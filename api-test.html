@@ -77,6 +77,31 @@ header{text-align:center;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1p
 /* TIMER */
 .timer{font-family:'Courier New',monospace;font-size:.65rem;color:var(--faint);margin-top:.6rem}
 
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;padding:2rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bdr);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative;animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{position:absolute;top:.8rem;right:.8rem;background:none;border:1px solid var(--faint);color:var(--dim);width:28px;height:28px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:1}
+.modal-close:hover{border-color:var(--gold);color:var(--gold)}
+.modal-header{padding:1.5rem 1.5rem 0;border-bottom:none}
+.modal-header h3{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;margin-bottom:.2rem}
+.modal-header h3 em{font-style:italic;color:var(--gold)}
+.modal-body{padding:1.2rem 1.5rem 1.5rem}
+.modal-error{background:rgba(181,51,42,.1);border:1px solid var(--red);padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.78rem;color:var(--red);line-height:1.6;display:none}
+.modal-error.visible{display:block}
+.modal-error pre{font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word;margin-top:.4rem;font-size:.72rem;color:#e07a75}
+.modal-section-label{font-size:.6rem;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.5rem}
+.modal-prompt{background:var(--s2);border:1px solid var(--faint);padding:.8rem 1rem;font-family:'Courier New',monospace;font-size:.78rem;color:var(--txt);line-height:1.7;white-space:pre-wrap;word-break:break-word;margin-bottom:1.2rem}
+.modal-img-wrap{text-align:center;min-height:80px;position:relative}
+.modal-img-wrap img{max-width:100%;border:1px solid var(--bdr);display:block;margin:0 auto}
+.modal-spinner{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:2rem 0;color:var(--dim);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
+.modal-spinner .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 1.2s infinite}
+.modal-timer{font-family:'Courier New',monospace;font-size:.62rem;color:var(--faint);text-align:right;margin-top:.8rem}
+.modal-status{display:flex;align-items:center;gap:.5rem;padding:.6rem .8rem;background:var(--s2);border:1px solid var(--faint);margin-top:.8rem;font-size:.72rem}
+.modal-status .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.modal-status .status-text{color:var(--dim);flex:1}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--s2)}
@@ -194,6 +219,33 @@ header{text-align:center;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1p
   </div>
 </div>
 
+</div>
+
+<!-- ═══ HIGGSFIELD TEST MODAL ═══ -->
+<div class="modal-overlay" id="hf-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeHfModal()">&times;</button>
+    <div class="modal-header">
+      <h3>Higgsfield — <em>Image Generation Test</em></h3>
+    </div>
+    <div class="modal-body">
+      <div class="modal-error" id="hf-modal-error">
+        <strong>Generation Failed</strong>
+        <pre id="hf-modal-error-msg"></pre>
+      </div>
+      <div class="modal-section-label">Prompt Sent</div>
+      <div class="modal-prompt" id="hf-modal-prompt"></div>
+      <div class="modal-section-label">Generated Image</div>
+      <div class="modal-img-wrap" id="hf-modal-img">
+        <!-- spinner or image injected here -->
+      </div>
+      <div class="modal-timer" id="hf-modal-timer"></div>
+      <div class="modal-status" id="hf-modal-status">
+        <div class="dot idle"></div>
+        <div class="status-text">Waiting...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -333,6 +385,50 @@ async function hfPoll(requestId, creds, maxWait = 120000) {
   throw new Error('Timed out waiting for generation (120s)');
 }
 
+/* ── Modal helpers ── */
+let hfModalTimer = null;
+
+function openHfModal() {
+  const overlay = document.getElementById('hf-modal');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeHfModal() {
+  const overlay = document.getElementById('hf-modal');
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  if (hfModalTimer) { hfModalTimer.stop(); hfModalTimer = null; }
+}
+
+function setModalStatus(state, msg) {
+  const bar = document.getElementById('hf-modal-status');
+  const dot = bar.querySelector('.dot');
+  const txt = bar.querySelector('.status-text');
+  dot.className = 'dot ' + state;
+  txt.textContent = msg;
+}
+
+function showModalError(msg) {
+  const el = document.getElementById('hf-modal-error');
+  document.getElementById('hf-modal-error-msg').textContent = msg;
+  el.classList.add('visible');
+}
+
+function hideModalError() {
+  document.getElementById('hf-modal-error').classList.remove('visible');
+}
+
+// Close modal on overlay click
+document.getElementById('hf-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeHfModal();
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeHfModal();
+});
+
 async function testHiggsfield() {
   const creds = getHfCredentials();
   if (!creds.keyId || !creds.keySecret) {
@@ -340,29 +436,36 @@ async function testHiggsfield() {
     return;
   }
 
-  hideResult('hf-result');
-  setStatus('hf-status', 'running', 'Submitting image generation request...');
-  const timer = startTimer('hf-timer');
+  const testPrompt = 'A simple gold engagement ring, fine jewelry photograph, studio lighting, black velvet background, photorealistic';
+
+  // Reset & open modal
+  hideModalError();
+  document.getElementById('hf-modal-prompt').textContent = testPrompt;
+  document.getElementById('hf-modal-img').innerHTML =
+    '<div class="modal-spinner"><div class="dot"></div>Generating image...</div>';
+  setModalStatus('running', 'Submitting request to Higgsfield...');
+  openHfModal();
+
+  hfModalTimer = startTimer('hf-modal-timer');
+  setStatus('hf-status', 'running', 'Test running — see modal');
+
   const model = document.getElementById('hf-model').value;
 
   try {
     const submitData = await hfSubmit(model, {
-      prompt: 'Fine jewelry photograph: 18k white gold solitaire ring, round brilliant diamond, six-prong setting, polished band, black velvet background, studio lighting, photorealistic',
+      prompt: testPrompt,
       aspect_ratio: '1:1'
     }, creds);
 
     const requestId = submitData.request_id;
     if (!requestId) {
-      timer.stop();
-      setStatus('hf-status', 'fail', 'No request_id in response');
-      showResult('hf-result', JSON.stringify(submitData, null, 2));
-      return;
+      throw new Error('No request_id in response: ' + JSON.stringify(submitData));
     }
 
-    setStatus('hf-status', 'running', `Polling — request ${requestId.slice(0, 8)}...`);
+    setModalStatus('running', 'Polling — request ' + requestId.slice(0, 8) + '...');
 
     const result = await hfPoll(requestId, creds);
-    timer.stop();
+    hfModalTimer.stop(); hfModalTimer = null;
 
     const imgUrl = result.images?.[0]?.url
       || result.jobs?.[0]?.results?.raw?.url
@@ -370,32 +473,41 @@ async function testHiggsfield() {
       || null;
 
     if (imgUrl) {
-      setStatus('hf-status', 'pass', `Pass — image generated (${requestId.slice(0, 8)})`);
-      showResult('hf-result',
-        `<div class="img-result"><img src="${imgUrl}" alt="Generated jewelry" /></div>`, true);
+      setModalStatus('pass', 'Image generated successfully');
+      setStatus('hf-status', 'pass', 'Pass — see modal for result');
+      document.getElementById('hf-modal-img').innerHTML =
+        '<img src="' + imgUrl + '" alt="A simple gold engagement ring — AI generated" />';
     } else {
-      setStatus('hf-status', 'pass', 'Pass — completed but no image URL found in response');
-      showResult('hf-result', JSON.stringify(result, null, 2));
+      setModalStatus('pass', 'Completed — no image URL in response');
+      setStatus('hf-status', 'pass', 'Completed — see modal');
+      document.getElementById('hf-modal-img').innerHTML =
+        '<pre style="font-size:.72rem;color:var(--dim);text-align:left">' +
+        JSON.stringify(result, null, 2) + '</pre>';
     }
 
   } catch (err) {
-    timer.stop();
+    if (hfModalTimer) { hfModalTimer.stop(); hfModalTimer = null; }
     const msg = err.message || 'Unknown error';
     const isCors = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS');
+
+    document.getElementById('hf-modal-img').innerHTML =
+      '<div style="padding:1.5rem 0;color:var(--faint);font-size:.75rem">No image generated</div>';
+
     if (isCors) {
-      setStatus('hf-status', 'fail', 'CORS blocked — Higgsfield API requires a server-side proxy for browser access');
-      showResult('hf-result',
-        'The Higgsfield API does not allow direct browser requests (CORS).\n\n' +
-        'To resolve this, route requests through a backend proxy:\n' +
-        '  • A small Node.js/Express server\n' +
-        '  • A serverless function (Vercel, Cloudflare Workers, etc.)\n' +
-        '  • Or use the Higgsfield Node.js SDK (@higgsfield/client) server-side\n\n' +
-        'The Claude API supports direct browser access, so only the Higgsfield\n' +
-        'leg needs a proxy.\n\n' +
-        'Raw error: ' + msg);
+      showModalError(
+        'CORS blocked — the Higgsfield API does not allow direct browser requests.\n\n' +
+        'To resolve, route requests through a backend proxy:\n' +
+        '  \u2022 A small Node.js/Express server\n' +
+        '  \u2022 A serverless function (Vercel, Cloudflare Workers)\n' +
+        '  \u2022 The Higgsfield Node.js SDK (@higgsfield/client) server-side\n\n' +
+        'Raw error: ' + msg
+      );
+      setModalStatus('fail', 'CORS blocked');
+      setStatus('hf-status', 'fail', 'CORS blocked — see modal');
     } else {
-      setStatus('hf-status', 'fail', msg);
-      showResult('hf-result', msg);
+      showModalError(msg);
+      setModalStatus('fail', 'Generation failed');
+      setStatus('hf-status', 'fail', 'Failed — see modal');
     }
   }
 }
