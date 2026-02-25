@@ -128,12 +128,12 @@ header{text-align:center;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1p
     </div>
     <div>
       <div class="field">
-        <label>Higgsfield Key ID</label>
-        <input type="password" id="hf-key-id" placeholder="Key ID" />
+        <label>Higgsfield API Key</label>
+        <input type="password" id="hf-key-id" placeholder="your_api_key" />
       </div>
       <div class="field" style="margin-bottom:0">
-        <label>Higgsfield Key Secret</label>
-        <input type="password" id="hf-key-secret" placeholder="Key Secret" />
+        <label>Higgsfield API Key Secret</label>
+        <input type="password" id="hf-key-secret" placeholder="your_api_key_secret" />
       </div>
     </div>
   </div>
@@ -169,8 +169,8 @@ header{text-align:center;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1p
     <div class="field">
       <label>Model Path</label>
       <select id="hf-model">
+        <option value="higgsfield-ai/soul/standard">higgsfield-ai/soul/standard</option>
         <option value="flux-pro/kontext/max/text-to-image">flux-pro/kontext/max/text-to-image</option>
-        <option value="bytedance/seedream/v4/text-to-image">bytedance/seedream/v4/text-to-image</option>
       </select>
     </div>
     <button class="btn btn-sm" onclick="testHiggsfield()">Run Test</button>
@@ -352,8 +352,10 @@ async function testClaude() {
 ══════════════════════════════════ */
 const HF_BASE = 'https://platform.higgsfield.ai';
 
-async function hfSubmit(model, input, creds) {
-  const res = await fetch(`${HF_BASE}/${model}`, {
+async function hfSubmit(modelId, input, creds) {
+  // POST https://platform.higgsfield.ai/{model_id}
+  // Auth: Authorization: Key {api_key}:{api_key_secret}
+  const res = await fetch(`${HF_BASE}/${modelId}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -369,8 +371,9 @@ async function hfSubmit(model, input, creds) {
 }
 
 async function hfPoll(requestId, creds, maxWait = 120000) {
+  // GET https://platform.higgsfield.ai/requests/{request_id}/status
   const t0 = Date.now();
-  const interval = 2500;
+  const interval = 3000;
   while (Date.now() - t0 < maxWait) {
     const res = await fetch(`${HF_BASE}/requests/${requestId}/status`, {
       headers: { 'Authorization': `Key ${creds.keyId}:${creds.keySecret}` }
@@ -378,8 +381,8 @@ async function hfPoll(requestId, creds, maxWait = 120000) {
     if (!res.ok) throw new Error(`Poll failed: HTTP ${res.status}`);
     const data = await res.json();
     if (data.status === 'completed') return data;
-    if (data.status === 'failed') throw new Error('Generation failed on server');
-    if (data.status === 'nsfw') throw new Error('Request rejected by content moderation');
+    if (data.status === 'failed') throw new Error('Generation failed on server (credits refunded)');
+    if (data.status === 'nsfw') throw new Error('Content failed moderation checks (credits refunded)');
     await new Promise(r => setTimeout(r, interval));
   }
   throw new Error('Timed out waiting for generation (120s)');
@@ -454,7 +457,8 @@ async function testHiggsfield() {
   try {
     const submitData = await hfSubmit(model, {
       prompt: testPrompt,
-      aspect_ratio: '1:1'
+      aspect_ratio: '1:1',
+      resolution: '720p'
     }, creds);
 
     const requestId = submitData.request_id;
@@ -591,7 +595,8 @@ async function testHarmony() {
 
     const submitData = await hfSubmit(hfModel, {
       prompt: imagePrompt,
-      aspect_ratio: '1:1'
+      aspect_ratio: '1:1',
+      resolution: '720p'
     }, creds);
 
     const requestId = submitData.request_id;
