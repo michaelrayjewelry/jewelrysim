@@ -441,13 +441,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
           <label>Higgsfield Image Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
           <input id="b-higgsfield-key" type="password" placeholder="KEY_ID:KEY_SECRET · takes priority over Pixazo">
           <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Higgsfield Flux image generation. Priority: Higgsfield → Pixazo → Pollinations (free).</div>
-          <button class="btn" style="margin-top:.45rem;font-size:.65rem;padding:.35rem .7rem;letter-spacing:.04em;width:100%" onclick="testHiggsfieldAPI()">⚡ Test Higgsfield API</button>
-          <div id="higgs-test-result" style="display:none;margin-top:.5rem"></div>
         </div>
         <div style="display:flex;gap:.4rem;margin-top:.9rem">
           <button class="btn btn-primary" style="flex:1;font-size:.72rem;padding:.45rem .8rem;letter-spacing:.05em" onclick="applyAPIKeys()">▶ Apply API Keys</button>
           <button class="btn" style="font-size:.68rem;padding:.45rem .75rem;letter-spacing:.04em;white-space:nowrap" onclick="testClaudeAPI()">⚡ Test Claude API</button>
         </div>
+        <button class="btn" style="margin-top:.4rem;font-size:.68rem;padding:.45rem .75rem;letter-spacing:.04em;width:100%" onclick="testHiggsfieldAPI()">⚡ Test Higgsfield API</button>
+        <div id="higgs-test-result" style="display:none;margin-top:.5rem"></div>
         <div id="api-status" style="display:none;font-size:.6rem;line-height:2;margin-top:.5rem;padding:.5rem .6rem;background:rgba(255,255,255,.04);border-radius:.4rem;border:1px solid rgba(255,255,255,.07)"></div>
       </div>
     </div>
@@ -1324,7 +1324,10 @@ function renderDesignCard(d, i) {
   if (hasImgKey) {
     generateImageUrl(d.prompt, seed)
       .then(url => { img.src = url; })
-      .catch(() => showError());
+      .catch(err => {
+        console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err);
+        img.src = makeImgUrl(d.prompt, seed);
+      });
   } else {
     img.src = makeImgUrl(d.prompt, seed);
   }
@@ -1499,7 +1502,7 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
         (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
         (document.getElementById('b-imgkey')?.value || '').trim());
       if (_hasKey) {
-        generateImageUrl(d.prompt, seed).then(url => { img.src = url; }).catch(showFallback);
+        generateImageUrl(d.prompt, seed).then(url => { img.src = url; }).catch(err => { console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err); img.src = makeImgUrl(d.prompt, seed); });
       } else {
         img.src = makeImgUrl(d.prompt, seed);
       }
@@ -2129,7 +2132,7 @@ function viewReport(cycleNum) {
       (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
       (document.getElementById('b-imgkey')?.value || '').trim());
     if (_rHasKey) {
-      generateImageUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { if(imgEl) imgEl.style.display='none'; });
+      generateImageUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(err => { console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err); imgEl.src = makeImgUrl(d.prompt, seed); });
     } else {
       imgEl.src = makeImgUrl(d.prompt, seed);
     }
