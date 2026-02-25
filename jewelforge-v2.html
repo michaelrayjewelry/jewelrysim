@@ -442,6 +442,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
           <input id="b-higgsfield-key" type="password" placeholder="KEY_ID:KEY_SECRET · takes priority over Pixazo">
           <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Higgsfield Flux image generation. Priority: Higgsfield → Pixazo → Pollinations (free).</div>
         </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:.9rem;font-size:.72rem;padding:.45rem .8rem;letter-spacing:.05em" onclick="applyAPIKeys()">▶ Apply API Keys</button>
+        <div id="api-status" style="display:none;font-size:.6rem;line-height:2;margin-top:.5rem;padding:.5rem .6rem;background:rgba(255,255,255,.04);border-radius:.4rem;border:1px solid rgba(255,255,255,.07)"></div>
       </div>
     </div>
 
@@ -609,6 +611,11 @@ let activeDesigns = [];
 let liveMode = false;
 let autoPilot = false;
 let livePhaseData = {};
+
+// Applied API keys (set by applyAPIKeys() before simulation starts)
+let _keyAI    = '';  // Anthropic sk-ant-… (blank = Pollinations for text)
+let _keyHiggs = '';  // Higgsfield KEY_ID:KEY_SECRET or Bearer
+let _keyPixazo= '';  // Pixazo subscription key
 
 // Pre-defined agents (slot 0 = user's agent, built in builder)
 const BASE_AGENTS = [
@@ -1305,9 +1312,10 @@ function renderDesignCard(d, i) {
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Set src — use custom image API if any key is present, otherwise Pollinations
-  const hasImgKey = !!(document.getElementById('b-higgsfield-key')?.value || '').trim() ||
-                    !!(document.getElementById('b-imgkey')?.value || '').trim();
+  // Set src — use custom image API if any key is applied or entered, otherwise Pollinations
+  const hasImgKey = !!(_keyHiggs || _keyPixazo ||
+    (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
+    (document.getElementById('b-imgkey')?.value || '').trim());
   if (hasImgKey) {
     generateImageUrl(d.prompt, seed)
       .then(url => { img.src = url; })
@@ -1380,8 +1388,9 @@ async function _pollHiggsfield(requestId, authHeader, maxAttempts = 30) {
 }
 
 async function generateImageUrl(prompt, seed) {
-  const higgsKey   = (document.getElementById('b-higgsfield-key')?.value || '').trim();
-  const pixazoKey  = (document.getElementById('b-imgkey')?.value || '').trim();
+  // Applied keys take priority; live DOM values are fallback before simulation starts
+  const higgsKey   = _keyHiggs  || (document.getElementById('b-higgsfield-key')?.value || '').trim();
+  const pixazoKey  = _keyPixazo || (document.getElementById('b-imgkey')?.value         || '').trim();
   const fullPrompt = `fine jewelry, ${prompt.slice(0, 400)}, studio lighting, photorealistic`;
 
   // ── Higgsfield (priority) ──
@@ -1419,7 +1428,8 @@ async function generateImageUrl(prompt, seed) {
     throw new Error('Pixazo: unexpected response format');
   }
 
-  // ── Pollinations (free fallback) ──
+  // ── Pollinations (free fallback — only when no custom key is applied) ──
+  if (_keyHiggs || _keyPixazo) throw new Error('Image API key set but request failed — check key or connection');
   return makeImgUrl(prompt, seed);
 }
 
@@ -1476,8 +1486,9 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
       };
       img.onerror = showFallback;
       setTimeout(showFallback, 35000); // timeout fallback
-      const _hasKey = !!(document.getElementById('b-higgsfield-key')?.value || '').trim() ||
-                      !!(document.getElementById('b-imgkey')?.value || '').trim();
+      const _hasKey = !!(_keyHiggs || _keyPixazo ||
+        (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
+        (document.getElementById('b-imgkey')?.value || '').trim());
       if (_hasKey) {
         generateImageUrl(d.prompt, seed).then(url => { img.src = url; }).catch(showFallback);
       } else {
@@ -2105,8 +2116,9 @@ function viewReport(cycleNum) {
     const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
     imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
     imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
-    const _rHasKey = !!(document.getElementById('b-higgsfield-key')?.value || '').trim() ||
-                     !!(document.getElementById('b-imgkey')?.value || '').trim();
+    const _rHasKey = !!(_keyHiggs || _keyPixazo ||
+      (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
+      (document.getElementById('b-imgkey')?.value || '').trim());
     if (_rHasKey) {
       generateImageUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { if(imgEl) imgEl.style.display='none'; });
     } else {
@@ -2172,6 +2184,34 @@ function setAutoPilot(on) {
   if (desc) desc.style.display = on ? '' : 'none';
 }
 
+function applyAPIKeys() {
+  _keyAI     = (document.getElementById('b-apikey')?.value        || '').trim();
+  _keyHiggs  = (document.getElementById('b-higgsfield-key')?.value || '').trim();
+  _keyPixazo = (document.getElementById('b-imgkey')?.value         || '').trim();
+
+  const rows = [];
+
+  // AI text status
+  if (_keyAI.startsWith('sk-ant-'))
+    rows.push('<span style="color:#7ecf7e">✓ Anthropic Claude</span> — AI agent decisions');
+  else
+    rows.push('<span style="color:#f0c060">⚠ No AI key</span> — using Pollinations (may be slow / unreliable)');
+
+  // Image status
+  if (_keyHiggs)
+    rows.push('<span style="color:#7ecf7e">✓ Higgsfield</span> — image generation (priority)');
+  else if (_keyPixazo)
+    rows.push('<span style="color:#7ecf7e">✓ Pixazo</span> — image generation');
+  else
+    rows.push('<span style="color:#f0c060">⚠ No image key</span> — using Pollinations images (may fail)');
+
+  const el = document.getElementById('api-status');
+  if (el) { el.innerHTML = rows.join('<br>'); el.style.display = ''; }
+
+  const applyBtn = document.querySelector('[onclick="applyAPIKeys()"]');
+  if (applyBtn) { applyBtn.textContent = '✓ Keys Applied'; setTimeout(() => { applyBtn.textContent = '▶ Apply API Keys'; }, 2000); }
+}
+
 let _llmLastCall = 0;
 
 async function callLLM(systemPrompt, userPrompt, json = false) {
@@ -2180,7 +2220,8 @@ async function callLLM(systemPrompt, userPrompt, json = false) {
   if (wait > 0) await new Promise(r => setTimeout(r, wait));
   _llmLastCall = Date.now();
 
-  const key = (document.getElementById('b-apikey')?.value || '').trim();
+  // Use applied key first, then live DOM value as fallback
+  const key = _keyAI || (document.getElementById('b-apikey')?.value || '').trim();
   const jsonSuffix = json ? '\n\nRespond with valid JSON only. No markdown, no explanation.' : '';
   const msgs = [
     { role: 'system', content: systemPrompt },
