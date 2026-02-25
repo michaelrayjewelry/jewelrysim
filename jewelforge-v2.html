@@ -1323,13 +1323,17 @@ function renderDesignCard(d, i) {
     (document.getElementById('b-imgkey')?.value || '').trim());
   if (hasImgKey) {
     generateImageUrl(d.prompt, seed)
-      .then(url => { img.src = url; })
+      .then(url => { img.src = url; if (activeDesigns[i]) activeDesigns[i].imageUrl = url; })
       .catch(err => {
         console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err);
-        img.src = makeImgUrl(d.prompt, seed);
+        const fb = makeImgUrl(d.prompt, seed);
+        img.src = fb;
+        if (activeDesigns[i]) activeDesigns[i].imageUrl = fb;
       });
   } else {
-    img.src = makeImgUrl(d.prompt, seed);
+    const url = makeImgUrl(d.prompt, seed);
+    img.src = url;
+    if (activeDesigns[i]) activeDesigns[i].imageUrl = url;
   }
 }
 
@@ -1501,8 +1505,10 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
       const _hasKey = !!(_keyHiggs || _keyPixazo ||
         (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
         (document.getElementById('b-imgkey')?.value || '').trim());
-      if (_hasKey) {
-        generateImageUrl(d.prompt, seed).then(url => { img.src = url; }).catch(err => { console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err); img.src = makeImgUrl(d.prompt, seed); });
+      if (d.imageUrl) {
+        img.src = d.imageUrl;
+      } else if (_hasKey) {
+        generateImageUrl(d.prompt, seed).then(url => { img.src = url; d.imageUrl = url; }).catch(err => { console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err); img.src = makeImgUrl(d.prompt, seed); });
       } else {
         img.src = makeImgUrl(d.prompt, seed);
       }
@@ -1688,6 +1694,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
       strategy: myDesign?.strategy || '—',
       rank: myDesign?.rank || 7,
       designName: myDesign?.name || '—',
+      designImg: myDesign?.imageUrl || null,
       isUser: a.isUser || false
     };
   });
@@ -1936,7 +1943,7 @@ function viewReport(cycleNum) {
         <tr>
           <td class="rank-num ${i===0?'r1':''}">${i+1}</td>
           <td>${a.emoji||''} ${a.name}${a.isUser?'<span class="you-badge">YOU</span>':''}</td>
-          <td style="font-style:italic;color:var(--txt)">"${a.designName}"</td>
+          <td>${a.designImg ? `<img src="${a.designImg}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:.4rem;border:1px solid var(--border)">` : ''}<span style="font-style:italic;color:var(--txt)">"${a.designName}"</span></td>
           <td><span class="strat-badge strat-${a.strategy}">${a.strategy.toUpperCase()}</span></td>
           <td class="gold" style="color:${i===0?'var(--gold)':'var(--dim)'}">${fmtC(a.earned)}⬡</td>
           <td>${fmtC(a.spent)}⬡</td>
@@ -2043,9 +2050,10 @@ function viewReport(cycleNum) {
   // ── Section 11: Image Generation Prompts ──
   const promptHtml = `
     <table class="rtable">
-      <thead><tr><th style="width:160px">Design</th><th>Image Generation Prompt</th></tr></thead>
+      <thead><tr><th style="width:60px">Image</th><th style="width:160px">Design</th><th>Image Generation Prompt</th></tr></thead>
       <tbody>${[...r.designs].sort((a,b)=>a.rank-b.rank).map(d=>`
         <tr class="${d.rank<=3?'highlight-row':''}">
+          <td>${d.imageUrl ? `<img src="${d.imageUrl}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block">` : `<div style="width:52px;height:52px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem">${d.emoji||'💎'}</div>`}</td>
           <td><b>${d.rank===1?'🏆 ':''}#${d.rank} ${d.name}</b><br><span style="color:var(--faint);font-size:.65rem">${d.agentName||'Agent'}</span></td>
           <td><div class="prompt-box">${d.prompt}</div></td>
         </tr>`).join('')}
@@ -2128,13 +2136,17 @@ function viewReport(cycleNum) {
     const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
     imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
     imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
-    const _rHasKey = !!(_keyHiggs || _keyPixazo ||
-      (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
-      (document.getElementById('b-imgkey')?.value || '').trim());
-    if (_rHasKey) {
-      generateImageUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(err => { console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err); imgEl.src = makeImgUrl(d.prompt, seed); });
+    if (d.imageUrl) {
+      imgEl.src = d.imageUrl;
     } else {
-      imgEl.src = makeImgUrl(d.prompt, seed);
+      const _rHasKey = !!(_keyHiggs || _keyPixazo ||
+        (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
+        (document.getElementById('b-imgkey')?.value || '').trim());
+      if (_rHasKey) {
+        generateImageUrl(d.prompt, seed).then(url => { imgEl.src = url; d.imageUrl = url; }).catch(err => { console.error('[JewelForge] Image API failed, falling back to Pollinations:', err?.message || err); imgEl.src = makeImgUrl(d.prompt, seed); });
+      } else {
+        imgEl.src = makeImgUrl(d.prompt, seed);
+      }
     }
   });
 
