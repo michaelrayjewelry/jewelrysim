@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JEWELFORGE — API Integration Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a84c;--gold-l:#e8c97a;--gold-d:#8a6e30;--gold-x:#4a3a18;
+  --bg:#060606;--s1:#0d0d0d;--s2:#141414;--s3:#1c1c1c;
+  --txt:#e8e4dc;--dim:#8a8680;--faint:#3a3a38;
+  --grn:#4caf7d;--red:#b5332a;--blu:#4a7fa8;--purp:#7b6fa8;
+  --bdr:rgba(201,168,76,0.14);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min-height:100vh;padding:2rem}
+
+/* HEADER */
+header{text-align:center;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid var(--bdr)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;letter-spacing:.4em;color:var(--gold);font-weight:300;margin-bottom:.4rem}
+.subtitle{font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:var(--dim)}
+
+/* LAYOUT */
+.container{max-width:960px;margin:0 auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.full{grid-column:1/-1}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--bdr);padding:1.8rem}
+.card h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;margin-bottom:.3rem}
+.card h2 em{font-style:italic;color:var(--gold)}
+.card-desc{font-size:.75rem;color:var(--dim);margin-bottom:1.4rem;line-height:1.6}
+
+/* FORM */
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.62rem;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.4rem}
+.field input,.field textarea,.field select{width:100%;background:var(--s2);border:1px solid var(--faint);color:var(--txt);padding:.6rem .85rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
+.field input:focus,.field textarea:focus{border-color:var(--gold-d)}
+.field input[type="password"]{letter-spacing:.15em}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.6rem;font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;border:1px solid var(--gold);color:var(--gold);background:transparent;cursor:pointer;transition:all .25s}
+.btn:hover{background:rgba(201,168,76,.1)}
+.btn-primary{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.btn-primary:hover{background:var(--gold-l)}
+.btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+.btn-sm{padding:.45rem 1rem;font-size:.62rem}
+
+/* STATUS */
+.status-bar{display:flex;align-items:center;gap:.6rem;margin-top:1.2rem;padding:.8rem 1rem;background:var(--s2);border:1px solid var(--faint);min-height:42px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.idle{background:var(--faint)}
+.dot.running{background:var(--gold);animation:pulse 1.2s infinite}
+.dot.pass{background:var(--grn)}
+.dot.fail{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.status-msg{font-size:.78rem;color:var(--dim);line-height:1.5;flex:1}
+
+/* RESULT PANELS */
+.result-panel{margin-top:1rem;background:var(--s2);border:1px solid var(--faint);padding:1rem;display:none;max-height:320px;overflow-y:auto}
+.result-panel.visible{display:block}
+.result-panel pre{font-family:'Courier New',monospace;font-size:.78rem;color:var(--txt);white-space:pre-wrap;word-break:break-word;line-height:1.7}
+.result-panel .img-result{text-align:center}
+.result-panel .img-result img{max-width:100%;max-height:260px;border:1px solid var(--bdr)}
+
+/* HARMONY */
+.harmony-flow{display:flex;align-items:center;gap:.6rem;margin:1.4rem 0;flex-wrap:wrap}
+.flow-step{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border:1px solid var(--faint);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);transition:all .3s}
+.flow-step.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.05)}
+.flow-step.done{border-color:var(--grn);color:var(--grn);background:rgba(76,175,125,.04)}
+.flow-step.fail{border-color:var(--red);color:var(--red);background:rgba(181,51,42,.04)}
+.flow-arrow{color:var(--faint);font-size:.9rem}
+
+/* TIMER */
+.timer{font-family:'Courier New',monospace;font-size:.65rem;color:var(--faint);margin-top:.6rem}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--s2)}
+::-webkit-scrollbar-thumb{background:var(--faint)}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <div class="logo">JEWELFORGE</div>
+  <div class="subtitle">API Integration Test Suite</div>
+</header>
+
+<!-- ═══ API KEYS ═══ -->
+<div class="card full" style="margin-bottom:1.5rem">
+  <h2><em>Credentials</em></h2>
+  <div class="card-desc">Enter API keys below. Keys are stored only in your browser session and never transmitted except to their respective APIs.</div>
+  <div class="grid" style="margin-bottom:0">
+    <div class="field">
+      <label>Anthropic API Key</label>
+      <input type="password" id="claude-key" placeholder="sk-ant-..." />
+    </div>
+    <div>
+      <div class="field">
+        <label>Higgsfield Key ID</label>
+        <input type="password" id="hf-key-id" placeholder="Key ID" />
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Higgsfield Key Secret</label>
+        <input type="password" id="hf-key-secret" placeholder="Key Secret" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TEST PANELS ═══ -->
+<div class="grid">
+
+  <!-- Claude Test -->
+  <div class="card">
+    <h2>Test 1 — <em>Claude API</em></h2>
+    <div class="card-desc">Sends a simple prompt to the Anthropic Messages API and confirms a valid response.</div>
+    <div class="field">
+      <label>Model</label>
+      <select id="claude-model">
+        <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514</option>
+        <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+      </select>
+    </div>
+    <button class="btn btn-sm" onclick="testClaude()">Run Test</button>
+    <div class="status-bar" id="claude-status">
+      <div class="dot idle"></div>
+      <div class="status-msg">Idle — ready to test</div>
+    </div>
+    <div class="timer" id="claude-timer"></div>
+    <div class="result-panel" id="claude-result"><pre></pre></div>
+  </div>
+
+  <!-- Higgsfield Test -->
+  <div class="card">
+    <h2>Test 2 — <em>Higgsfield API</em></h2>
+    <div class="card-desc">Submits a text-to-image request to Higgsfield and polls until the image is ready.</div>
+    <div class="field">
+      <label>Model Path</label>
+      <select id="hf-model">
+        <option value="flux-pro/kontext/max/text-to-image">flux-pro/kontext/max/text-to-image</option>
+        <option value="bytedance/seedream/v4/text-to-image">bytedance/seedream/v4/text-to-image</option>
+      </select>
+    </div>
+    <button class="btn btn-sm" onclick="testHiggsfield()">Run Test</button>
+    <div class="status-bar" id="hf-status">
+      <div class="dot idle"></div>
+      <div class="status-msg">Idle — ready to test</div>
+    </div>
+    <div class="timer" id="hf-timer"></div>
+    <div class="result-panel" id="hf-result"><pre></pre></div>
+  </div>
+
+</div>
+
+<!-- ═══ HARMONY TEST ═══ -->
+<div class="card full">
+  <h2>Test 3 — <em>Harmony</em></h2>
+  <div class="card-desc">
+    End-to-end pipeline: Claude generates a detailed jewelry image prompt, then Higgsfield renders it.
+    Confirms both APIs work together as they would in the full JewelForge simulation.
+  </div>
+
+  <div class="harmony-flow">
+    <div class="flow-step" id="h-step-1">1 &middot; Claude prompt</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step" id="h-step-2">2 &middot; Higgsfield render</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step" id="h-step-3">3 &middot; Result</div>
+  </div>
+
+  <div class="field">
+    <label>Jewelry Description (input to Claude)</label>
+    <textarea id="harmony-input" rows="2" placeholder="e.g. An art deco platinum ring with an emerald-cut sapphire">An art deco platinum ring with a 3-carat emerald-cut sapphire, flanked by tapered baguette diamonds, milgrain detailing</textarea>
+  </div>
+
+  <button class="btn btn-primary" onclick="testHarmony()">Run Harmony Test</button>
+
+  <div class="status-bar" id="harmony-status">
+    <div class="dot idle"></div>
+    <div class="status-msg">Idle — ready to test</div>
+  </div>
+  <div class="timer" id="harmony-timer"></div>
+
+  <div class="result-panel" id="harmony-result">
+    <div id="harmony-prompt-output"></div>
+    <div id="harmony-img-output" class="img-result"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* ══════════════════════════════════
+   UTILITIES
+══════════════════════════════════ */
+function setStatus(id, state, msg) {
+  const bar = document.getElementById(id);
+  const dot = bar.querySelector('.dot');
+  const txt = bar.querySelector('.status-msg');
+  dot.className = 'dot ' + state;
+  txt.textContent = msg;
+}
+
+function showResult(id, content, isHtml) {
+  const panel = document.getElementById(id);
+  panel.classList.add('visible');
+  if (isHtml) {
+    panel.innerHTML = content;
+  } else {
+    panel.querySelector('pre').textContent = content;
+  }
+}
+
+function hideResult(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+function startTimer(id) {
+  const el = document.getElementById(id);
+  const t0 = performance.now();
+  el.textContent = '0.0s';
+  const iv = setInterval(() => {
+    el.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's';
+  }, 100);
+  return { stop() { clearInterval(iv); el.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's'; } };
+}
+
+function getClaudeKey() {
+  return document.getElementById('claude-key').value.trim();
+}
+
+function getHfCredentials() {
+  return {
+    keyId: document.getElementById('hf-key-id').value.trim(),
+    keySecret: document.getElementById('hf-key-secret').value.trim()
+  };
+}
+
+/* ══════════════════════════════════
+   TEST 1: CLAUDE API
+══════════════════════════════════ */
+async function testClaude() {
+  const key = getClaudeKey();
+  if (!key) { setStatus('claude-status', 'fail', 'Missing API key'); return; }
+
+  hideResult('claude-result');
+  setStatus('claude-status', 'running', 'Sending request to Anthropic Messages API...');
+  const timer = startTimer('claude-timer');
+  const model = document.getElementById('claude-model').value;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 256,
+        messages: [{
+          role: 'user',
+          content: 'In one sentence, describe a unique piece of fine jewelry suitable for a luxury auction catalog. Be specific about metals, stones, and design elements.'
+        }]
+      })
+    });
+
+    timer.stop();
+    const data = await res.json();
+
+    if (!res.ok) {
+      setStatus('claude-status', 'fail', `HTTP ${res.status} — ${data.error?.message || 'Unknown error'}`);
+      showResult('claude-result', JSON.stringify(data, null, 2));
+      return;
+    }
+
+    const text = data.content?.[0]?.text || '(no text in response)';
+    setStatus('claude-status', 'pass',
+      `Pass — model: ${data.model}, tokens: ${data.usage?.input_tokens}→${data.usage?.output_tokens}`);
+    showResult('claude-result', text);
+
+  } catch (err) {
+    timer.stop();
+    setStatus('claude-status', 'fail', `Network error — ${err.message}`);
+    showResult('claude-result', err.stack || err.message);
+  }
+}
+
+/* ══════════════════════════════════
+   TEST 2: HIGGSFIELD API
+══════════════════════════════════ */
+const HF_BASE = 'https://platform.higgsfield.ai';
+
+async function hfSubmit(model, input, creds) {
+  const res = await fetch(`${HF_BASE}/${model}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Key ${creds.keyId}:${creds.keySecret}`
+    },
+    body: JSON.stringify(input)
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(`HTTP ${res.status}: ${body.error || body.message || res.statusText}`);
+  }
+  return res.json();
+}
+
+async function hfPoll(requestId, creds, maxWait = 120000) {
+  const t0 = Date.now();
+  const interval = 2500;
+  while (Date.now() - t0 < maxWait) {
+    const res = await fetch(`${HF_BASE}/requests/${requestId}/status`, {
+      headers: { 'Authorization': `Key ${creds.keyId}:${creds.keySecret}` }
+    });
+    if (!res.ok) throw new Error(`Poll failed: HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.status === 'completed') return data;
+    if (data.status === 'failed') throw new Error('Generation failed on server');
+    if (data.status === 'nsfw') throw new Error('Request rejected by content moderation');
+    await new Promise(r => setTimeout(r, interval));
+  }
+  throw new Error('Timed out waiting for generation (120s)');
+}
+
+async function testHiggsfield() {
+  const creds = getHfCredentials();
+  if (!creds.keyId || !creds.keySecret) {
+    setStatus('hf-status', 'fail', 'Missing Higgsfield credentials');
+    return;
+  }
+
+  hideResult('hf-result');
+  setStatus('hf-status', 'running', 'Submitting image generation request...');
+  const timer = startTimer('hf-timer');
+  const model = document.getElementById('hf-model').value;
+
+  try {
+    const submitData = await hfSubmit(model, {
+      prompt: 'Fine jewelry photograph: 18k white gold solitaire ring, round brilliant diamond, six-prong setting, polished band, black velvet background, studio lighting, photorealistic',
+      aspect_ratio: '1:1'
+    }, creds);
+
+    const requestId = submitData.request_id;
+    if (!requestId) {
+      timer.stop();
+      setStatus('hf-status', 'fail', 'No request_id in response');
+      showResult('hf-result', JSON.stringify(submitData, null, 2));
+      return;
+    }
+
+    setStatus('hf-status', 'running', `Polling — request ${requestId.slice(0, 8)}...`);
+
+    const result = await hfPoll(requestId, creds);
+    timer.stop();
+
+    const imgUrl = result.images?.[0]?.url
+      || result.jobs?.[0]?.results?.raw?.url
+      || result.result?.url
+      || null;
+
+    if (imgUrl) {
+      setStatus('hf-status', 'pass', `Pass — image generated (${requestId.slice(0, 8)})`);
+      showResult('hf-result',
+        `<div class="img-result"><img src="${imgUrl}" alt="Generated jewelry" /></div>`, true);
+    } else {
+      setStatus('hf-status', 'pass', 'Pass — completed but no image URL found in response');
+      showResult('hf-result', JSON.stringify(result, null, 2));
+    }
+
+  } catch (err) {
+    timer.stop();
+    const msg = err.message || 'Unknown error';
+    const isCors = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS');
+    if (isCors) {
+      setStatus('hf-status', 'fail', 'CORS blocked — Higgsfield API requires a server-side proxy for browser access');
+      showResult('hf-result',
+        'The Higgsfield API does not allow direct browser requests (CORS).\n\n' +
+        'To resolve this, route requests through a backend proxy:\n' +
+        '  • A small Node.js/Express server\n' +
+        '  • A serverless function (Vercel, Cloudflare Workers, etc.)\n' +
+        '  • Or use the Higgsfield Node.js SDK (@higgsfield/client) server-side\n\n' +
+        'The Claude API supports direct browser access, so only the Higgsfield\n' +
+        'leg needs a proxy.\n\n' +
+        'Raw error: ' + msg);
+    } else {
+      setStatus('hf-status', 'fail', msg);
+      showResult('hf-result', msg);
+    }
+  }
+}
+
+/* ══════════════════════════════════
+   TEST 3: HARMONY
+══════════════════════════════════ */
+function setFlowStep(step, state) {
+  const el = document.getElementById('h-step-' + step);
+  el.className = 'flow-step ' + state;
+}
+
+async function testHarmony() {
+  const key = getClaudeKey();
+  const creds = getHfCredentials();
+  if (!key) { setStatus('harmony-status', 'fail', 'Missing Anthropic API key'); return; }
+  if (!creds.keyId || !creds.keySecret) { setStatus('harmony-status', 'fail', 'Missing Higgsfield credentials'); return; }
+
+  // Reset
+  hideResult('harmony-result');
+  [1,2,3].forEach(i => setFlowStep(i, ''));
+  document.getElementById('harmony-prompt-output').innerHTML = '';
+  document.getElementById('harmony-img-output').innerHTML = '';
+
+  const timer = startTimer('harmony-timer');
+  const description = document.getElementById('harmony-input').value.trim()
+    || 'A luxury platinum ring with a cushion-cut blue sapphire';
+
+  // Step 1: Claude generates a detailed image prompt
+  setFlowStep(1, 'active');
+  setStatus('harmony-status', 'running', 'Step 1/3 — Claude is writing an image generation prompt...');
+
+  let imagePrompt;
+  try {
+    const claudeModel = document.getElementById('claude-model').value;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: claudeModel,
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: `You are a luxury jewelry photographer's AI assistant. Given a jewelry description, output ONLY a concise image-generation prompt (max 180 characters) optimized for an AI image model. Focus on the piece, materials, lighting, and background. No explanation, just the prompt.\n\nJewelry: ${description}`
+        }]
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+
+    imagePrompt = data.content?.[0]?.text?.trim();
+    if (!imagePrompt) throw new Error('Empty response from Claude');
+
+    setFlowStep(1, 'done');
+
+    // Show the intermediate prompt
+    const panel = document.getElementById('harmony-result');
+    panel.classList.add('visible');
+    document.getElementById('harmony-prompt-output').innerHTML =
+      `<div style="margin-bottom:1rem"><div style="font-size:.6rem;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.4rem">Claude-Generated Prompt</div><pre style="font-family:'Courier New',monospace;font-size:.78rem;color:var(--txt);white-space:pre-wrap;line-height:1.7;padding:.6rem;background:var(--s1);border:1px solid var(--bdr)">${imagePrompt}</pre></div>`;
+
+  } catch (err) {
+    timer.stop();
+    setFlowStep(1, 'fail');
+    setStatus('harmony-status', 'fail', `Claude failed — ${err.message}`);
+    return;
+  }
+
+  // Step 2: Higgsfield renders the image
+  setFlowStep(2, 'active');
+  setStatus('harmony-status', 'running', 'Step 2/3 — Higgsfield is generating the image...');
+
+  try {
+    const hfModel = document.getElementById('hf-model').value;
+
+    const submitData = await hfSubmit(hfModel, {
+      prompt: imagePrompt,
+      aspect_ratio: '1:1'
+    }, creds);
+
+    const requestId = submitData.request_id;
+    if (!requestId) throw new Error('No request_id returned');
+
+    setStatus('harmony-status', 'running', `Step 2/3 — Polling generation ${requestId.slice(0, 8)}...`);
+
+    const result = await hfPoll(requestId, creds);
+    const imgUrl = result.images?.[0]?.url
+      || result.jobs?.[0]?.results?.raw?.url
+      || result.result?.url
+      || null;
+
+    if (!imgUrl) throw new Error('Completed but no image URL in response');
+
+    setFlowStep(2, 'done');
+
+    // Step 3: Show combined result
+    setFlowStep(3, 'done');
+    timer.stop();
+    setStatus('harmony-status', 'pass', 'Harmony confirmed — Claude + Higgsfield pipeline working end-to-end');
+
+    document.getElementById('harmony-img-output').innerHTML =
+      `<div style="margin-top:.6rem"><div style="font-size:.6rem;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.4rem">Higgsfield Rendered Image</div><img src="${imgUrl}" alt="AI-generated jewelry" style="max-width:100%;max-height:400px;border:1px solid var(--bdr)" /></div>`;
+
+  } catch (err) {
+    timer.stop();
+    const msg = err.message || 'Unknown error';
+    const isCors = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS');
+
+    setFlowStep(2, 'fail');
+    setFlowStep(3, 'fail');
+
+    if (isCors) {
+      setStatus('harmony-status', 'fail', 'Higgsfield leg blocked by CORS — needs a server-side proxy');
+      document.getElementById('harmony-img-output').innerHTML =
+        `<pre style="font-family:'Courier New',monospace;font-size:.78rem;color:var(--red);white-space:pre-wrap;line-height:1.7;margin-top:.6rem">Claude step succeeded, but the Higgsfield API blocked the browser request (CORS).\nRoute Higgsfield calls through a backend proxy to complete the pipeline.</pre>`;
+    } else {
+      setStatus('harmony-status', 'fail', `Higgsfield failed — ${msg}`);
+      document.getElementById('harmony-img-output').innerHTML =
+        `<pre style="font-family:'Courier New',monospace;font-size:.78rem;color:var(--red);white-space:pre-wrap;line-height:1.7;margin-top:.6rem">${msg}</pre>`;
+    }
+  }
+}
+</script>
+</body>
+</html>
