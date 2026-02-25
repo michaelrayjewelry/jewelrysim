@@ -418,6 +418,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
           <div class="chip" onclick="toggleChip(this,'mc')">collectible</div><div class="chip" onclick="toggleChip(this,'mc')">avant-garde</div>
         </div>
       </div>
+      <div class="bsec" style="margin-top:1px">
+        <h4>Simulation Mode</h4>
+        <div class="chips" style="margin-bottom:.7rem">
+          <div class="chip on" id="mode-scripted" onclick="setLiveMode(false)">Scripted</div>
+          <div class="chip" id="mode-live" onclick="setLiveMode(true)">Live AI ✦</div>
+        </div>
+        <div style="font-size:.62rem;color:var(--faint);line-height:1.6;margin-bottom:.7rem" id="mode-desc">Pre-written narratives with deterministic outcomes. Fast, no API required.</div>
+        <div class="field" id="apikey-field" style="display:none">
+          <label>API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
+          <input id="b-apikey" type="password" placeholder="sk-ant-… or leave blank for free Pollinations AI">
+          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Leave blank for Pollinations AI (free, no account). Add an Anthropic key for Claude-quality responses.</div>
+        </div>
+      </div>
     </div>
 
     <div>
@@ -581,6 +594,8 @@ let currentCycle = 1;
 let cycleReports = [];
 let agentStates = [];
 let activeDesigns = [];
+let liveMode = false;
+let livePhaseData = {};
 
 // Pre-defined agents (slot 0 = user's agent, built in builder)
 const BASE_AGENTS = [
@@ -837,25 +852,30 @@ function addLog(text, type='', delay=0) {
 let phaseDelay = 0;
 function D(ms){ return ms; }
 
-function nextPhase() {
+async function nextPhase() {
   currentPhase++;
   if(currentPhase >= 5) return;
   setPhaseActive(currentPhase);
-  document.getElementById('phase-btn').disabled = true;
-  document.getElementById('phase-btn').textContent = '⏳ Running phase…';
+  const btn = document.getElementById('phase-btn');
+  btn.disabled = true;
+  btn.textContent = liveMode ? '⏳ Generating with AI…' : '⏳ Running phase…';
 
-  const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
-  const script = scripts[currentPhase];
-  const finishDelay = script();
+  let finishDelay;
+  if (liveMode) {
+    finishDelay = await runLivePhase(currentPhase);
+  } else {
+    const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
+    finishDelay = scripts[currentPhase]();
+  }
 
   setTimeout(()=>{
-    document.getElementById('phase-btn').disabled = false;
+    btn.disabled = false;
     if(currentPhase === 4) {
-      document.getElementById('phase-btn').style.display='none';
+      btn.style.display='none';
       showCycleComplete();
     } else {
       const labels = ['▶ Proceed to Synthesis','▶ Generate Designs','▶ Begin Agent Voting','▶ Apply Evolution'];
-      document.getElementById('phase-btn').textContent = labels[currentPhase]||'▶ Next Phase';
+      btn.textContent = labels[currentPhase]||'▶ Next Phase';
     }
   }, finishDelay/speed);
 }
@@ -1471,7 +1491,7 @@ function pct(v, tot) { return tot ? Math.round(v/tot*100) : 0; }
    REPORT GENERATION
 ══════════════════════════════════ */
 function generateAndStoreReport(cycleNum, sortedDesigns) {
-  const voteMatrix = VOTE_MATRICES[cycleNum-1];
+  const voteMatrix = (liveMode && livePhaseData.voteMatrix) ? livePhaseData.voteMatrix : VOTE_MATRICES[cycleNum-1];
   const designs = activeDesigns.map((d,i)=>({
     ...d,
     rank: sortedDesigns.findIndex(s=>s.idx===i)+1,
@@ -1555,8 +1575,8 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     if(topI===topJ && vi[topI]>0) { const shared=vi[topI]+vj[topJ]; if(shared>maxAlign){ maxAlign=shared; alignPair=[agentStates[i].name,agentStates[j].name]; } }
   }
 
-  // ── Hardcoded trend narratives (could be ML-generated) ──
-  const trendData = [
+  // ── Trend narratives: AI-generated in live mode, hardcoded in scripted mode ──
+  const trendData = (liveMode && livePhaseData.trendData) ? livePhaseData.trendData : [
     {
       emerging:['minimal','negative-space','platinum-bezel'],
       declining:['ornate-pavé','traditional-solitaire'],
@@ -2007,6 +2027,288 @@ function exportAllReports() {
   const blob = new Blob([content], {type:'text/plain'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'JewelForge_Epoch_Intelligence_Archive.txt'; a.click();
+}
+
+/* ══════════════════════════════════
+   LIVE MODE — AI API ENGINE
+══════════════════════════════════ */
+
+function setLiveMode(on) {
+  liveMode = on;
+  const scripted = document.getElementById('mode-scripted');
+  const live     = document.getElementById('mode-live');
+  const desc     = document.getElementById('mode-desc');
+  const apiField = document.getElementById('apikey-field');
+  if (on) {
+    scripted.classList.remove('on'); live.classList.add('on');
+    desc.textContent = 'Agent dialogues, designs, and votes generated live by AI — every run is unique and unpredictable.';
+    if (apiField) apiField.style.display = '';
+  } else {
+    live.classList.remove('on'); scripted.classList.add('on');
+    desc.textContent = 'Pre-written narratives with deterministic outcomes. Fast, no API required.';
+    if (apiField) apiField.style.display = 'none';
+  }
+}
+
+async function callLLM(systemPrompt, userPrompt, json = false) {
+  const key = (document.getElementById('b-apikey')?.value || '').trim();
+  const jsonSuffix = json ? '\n\nRespond with valid JSON only. No markdown, no explanation.' : '';
+
+  if (key.startsWith('sk-ant-')) {
+    // Anthropic Claude Haiku
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt + jsonSuffix }]
+      })
+    });
+    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Anthropic ${r.status}`); }
+    const d = await r.json();
+    return d.content[0].text;
+  }
+
+  // Default: Pollinations AI (free, no key needed)
+  const msgs = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt + jsonSuffix }
+  ];
+  const body = { model: 'openai', messages: msgs, seed: Math.floor(Math.random() * 99999), private: true };
+  if (json) body.response_format = { type: 'json_object' };
+  const r = await fetch('https://text.pollinations.ai/openai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`Pollinations ${r.status}`);
+  const d = await r.json();
+  return d.choices[0].message.content;
+}
+
+function extractJSON(text, fallback) {
+  try { return JSON.parse(text); } catch {}
+  const m = text.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch {} }
+  return fallback ?? {};
+}
+
+function normalizeVoteRow(rawWeights, selfIdx, budget) {
+  budget = budget || 10000;
+  const n = agentStates.length;
+  const safe = Array.from({ length: n }, (_, i) => {
+    if (i === selfIdx) return 0;
+    const v = Array.isArray(rawWeights) ? (rawWeights[i] ?? 10) : 10;
+    return Math.max(0, Number(v) || 0);
+  });
+  const total = safe.reduce((a, b) => a + b, 0);
+  if (!total) {
+    const even = Math.floor(budget / (n - 1));
+    return safe.map((_, i) => i !== selfIdx ? even : 0);
+  }
+  let result = safe.map(v => Math.floor(v / total * budget));
+  const diff = budget - result.reduce((a, b) => a + b, 0);
+  const maxI = result.reduce((mi, v, i) => (i !== selfIdx && v > result[mi]) ? i : mi, selfIdx === 0 ? 1 : 0);
+  result[maxI] += diff;
+  return result;
+}
+
+function agentGenomeStr(a) {
+  return `${a.name}[${a.arch}] novelty=${a.novelty} risk=${a.risk} mktFit=${a.marketFit} platBias=${a.platBias} tags=[${(a.styleTags||[]).join(',')}] philosophy="${(a.philosophy||'').slice(0,60)}"`;
+}
+
+function priorReportCtx() {
+  return cycleReports.map(r =>
+    `C${r.cycle} winner:"${r.winner.name}" by ${r.winner.agentName} (${r.winner.strategy}) ${r.winner.credits}⬡ — emerging:${(r.trendData.emerging||[]).join('/')} saturation:${r.trendData.saturation||'—'}`
+  ).join('\n');
+}
+
+/* ── Live Phase 0: Cross-Pollination ── */
+async function livePhase0() {
+  livePhaseData = {};
+  setProgress(5);
+  addLog(`Cycle ${currentCycle} initiated. Connecting agents for live cross-pollination…`, '', 100);
+  const profiles = agentStates.map(agentGenomeStr).join('\n');
+  const prior    = priorReportCtx();
+  const sys = `You simulate a luxury jewelry design AI competition. Generate cross-pollination dialogues between designer agents sharing their cycle strategy. Be specific about jewelry choices (metal, stone, category, technique). Each line: one agent speaking.`;
+  const usr = `Cycle ${currentCycle}. Generate 7 dialogue lines between these agents.\n${prior ? 'Prior cycles:\n'+prior+'\n' : 'First cycle — cold start.\n'}\nAgents:\n${profiles}\n\nJSON: {"dialogues":["AgentA → AgentB: \\"quote\\"","AgentC: \\"statement\\"", ...]}`;
+  addLog('Calling AI to generate agent dialogues…', 'rp', 300);
+  const text   = await callLLM(sys, usr, true);
+  const parsed = extractJSON(text, { dialogues: [] });
+  (parsed.dialogues || []).forEach((line, i) => addLog(line.replace(/^"|"$/g, ''), 'cv', 900 + i * 600));
+  agentStates.forEach((a, i) => setTimeout(() => setAgentStatus(a.id, 'Conversing…'), (3800 + i * 100) / speed));
+  addLog('All agents complete cross-pollination. Intent vectors stored.', 'rs', 5500);
+  setProgress(20);
+  livePhaseData.dialogues = parsed.dialogues || [];
+  return 6200;
+}
+
+/* ── Live Phase 1: Synthesis ── */
+async function livePhase1() {
+  setProgress(25);
+  agentStates.forEach(a => setAgentStatus(a.id, 'Drafting blueprint…'));
+  addLog('Synthesis: agents compiling dialogues + genome into design blueprints…', '', 200);
+  const profiles = agentStates.map(agentGenomeStr).join('\n');
+  const dlg      = (livePhaseData.dialogues || []).join('\n');
+  const prior    = priorReportCtx();
+  const sys = `You simulate a jewelry design competition. Create design blueprints for 6 agents based on their genome and cross-pollination. Ensure category variety — not all rings. Each blueprint is one agent's plan for their submission.`;
+  const usr = `Cycle ${currentCycle} synthesis.\nAgents:\n${profiles}\nDialogues:\n${dlg}\n${prior ? 'Prior cycles:\n'+prior : ''}\n\nJSON: {"blueprints":[{"agentIdx":0,"strategy":"explore","cat":"Ring","metal":"platinum","description":"concise blueprint","estMargin":68}, ...]} — exactly 6 entries, agentIdx 0-5, vary categories`;
+  addLog('Calling AI to synthesize blueprints…', 'rp', 300);
+  const text   = await callLLM(sys, usr, true);
+  const parsed = extractJSON(text, { blueprints: [] });
+  const bps    = Array.from({ length: 6 }, (_, i) =>
+    (parsed.blueprints || []).find(b => Number(b.agentIdx) === i) || (parsed.blueprints || [])[i] || {}
+  );
+  bps.forEach((bp, i) => {
+    const a = agentStates[i]; if (!a) return;
+    addLog(`<b>${a.name}</b> — <b>${(bp.strategy||'explore').toUpperCase()}</b> · ${bp.cat||'Ring'} · ${bp.description||'…'} · Est. margin: ${bp.estMargin||65}%`, '', 600 + i * 400);
+  });
+  addLog('All blueprints hashed. Validation: ✓ Feasibility ✓ Novelty ✓ Margin', 'rs', 3800);
+  setProgress(40);
+  livePhaseData.blueprints = bps;
+  return 4400;
+}
+
+/* ── Live Phase 2: Generation ── */
+async function livePhase2() {
+  setProgress(45);
+  document.getElementById('designs-wrap').style.display = 'block';
+  agentStates.forEach(a => setAgentStatus(a.id, 'Rendering…'));
+  addLog('Generation: AI producing final design submissions…', '', 100);
+  const EMOJIS = ['💍','🌑','✨','🔷','💎','🌿','⬡','🔩','💛','🌸','🔥','🦴'];
+  const agentList = agentStates.map((a, i) => {
+    const bp = (livePhaseData.blueprints || [])[i] || {};
+    return `${i}.${a.name}(${a.arch}) novelty=${a.novelty} risk=${a.risk} mktFit=${a.marketFit} blueprint="${bp.description||''}" strategy=${bp.strategy||'explore'} cat=${bp.cat||'Ring'}`;
+  }).join('\n');
+  const sys = `You create luxury jewelry design entries for an AI competition. Each design needs an evocative 2-3 word name, category, scores (0-100), strategy, and a 40-60 word photorealistic Flux AI image prompt. Vary categories across Ring/Earrings/Pendant/Bracelet/Necklace.`;
+  const usr = `Cycle ${currentCycle} generation. Create 6 unique designs, one per agent.\nAgents:\n${agentList}\n\nJSON: {"designs":[{"agentIdx":0,"name":"Name","cat":"Ring","emoji":"💍","strategy":"explore","aesthetic":85,"novelty":72,"profit":68,"prompt":"40-60 word Flux prompt with metal, stone, style, photography, background, lighting"},...]}`;
+  addLog('Calling AI to generate 6 design submissions…', 'rp', 200);
+  const text   = await callLLM(sys, usr, true);
+  const parsed = extractJSON(text, { designs: [] });
+  activeDesigns = agentStates.map((a, idx) => {
+    const m  = (parsed.designs || []).find(d => Number(d.agentIdx) === idx) || (parsed.designs || [])[idx] || {};
+    const bp = (livePhaseData.blueprints || [])[idx] || {};
+    return {
+      name: m.name || `Design ${idx + 1}`, cat: m.cat || bp.cat || 'Ring',
+      emoji: m.emoji || EMOJIS[idx % EMOJIS.length], agentIdx: idx, agentName: a.name,
+      strategy: m.strategy || bp.strategy || 'explore',
+      aesthetic: Math.min(100, Math.max(0, Number(m.aesthetic) || 70)),
+      novelty:   Math.min(100, Math.max(0, Number(m.novelty)   || 70)),
+      profit:    Math.min(100, Math.max(0, Number(m.profit)    || 65)),
+      prompt: m.prompt || `Fine jewelry ${m.name||'piece'}, platinum diamond, editorial studio photography, neutral background, soft lighting, photorealistic`,
+      credits: 0
+    };
+  });
+  activeDesigns.forEach((d, i) => {
+    addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · ${d.strategy.toUpperCase()}`, 'ds', 500 + i * 500);
+    setTimeout(() => renderDesignCard(d, i), (600 + i * 500) / speed);
+  });
+  addLog('Pool locked. 6 designs submitted. Voting begins.', 'rs', 4500);
+  setProgress(60);
+  livePhaseData.designs = activeDesigns;
+  return 5200;
+}
+
+/* ── Live Phase 3: Voting ── */
+async function livePhase3() {
+  setProgress(65);
+  agentStates.forEach(a => setAgentStatus(a.id, 'Voting…'));
+  addLog('Voting: each agent allocates 10,000⬡ across the blind design pool…', '', 100);
+  const designList = activeDesigns.map((d, i) =>
+    `${i}."${d.name}"(${d.cat},${d.strategy}) AES=${d.aesthetic} NOV=${d.novelty} PRO=${d.profit} by:${d.agentName}`
+  ).join('\n');
+  const agentList = agentStates.map((a, i) =>
+    `${i}.${a.name}: novelty_pref=${a.novelty} mktFit=${a.marketFit} risk=${a.risk}`
+  ).join('\n');
+  const sys = `You simulate blind voting in a jewelry design competition. Each agent allocates vote weight across designs based on their aesthetic preferences. High-novelty agents prefer novel designs; high-marketFit agents prefer profitable ones. Self-votes (agent i voting for design at their own agentIdx) must be 0.`;
+  const usr = `Cycle ${currentCycle} voting. Raw preference weights (0-100), will be auto-normalized to 10,000⬡.\nDesigns:\n${designList}\nAgents:\n${agentList}\n\nJSON: {"votes":[[0,42,21,8,12,17],...]} — 6×6 matrix. Row i=agent i weights for designs 0-5. Row i col i=0 (no self-vote).`;
+  addLog('Calling AI to generate vote allocations…', 'rp', 200);
+  const text   = await callLLM(sys, usr, true);
+  const parsed = extractJSON(text, { votes: [] });
+  const vm = agentStates.map((_, vi) => normalizeVoteRow((parsed.votes || [])[vi], vi, 10000));
+  livePhaseData.voteMatrix = vm;
+  vm.forEach((row, vi) => {
+    const top2 = row.map((v, i) => ({ i, v })).sort((a, b) => b.v - a.v).filter(x => x.v > 0).slice(0, 2);
+    if (top2.length) {
+      const msg = top2.map(x => `"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
+      addLog(`<b>${agentStates[vi].name}</b> → ${msg}`, 'vt', 600 + vi * 500);
+    }
+  });
+  vm.forEach((row, vi) => row.forEach((c, di) => { if (di < activeDesigns.length) activeDesigns[di].credits += c; }));
+  setTimeout(() => {
+    activeDesigns.forEach((d, i) => { const e = document.getElementById('dc-cred-' + i); if (e) e.textContent = d.credits.toLocaleString() + '⬡'; });
+    agentStates.forEach((a, vi) => { const spent = vm[vi].reduce((s, v) => s + v, 0); a.credits = 10000 - spent; setAgentCreds(a.id, a.credits); setAgentStatus(a.id, 'Voted'); });
+  }, 4000 / speed);
+  addLog(`Voting complete. Credits tallied across ${activeDesigns.length} designs.`, 'rs', 4800);
+  setProgress(80);
+  return 5500;
+}
+
+/* ── Live Phase 4: Evolution ── */
+async function livePhase4() {
+  setProgress(85);
+  const sorted = [...activeDesigns].map((d, i) => ({ ...d, idx: i })).sort((a, b) => b.credits - a.credits);
+  const winner = sorted[0];
+  addLog('Ranking finalized. AI generating trend intelligence…', '', 200);
+  const resultsSummary = sorted.map((d, i) =>
+    `#${i+1} "${d.name}"(${d.cat},${d.strategy}) ${d.credits.toLocaleString()}⬡ AES=${d.aesthetic} NOV=${d.novelty} PRO=${d.profit} by ${d.agentName}`
+  ).join('\n');
+  const prior = priorReportCtx();
+  const sys = `You analyze jewelry design competition results and generate strategic forward intelligence for agents. Be specific about aesthetic trends, category saturation, and strategy signals. Each insight ≤ 110 characters.`;
+  const usr = `Cycle ${currentCycle} results:\n${resultsSummary}\n${prior ? 'Prior cycles:\n'+prior : ''}\n\nJSON: {"insights":["...","...","...","...","..."],"emerging":["style1","style2","style3"],"declining":["style4","style5"],"saturation":"category warning","treasury":"best material+style combination","velocityScore":75}`;
+  addLog('Calling AI to generate trend report…', 'rp', 400);
+  const text   = await callLLM(sys, usr, true);
+  const parsed = extractJSON(text, { insights:[], emerging:[], declining:[], saturation:'—', treasury:'—', velocityScore:70 });
+  setTimeout(() => {
+    const wc = document.getElementById('dc-' + winner.idx);
+    if (wc) { wc.classList.add('winner-card'); const body = wc.querySelector('.dcard-body'); if (body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>'); }
+  }, 300 / speed);
+  addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`, 'rs', 500);
+  (parsed.insights || []).forEach((ins, i) => addLog(ins, i < 2 ? 'rs' : '', 1000 + i * 500));
+  if (parsed.saturation && parsed.saturation !== '—') addLog(`Saturation: <b>${parsed.saturation}</b>`, '', 3800);
+  addLog(`<b>Cycle ${currentCycle} Intelligence Report written to archive.</b>`, 'rs', 4300);
+  setProgress(100);
+  sorted.forEach((d, rank) => {
+    const agent = agentStates[d.agentIdx];
+    if (agent) {
+      agent.reputation = Math.max(5, agent.reputation + (rank===0?9:rank===1?4:rank===2?1:-3));
+      setAgentStatus(agent.id, rank === 0 ? 'Winner' : 'Cycle complete');
+    }
+  });
+  livePhaseData.trendData = {
+    emerging: parsed.emerging || [], declining: parsed.declining || [],
+    saturation: parsed.saturation || '—', treasury: parsed.treasury || '—',
+    velocityScore: Number(parsed.velocityScore) || 70,
+    fi: parsed.insights || []
+  };
+  generateAndStoreReport(currentCycle, sorted);
+  if (currentCycle === 3) document.getElementById('nav-epoch-txt').textContent = '3 / 3';
+  return 5000;
+}
+
+/* ── Live Phase Dispatcher ── */
+async function runLivePhase(phaseIdx) {
+  try {
+    switch (phaseIdx) {
+      case 0: return await livePhase0();
+      case 1: return await livePhase1();
+      case 2: return await livePhase2();
+      case 3: return await livePhase3();
+      case 4: return await livePhase4();
+      default: return 1000;
+    }
+  } catch (err) {
+    console.error('Live phase error:', err);
+    addLog(`⚠ API error: ${err.message || 'Network error'}. Check connection or API key.`, 'rs', 100);
+    return 2000;
+  }
 }
 
 /* ══════════════════════════════════
