@@ -1391,6 +1391,10 @@ async function generateImageUrl(prompt, seed) {
   // Applied keys take priority; live DOM values are fallback before simulation starts
   const higgsKey   = _keyHiggs  || (document.getElementById('b-higgsfield-key')?.value || '').trim();
   const pixazoKey  = _keyPixazo || (document.getElementById('b-imgkey')?.value         || '').trim();
+
+  // ── Pollinations (free fallback — only when no custom image key is set) ──
+  if (!higgsKey && !pixazoKey) return makeImgUrl(prompt, seed);
+
   const fullPrompt = `fine jewelry, ${prompt.slice(0, 400)}, studio lighting, photorealistic`;
 
   // ── Higgsfield (priority) ──
@@ -1428,9 +1432,7 @@ async function generateImageUrl(prompt, seed) {
     throw new Error('Pixazo: unexpected response format');
   }
 
-  // ── Pollinations (free fallback — only when no custom key is applied) ──
-  if (_keyHiggs || _keyPixazo) throw new Error('Image API key set but request failed — check key or connection');
-  return makeImgUrl(prompt, seed);
+  throw new Error('Image API key set but request failed — check key or connection');
 }
 
 function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
@@ -1479,13 +1481,15 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
     };
 
     if (img) {
+      let fallbackTimer;
       img.onload = () => {
+        clearTimeout(fallbackTimer);
         img.classList.add('loaded');
         if (loader) loader.classList.add('hidden');
         checkAllImagesLoaded(containerId);
       };
-      img.onerror = showFallback;
-      setTimeout(showFallback, 35000); // timeout fallback
+      img.onerror = () => { clearTimeout(fallbackTimer); showFallback(); };
+      fallbackTimer = setTimeout(showFallback, 35000); // timeout fallback
       const _hasKey = !!(_keyHiggs || _keyPixazo ||
         (document.getElementById('b-higgsfield-key')?.value || '').trim() ||
         (document.getElementById('b-imgkey')?.value || '').trim());
@@ -2264,9 +2268,13 @@ async function callLLM(systemPrompt, userPrompt, json = false) {
       return d.choices[0].message.content;
 
     } catch (err) {
-      const isNetwork = err instanceof TypeError || (err.message || '').toLowerCase().includes('fetch');
-      if (isNetwork && attempt < MAX_RETRIES) {
-        addLog(`⏳ Network hiccup — retrying in 15s (attempt ${attempt} of ${MAX_RETRIES})…`, 'rp', 0);
+      const msg = (err.message || '').toLowerCase();
+      const isNetwork = err instanceof TypeError || msg.includes('fetch');
+      const isRateLimit = msg.includes('429') || msg.includes('rate limit') || msg.includes('rate_limit') ||
+                          msg.includes('overloaded') || msg.includes('overload') || msg.includes('529');
+      if ((isNetwork || isRateLimit) && attempt < MAX_RETRIES) {
+        const reason = isRateLimit ? 'Rate limit / overload' : 'Network hiccup';
+        addLog(`⏳ ${reason} — retrying in 15s (attempt ${attempt} of ${MAX_RETRIES})…`, 'rp', 0);
         await new Promise(r => setTimeout(r, 15000));
         _llmLastCall = Date.now(); // reset rate-limit window after the wait
       } else {
@@ -2278,9 +2286,19 @@ async function callLLM(systemPrompt, userPrompt, json = false) {
 
 function extractJSON(text, fallback) {
   if (!text || typeof text !== 'string') return fallback ?? {};
+  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  const stripped = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+  try { return JSON.parse(stripped); } catch {}
   try { return JSON.parse(text); } catch {}
-  const m = text.match(/\{[\s\S]*\}/);
-  if (m) { try { return JSON.parse(m[0]); } catch {} }
+  // Balanced-bracket scanner: find the first complete {...} span
+  const start = text.indexOf('{');
+  if (start !== -1) {
+    let depth = 0;
+    for (let i = start; i < text.length; i++) {
+      if (text[i] === '{') depth++;
+      else if (text[i] === '}') { depth--; if (depth === 0) { try { return JSON.parse(text.slice(start, i + 1)); } catch {} break; } }
+    }
+  }
   return fallback ?? {};
 }
 
@@ -2316,8 +2334,7 @@ function priorReportCtx() {
 
 /* ── Live Phase 0: Cross-Pollination — one call per agent ── */
 async function livePhase0() {
-  livePhaseData = {};
-  livePhaseData.crossPoll = [];
+  livePhaseData = { crossPoll: [], blueprints: [], designs: [], voteMatrix: [], trendData: {} };
   setProgress(5);
   addLog(`Cycle ${currentCycle} initiated. Agents entering cross-pollination…`, '', 0);
   const prior = priorReportCtx();
