@@ -426,9 +426,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         </div>
         <div style="font-size:.62rem;color:var(--faint);line-height:1.6;margin-bottom:.7rem" id="mode-desc">Pre-written narratives with deterministic outcomes. Fast, no API required.</div>
         <div class="field" id="apikey-field">
-          <label>API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
+          <label>AI API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
           <input id="b-apikey" type="password" placeholder="sk-ant-… (Anthropic Claude) · blank = Pollinations AI (free)">
           <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Paste your Anthropic key for Claude AI. Leave blank to use Pollinations AI (free, no key needed).</div>
+        </div>
+        <div class="field" id="imgkey-field" style="margin-top:.6rem">
+          <label>Image API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
+          <input id="b-imgkey" type="password" placeholder="Pixazo subscription key · blank = Pollinations images (free)">
+          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Paste your Pixazo key to generate images with Flux. Leave blank for Pollinations (free).</div>
         </div>
       </div>
     </div>
@@ -1261,7 +1266,6 @@ function renderDesignCard(d, i) {
   const loader = document.getElementById(loaderId);
 
   const seed = (d.agentIdx * 997 + currentCycle * 113 + i * 31 + 7) | 0;
-  const imgUrl = makeImgUrl(d.prompt, seed);
 
   const showError = () => {
     if (loader) {
@@ -1292,8 +1296,15 @@ function renderDesignCard(d, i) {
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Set src AFTER attaching events
-  img.src = imgUrl;
+  // Set src — async when Pixazo key present, direct URL for Pollinations
+  const pixazoKey = (document.getElementById('b-imgkey')?.value || '').trim();
+  if (pixazoKey) {
+    generateImageUrl(d.prompt, seed)
+      .then(url => { img.src = url; })
+      .catch(() => showError());
+  } else {
+    img.src = makeImgUrl(d.prompt, seed);
+  }
 }
 
 function cardImgProgress(pctId, loaderId) {
@@ -1317,6 +1328,57 @@ function makeImgUrl(prompt, seed) {
   const base = prompt.slice(0, 200);
   const full = `fine jewelry, ${base}, studio lighting, photorealistic`;
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=400&height=400&nologo=true&seed=${seed}&model=flux&enhance=false`;
+}
+
+async function _pollPixazo(requestId, key, maxAttempts = 20) {
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const r = await fetch('https://gateway.pixazo.ai/flux-schnell-polling/v1/schnell/getStatus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': key },
+      body: JSON.stringify({ request_id: requestId })
+    });
+    if (!r.ok) continue;
+    const d = await r.json();
+    const status = (d.status || '').toLowerCase();
+    if (status === 'ready' || status === 'completed' || status === 'success') {
+      const url = d.url || d.image_url || d.result?.url || d.images?.[0]?.url;
+      if (url) return url;
+      const b64 = d.b64_json || d.result?.b64_json || d.images?.[0]?.b64_json;
+      if (b64) return `data:image/jpeg;base64,${b64}`;
+    }
+  }
+  throw new Error('Pixazo: image generation timed out');
+}
+
+async function generateImageUrl(prompt, seed) {
+  const key = (document.getElementById('b-imgkey')?.value || '').trim();
+  if (!key) return makeImgUrl(prompt, seed); // fall back to Pollinations
+
+  const body = {
+    prompt: `fine jewelry, ${prompt.slice(0, 400)}, studio lighting, photorealistic`,
+    image_size: '1024x1024',
+    seed: seed
+  };
+  const r = await fetch('https://gateway.pixazo.ai/flux-schnell/v1/schnell/textToImage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': key },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`Pixazo ${r.status}`);
+  const d = await r.json();
+
+  // Sync response — direct URL or base64
+  const url = d.url || d.image_url || d.images?.[0]?.url;
+  if (url) return url;
+  const b64 = d.b64_json || d.images?.[0]?.b64_json;
+  if (b64) return `data:image/jpeg;base64,${b64}`;
+
+  // Async response — poll for result
+  const requestId = d.request_id || d.id;
+  if (requestId) return await _pollPixazo(requestId, key);
+
+  throw new Error('Pixazo: unexpected response format');
 }
 
 function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
