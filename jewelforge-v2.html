@@ -423,17 +423,24 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         <div class="chips" style="margin-bottom:.7rem">
           <div class="chip on" id="mode-scripted" onclick="setLiveMode(false)">Scripted</div>
           <div class="chip" id="mode-live" onclick="setLiveMode(true)">Live AI ✦</div>
+          <div class="chip" id="mode-autopilot" onclick="setAutoPilot(!autoPilot)" title="Runs all 3 cycles without any button clicks">AutoPilot ⚡</div>
         </div>
         <div style="font-size:.62rem;color:var(--faint);line-height:1.6;margin-bottom:.7rem" id="mode-desc">Pre-written narratives with deterministic outcomes. Fast, no API required.</div>
+        <div style="font-size:.62rem;color:var(--faint);line-height:1.6;margin-bottom:.7rem" id="autopilot-desc" style="display:none">All 3 cycles run unattended — phases and cycle transitions advance automatically.</div>
         <div class="field" id="apikey-field">
           <label>AI API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
           <input id="b-apikey" type="password" placeholder="sk-ant-… (Anthropic Claude) · blank = Pollinations AI (free)">
           <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Paste your Anthropic key for Claude AI. Leave blank to use Pollinations AI (free, no key needed).</div>
         </div>
         <div class="field" id="imgkey-field" style="margin-top:.6rem">
-          <label>Image API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
+          <label>Pixazo Image Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
           <input id="b-imgkey" type="password" placeholder="Pixazo subscription key · blank = Pollinations images (free)">
-          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Paste your Pixazo key to generate images with Flux. Leave blank for Pollinations (free).</div>
+          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Pixazo Flux Schnell for image generation. Used if no Higgsfield key is set.</div>
+        </div>
+        <div class="field" id="higgsfield-key-field" style="margin-top:.6rem">
+          <label>Higgsfield Image Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
+          <input id="b-higgsfield-key" type="password" placeholder="KEY_ID:KEY_SECRET · takes priority over Pixazo">
+          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Higgsfield Flux image generation. Priority: Higgsfield → Pixazo → Pollinations (free).</div>
         </div>
       </div>
     </div>
@@ -600,6 +607,7 @@ let cycleReports = [];
 let agentStates = [];
 let activeDesigns = [];
 let liveMode = false;
+let autoPilot = false;
 let livePhaseData = {};
 
 // Pre-defined agents (slot 0 = user's agent, built in builder)
@@ -881,6 +889,7 @@ async function nextPhase() {
     } else {
       const labels = ['▶ Proceed to Synthesis','▶ Generate Designs','▶ Begin Agent Voting','▶ Apply Evolution'];
       btn.textContent = labels[currentPhase]||'▶ Next Phase';
+      if (autoPilot) setTimeout(nextPhase, 2000);
     }
   }, finishDelay/speed);
 }
@@ -1351,34 +1360,66 @@ async function _pollPixazo(requestId, key, maxAttempts = 20) {
   throw new Error('Pixazo: image generation timed out');
 }
 
+async function _pollHiggsfield(requestId, authHeader, maxAttempts = 30) {
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const r = await fetch(`https://platform.higgsfield.ai/requests/${requestId}/status`, {
+      headers: { 'Authorization': authHeader }
+    });
+    if (!r.ok) continue;
+    const d = await r.json();
+    const status = (d.status || '').toLowerCase();
+    if (status === 'completed') {
+      const url = d.images?.[0]?.url || d.url;
+      if (url) return url;
+    }
+    if (status === 'failed' || status === 'nsfw') throw new Error(`Higgsfield: ${status}`);
+  }
+  throw new Error('Higgsfield: image generation timed out');
+}
+
 async function generateImageUrl(prompt, seed) {
-  const key = (document.getElementById('b-imgkey')?.value || '').trim();
-  if (!key) return makeImgUrl(prompt, seed); // fall back to Pollinations
+  const higgsKey   = (document.getElementById('b-higgsfield-key')?.value || '').trim();
+  const pixazoKey  = (document.getElementById('b-imgkey')?.value || '').trim();
+  const fullPrompt = `fine jewelry, ${prompt.slice(0, 400)}, studio lighting, photorealistic`;
 
-  const body = {
-    prompt: `fine jewelry, ${prompt.slice(0, 400)}, studio lighting, photorealistic`,
-    image_size: '1024x1024',
-    seed: seed
-  };
-  const r = await fetch('https://gateway.pixazo.ai/flux-schnell/v1/schnell/textToImage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': key },
-    body: JSON.stringify(body)
-  });
-  if (!r.ok) throw new Error(`Pixazo ${r.status}`);
-  const d = await r.json();
+  // ── Higgsfield (priority) ──
+  if (higgsKey) {
+    const authHeader = higgsKey.includes(':') ? `Key ${higgsKey}` : `Bearer ${higgsKey}`;
+    const r = await fetch('https://platform.higgsfield.ai/flux-schnell/text-to-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+      body: JSON.stringify({ input: { prompt: fullPrompt, aspect_ratio: '1:1', seed, safety_tolerance: 2 } })
+    });
+    if (!r.ok) throw new Error(`Higgsfield ${r.status}`);
+    const d = await r.json();
+    const url = d.images?.[0]?.url || d.url;
+    if (url) return url;
+    const reqId = d.request_id || d.id;
+    if (reqId) return await _pollHiggsfield(reqId, authHeader);
+    throw new Error('Higgsfield: unexpected response format');
+  }
 
-  // Sync response — direct URL or base64
-  const url = d.url || d.image_url || d.images?.[0]?.url;
-  if (url) return url;
-  const b64 = d.b64_json || d.images?.[0]?.b64_json;
-  if (b64) return `data:image/jpeg;base64,${b64}`;
+  // ── Pixazo ──
+  if (pixazoKey) {
+    const r = await fetch('https://gateway.pixazo.ai/flux-schnell/v1/schnell/textToImage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': pixazoKey },
+      body: JSON.stringify({ prompt: fullPrompt, image_size: '1024x1024', seed })
+    });
+    if (!r.ok) throw new Error(`Pixazo ${r.status}`);
+    const d = await r.json();
+    const url = d.url || d.image_url || d.images?.[0]?.url;
+    if (url) return url;
+    const b64 = d.b64_json || d.images?.[0]?.b64_json;
+    if (b64) return `data:image/jpeg;base64,${b64}`;
+    const requestId = d.request_id || d.id;
+    if (requestId) return await _pollPixazo(requestId, pixazoKey);
+    throw new Error('Pixazo: unexpected response format');
+  }
 
-  // Async response — poll for result
-  const requestId = d.request_id || d.id;
-  if (requestId) return await _pollPixazo(requestId, key);
-
-  throw new Error('Pixazo: unexpected response format');
+  // ── Pollinations (free fallback) ──
+  return makeImgUrl(prompt, seed);
 }
 
 function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
@@ -1516,6 +1557,7 @@ function showCycleComplete() {
   }
   panel.classList.add('show');
   updateReportsNav();
+  if (autoPilot) setTimeout(() => document.getElementById('cc-next-btn')?.click(), 5000);
 }
 
 /* ══════════════════════════════════
@@ -2107,6 +2149,14 @@ function setLiveMode(on) {
     live.classList.remove('on'); scripted.classList.add('on');
     desc.textContent = 'Pre-written narratives with deterministic outcomes. Fast, no API required.';
   }
+}
+
+function setAutoPilot(on) {
+  autoPilot = on;
+  const btn  = document.getElementById('mode-autopilot');
+  const desc = document.getElementById('autopilot-desc');
+  if (btn)  btn.classList.toggle('on', on);
+  if (desc) desc.style.display = on ? '' : 'none';
 }
 
 let _llmLastCall = 0;
