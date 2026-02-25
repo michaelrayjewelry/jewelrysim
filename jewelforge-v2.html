@@ -625,7 +625,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
   <div style="margin-top:1.5rem;display:flex;gap:.8rem;flex-wrap:wrap">
     <button class="btn btn-ghost" onclick="goTo(2)">← Back to Simulator</button>
-    <button class="btn btn-ghost btn-sm" id="dl-all-btn" style="display:none" onclick="exportAllReports()">⬇ Export All Reports</button>
+    <button class="btn btn-ghost btn-sm" id="dl-all-btn" style="display:none" onclick="exportAllReports()">🖨 Export Epoch Archive (HTML)</button>
+    <button class="btn btn-ghost btn-sm" id="dl-json-btn" style="display:none" onclick="exportEpochJSON()">⬇ Export Epoch JSON</button>
   </div>
 </div>
 
@@ -948,17 +949,51 @@ const PHASE_SCRIPTS = [
     // Phase 0: Cross-Pollination
     ()=>{
       setProgress(5);
-      addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`,'',100);
-      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', 400);
-      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', 900);
-      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', 1300);
-      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', 1700);
-      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', 2100);
-      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', 2500);
-      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (2800+i*100)/speed); });
-      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', 3300);
+      livePhaseData.dialogues = [];
+      addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`, '', 100);
+      // Pre-reflection: each agent reviews their genome before pairing (cold start)
+      addLog(`<b>[PRE-CROSS-POLL REFLECTION]</b> Agents reviewing personal genome. No market history available.`, 'rp', 350);
+      addLog(`◈ <b>${agentStates[0].name}</b>: "Cold start. Genome: explore, architectural. Considering minimal negative-space ring."`, '', 620);
+      addLog(`◈ <b>${agentStates[1].name}</b>: "Minimal/negative-space DNA. Thinking platinum geometric earrings — floating circles, maximum air."`, '', 880);
+      addLog(`◈ <b>${agentStates[2].name}</b>: "High-jewelry instincts. Ornate romantic pendant — pavé cascade, sapphires. No data to override."`, '', 1130);
+      addLog(`◈ <b>${agentStates[3].name}</b>: "Maximum novelty/risk genome. Industrial mixed-metal bracelet — plant the flag."`, '', 1380);
+      addLog(`◈ <b>${agentStates[4].name}</b>: "Market strategist. Bridal halo ring — strongest commercial margins, proven demand."`, '', 1630);
+      addLog(`◈ <b>${agentStates[5].name}</b>: "Organic/sculptural DNA. Thorn motif ring — avant-garde, testing market tolerance."`, '', 1880);
+      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Reflecting…'), (2050+i*80)/speed); });
+      // Pair 1
+      addLog(`<b>${agentStates[0].name}</b> ↔ <b>${agentStates[1].name}</b> — design dialogue (3 turns)`, 'rp', 2400);
+      addLog(`<b>${agentStates[0].name}</b>: "First cycle. I'm thinking minimal — structural negative-space ring. Platinum bezel oval, open band. What direction are you taking?"`, 'cv', 2700);
+      addLog(`<b>${agentStates[1].name}</b>: "Aligned. Going geometric earrings — floating circles, maximum air. Different category so no vote collision. Rose-cut accents."`, 'cv', 3200);
+      addLog(`<b>${agentStates[0].name}</b>: "Ring vs earrings, both minimal lane. Complementary bets without cannibalizing. Locking in platinum bezel oval."`, 'cv', 3700);
+      livePhaseData.dialogues.push({ pairA:agentStates[0].name, pairB:agentStates[1].name, turns:[
+        `${agentStates[0].name}: "First cycle. Minimal negative-space ring. Platinum bezel oval, open band. What's your direction?"`,
+        `${agentStates[1].name}: "Aligned. Geometric earrings — floating circles, maximum air. Different category, no vote collision."`,
+        `${agentStates[0].name}: "Ring vs earrings, both minimal. Complementary bets. Locking in platinum bezel oval."`,
+      ], commitA:'Platinum bezel oval ring, negative-space band', commitB:'Platinum floating circle earrings, rose-cut accents'});
+      // Pair 2
+      addLog(`<b>${agentStates[2].name}</b> ↔ <b>${agentStates[4].name}</b> — design dialogue (3 turns)`, 'rp', 4200);
+      addLog(`<b>${agentStates[2].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning, sapphires and diamonds. No data to override romantic instincts."`, 'cv', 4500);
+      addLog(`<b>${agentStates[4].name}</b>: "Different lane — I see a bridal gap. Clean pavé halo ring. Strong margins. Your pendant doesn't compete with my ring category."`, 'cv', 5000);
+      addLog(`<b>${agentStates[2].name}</b>: "Pendant vs ring — different buyers. Holding ornate. Rose gold cascade pavé. Let's see if market rewards high jewelry."`, 'cv', 5500);
+      livePhaseData.dialogues.push({ pairA:agentStates[2].name, pairB:agentStates[4].name, turns:[
+        `${agentStates[2].name}: "Going ornate — pavé cascade pendant. High jewelry, sapphires + diamonds."`,
+        `${agentStates[4].name}: "Different lane — bridal gap. Clean pavé halo ring. Strong margins. No category collision."`,
+        `${agentStates[2].name}: "Pendant vs ring, different buyers. Holding ornate. Rose gold cascade pavé."`,
+      ], commitA:'Rose gold pavé cascade pendant, sapphire + diamond', commitB:'White gold pavé halo ring, bridal positioning'});
+      // Pair 3
+      addLog(`<b>${agentStates[3].name}</b> ↔ <b>${agentStates[5].name}</b> — design dialogue (3 turns)`, 'rp', 6000);
+      addLog(`<b>${agentStates[3].name}</b>: "Industrial frame bracelet — titanium and gold mixed. Won't win this cycle probably, but planting the flag for future trend data."`, 'cv', 6300);
+      addLog(`<b>${agentStates[5].name}</b>: "Same high-novelty lane — organic thorn motif ring. Avant-garde, blackened gold. Different form language but both testing extremes."`, 'cv', 6800);
+      addLog(`<b>${agentStates[3].name}</b>: "Both flagging. Industrial vs organic — non-overlapping novelty bets. If either earns votes, it signals C2 opportunity."`, 'cv', 7300);
+      livePhaseData.dialogues.push({ pairA:agentStates[3].name, pairB:agentStates[5].name, turns:[
+        `${agentStates[3].name}: "Industrial frame bracelet — titanium/gold. Planting the flag for future trend data."`,
+        `${agentStates[5].name}: "Same high-novelty lane — organic thorn motif. Blackened gold. Both testing extremes."`,
+        `${agentStates[3].name}: "Both flagging. Industrial vs organic — non-overlapping novelty bets."`,
+      ], commitA:'Titanium x gold industrial bracelet, hex frame', commitB:'Blackened gold thorn band, organic sculptural'});
+      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (7600+i*100)/speed); });
+      addLog(`All 3 cross-poll pairs complete — 3-turn dialogues. Commitments logged. Intent vectors stored.`, 'rs', 8000);
       setProgress(20);
-      return 3600;
+      return 8400;
     },
     // Phase 1: Synthesis
     ()=>{
@@ -1051,21 +1086,23 @@ const PHASE_SCRIPTS = [
     // Phase 0
     ()=>{
       setProgress(5);
+      livePhaseData.dialogues = [];
       const r1 = cycleReports[0];
-      const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
+      const winnerName  = r1 ? r1.winner.name : 'Orbit Drop';
       const winnerAgent = r1 ? r1.winner.agentName : agentStates[1].name;
       const fi = r1 ? r1.trendData.fi : [
         'Minimal/negative-space outperformed ornate by 2.4× in vote conversion',
         'Ring category over-saturated — agents should diversify',
         'Platinum + bezel setting received highest combined scores',
       ];
-      const emerging = r1 ? r1.trendData.emerging.join(' · ') : 'minimal · negative-space · platinum-bezel';
-      const saturation = r1 ? r1.trendData.saturation : 'Ring (50% of pool)';
-      const treasury = r1 ? r1.trendData.treasury : 'Platinum + bezel setting';
+      const emerging     = r1 ? r1.trendData.emerging.join(' · ') : 'minimal · negative-space · platinum-bezel';
+      const saturation   = r1 ? r1.trendData.saturation : 'Ring (50% of pool)';
+      const treasury     = r1 ? r1.trendData.treasury : 'Platinum + bezel setting';
       const totalCredits = r1 ? r1.totalCredits.toLocaleString() : '—';
-      const avgAes = r1 ? r1.avgAesthetic : '—';
+      const avgAes       = r1 ? r1.avgAesthetic : '—';
+      const loserName    = r1 ? r1.designs.slice().sort((a,b)=>(b.rank||0)-(a.rank||0))[0]?.name || 'Thorn Band' : 'Thorn Band';
 
-      addLog(`Cycle 2 initiated. Agents loading Cycle 1 Intelligence Report…`,'rp',100);
+      addLog(`Cycle 2 initiated. Agents loading Cycle 1 Intelligence Report…`, 'rp', 100);
       addLog(`<b>[KNOWLEDGE DATABASE — Cycle 1 Report]</b>`, 'rp', 400);
       addLog(`◆ Emerging: <b>${emerging}</b>`, 'rp', 600);
       addLog(`◆ Saturation: <b>${saturation}</b> · Treasury signal: <b>${treasury}</b>`, 'rp', 850);
@@ -1074,16 +1111,50 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi[2]}`, 'rp', 1350);
       addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
       addLog(buildIntelLibraryHtml(2), 'rp', 1800);
-
-      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', 2300);
-      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', 2500);
-      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', 2900);
-      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', 3300);
-      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', 3700);
-      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', 4500);
+      // Pre-reflection: dynamic from C1 memory
+      addLog(`<b>[PRE-CROSS-POLL REFLECTION]</b> Each agent synthesizes C1 outcomes before pairing.`, 'rp', 2050);
+      agentStates.forEach((a, i) => {
+        const mem  = (a.memory||[]).find(m=>m.phase===4 && m.cycle===1);
+        const lean = a.beliefs?.strategyBias || 'explore';
+        const dom  = a.beliefs?.dominant;
+        const note = mem
+          ? `C1: ${mem.event==='victory'?'WON 🏆':mem.event==='top3'?'top-3':mem.event==='midfield'?'mid-field':'bottom'}. Leaning ${lean.toUpperCase()}${dom?`, watching ${dom} trend`:''}.`
+          : `Reading C1 report. Lean: ${lean.toUpperCase()}.`;
+        addLog(`◈ <b>${a.emoji} ${a.name}</b>: "${note}"`, '', 2180 + i*270);
+      });
+      // Pair 1: winner ↔ agents[0]
+      addLog(`<b>${winnerAgent}</b> ↔ <b>${agentStates[0].name}</b> — design dialogue (3 turns)`, 'rp', 3900);
+      addLog(`<b>${winnerAgent}</b>: "My '${winnerName}' won last cycle. Doubling down — deeper cathedral-arch negative space, marquise center. Same minimal read?"`, 'cv', 4200);
+      addLog(`<b>${agentStates[0].name}</b>: "C1 report confirms the lane. Going architectural too — cathedral void ring, platinum marquise. Different execution of the same trend."`, 'cv', 4700);
+      addLog(`<b>${winnerAgent}</b>: "Two exploiters in minimal — both refining, not copying. Slight collision risk but the signal is strong enough. Committed: deeper geometric abstraction."`, 'cv', 5200);
+      livePhaseData.dialogues.push({ pairA:winnerAgent, pairB:agentStates[0].name, turns:[
+        `${winnerAgent}: "'${winnerName}' won. Doubling down — cathedral-arch negative space, marquise center."`,
+        `${agentStates[0].name}: "C1 confirms the lane. Going architectural — cathedral void ring, platinum. Different execution."`,
+        `${winnerAgent}: "Two exploiters in minimal — both refining, not copying. Committed: deeper geometric abstraction."`,
+      ], commitA:`${winnerAgent}: minimal architectural ring deeper (EXPLOIT)`, commitB:`${agentStates[0].name}: cathedral void ring, platinum marquise (EXPLOIT)`});
+      // Pair 2: agents[4] ↔ agents[2]
+      addLog(`<b>${agentStates[4].name}</b> ↔ <b>${agentStates[2].name}</b> — design dialogue (3 turns)`, 'rp', 5700);
+      addLog(`<b>${agentStates[4].name}</b>: "Report confirms minimal wins. Pivoting halo toward cleaner architecture — the data is clear."`, 'cv', 6000);
+      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic but shift to yellow gold — C1 report shows it gaining share. And pendant avoids ring saturation."`, 'cv', 6500);
+      addLog(`<b>${agentStates[4].name}</b>: "Your pendant is the smart category play — clears saturation risk. I'll stay white gold arch. Both data-driven, different executions."`, 'cv', 7000);
+      livePhaseData.dialogues.push({ pairA:agentStates[4].name, pairB:agentStates[2].name, turns:[
+        `${agentStates[4].name}: "Report confirms minimal wins. Pivoting halo toward cleaner architecture."`,
+        `${agentStates[2].name}: "Holding romantic but shifting yellow gold. Pendant avoids ring saturation."`,
+        `${agentStates[4].name}: "Your pendant clears saturation risk. I stay white gold arch. Both data-driven."`,
+      ], commitA:`${agentStates[4].name}: white gold arch ring, architectural (EXPLOIT)`, commitB:`${agentStates[2].name}: yellow gold sapphire canopy pendant (EXPLOIT)`});
+      // Pair 3: agents[3] ↔ agents[5]
+      addLog(`<b>${agentStates[3].name}</b> ↔ <b>${agentStates[5].name}</b> — design dialogue (3 turns)`, 'rp', 7500);
+      addLog(`<b>${agentStates[3].name}</b>: "C1 showed novelty wasn't rewarded enough vs margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', 7800);
+      addLog(`<b>${agentStates[5].name}</b>: "'${loserName}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', 8300);
+      addLog(`<b>${agentStates[3].name}</b>: "Both mutating from C1 failures — industrial-minimal hybrid vs organic-commercial. Non-overlapping pivots."`, 'cv', 8800);
+      livePhaseData.dialogues.push({ pairA:agentStates[3].name, pairB:agentStates[5].name, turns:[
+        `${agentStates[3].name}: "C1: novelty not rewarded vs margin. Mutating — industrial edge + minimal geometry."`,
+        `${agentStates[5].name}: "'${loserName}' underperformed — low margin killed it. Pivoting: sculptural bracelet, better margin."`,
+        `${agentStates[3].name}: "Both mutating from C1 failures — non-overlapping pivots from the same failure data."`,
+      ], commitA:`${agentStates[3].name}: industrial-minimal arc ring (MUTATE)`, commitB:`${agentStates[5].name}: organic sculptural bracelet, margin-recovered (MUTATE)`});
+      addLog(`Cross-pollination complete. 3-turn dialogues across 3 pairs. 4 agents exploiting C1 trend, 2 mutating. Intent vectors locked.`, 'rs', 9300);
       setProgress(20);
-      return 4800;
+      return 9600;
     },
     // Phase 1
     ()=>{
@@ -1176,14 +1247,16 @@ const PHASE_SCRIPTS = [
     // Phase 0
     ()=>{
       setProgress(5);
+      livePhaseData.dialogues = [];
       const r1 = cycleReports[0];
       const r2 = cycleReports[1];
-      const w1 = r1 ? r1.winner.name : 'Orbit Drop';
-      const w2 = r2 ? r2.winner.name : 'Cathedral Void';
-      const fi1last = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'High-novelty designs received more votes';
-      const sat2 = r2 ? r2.trendData.saturation : 'Ring (67% of pool)';
-      const fi2 = r2 ? r2.trendData.fi : ['Organic/sculptural space unexplored'];
-      addLog(`Cycle 3 initiated. Loading Cycle 1 + Cycle 2 Intelligence Reports…`,'rp',100);
+      const w1       = r1 ? r1.winner.name : 'Orbit Drop';
+      const w2       = r2 ? r2.winner.name : 'Cathedral Void';
+      const fi1last  = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'High-novelty designs received more votes';
+      const sat2     = r2 ? r2.trendData.saturation : 'Ring (67% of pool)';
+      const fi2      = r2 ? r2.trendData.fi : ['Organic/sculptural space unexplored'];
+      const r2second = r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring';
+      addLog(`Cycle 3 initiated. Loading Cycle 1 + Cycle 2 Intelligence Reports…`, 'rp', 100);
       addLog(`<b>[KNOWLEDGE DATABASE — 2-Cycle Compound Analysis]</b>`, 'rp', 400);
       addLog(`◆ C1 winner: "${w1}" · C2 winner: "${w2}" — 2 consecutive minimal wins`, 'rp', 650);
       addLog(`◆ C2 saturation: <b>${sat2}</b> — critical threshold exceeded`, 'rp', 850);
@@ -1191,15 +1264,53 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi2[1] || fi1last}`, 'rp', 1200);
       addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
       addLog(buildIntelLibraryHtml(3), 'rp', 1600);
-      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', 1900);
-      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', 2400);
-      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', 2900);
-      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Forge Shard, mixed metal with irregular natural form."`, 'cv', 3300);
-      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Bloom Fragment pendant, champagne pearl cluster, organic form."`, 'cv', 3700);
-      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', 4500);
+      // Pre-reflection: 2-cycle compound memory
+      addLog(`<b>[PRE-CROSS-POLL REFLECTION]</b> Agents processing 2-cycle compound history before pairing.`, 'rp', 1900);
+      agentStates.forEach((a, i) => {
+        const mems  = (a.memory||[]).filter(m=>m.phase===4).slice(-2);
+        const lean  = a.beliefs?.strategyBias || 'explore';
+        const dom   = a.beliefs?.dominant;
+        const avoid = (a.beliefs?.avoid||[]).slice(-1)[0];
+        const note  = mems.length >= 2
+          ? `2-cycle read: ${mems.map(m=>`C${m.cycle}:${m.event==='victory'?'WIN':m.event==='top3'?'TOP3':m.event==='midfield'?'MID':'BOT'}`).join(', ')}. Lean ${lean.toUpperCase()}${dom?`, dom:${dom}`:''}${avoid?`, avoid:${avoid}`:''}.`
+          : mems.length === 1
+            ? `C${mems[0].cycle}: ${mems[0].event}. Lean: ${lean.toUpperCase()}.`
+            : `Lean: ${lean.toUpperCase()}.`;
+        addLog(`◈ <b>${a.emoji} ${a.name}</b>: "${note}"`, '', 2000 + i*270);
+      });
+      // Pair 1: agents[1] ↔ agents[0]
+      addLog(`<b>${agentStates[1].name}</b> ↔ <b>${agentStates[0].name}</b> — design dialogue (3 turns)`, 'rp', 3700);
+      addLog(`<b>${agentStates[1].name}</b>: "Minimal is saturating. '${r2second}' ranked 2nd — the ceiling is here. I'm differentiating into pendant this cycle."`, 'cv', 4000);
+      addLog(`<b>${agentStates[0].name}</b>: "I'm going one more architectural refinement — I think the trend has one more cycle. Deeper cathedral, extreme negative space."`, 'cv', 4500);
+      addLog(`<b>${agentStates[1].name}</b>: "We're splitting the bet. You hold the trend, I explore the gap. If I'm right, pendants win. If you're right, cathedral vault takes it."`, 'cv', 5000);
+      livePhaseData.dialogues.push({ pairA:agentStates[1].name, pairB:agentStates[0].name, turns:[
+        `${agentStates[1].name}: "Minimal saturating. '${r2second}' only ranked 2nd. Differentiating into pendant."`,
+        `${agentStates[0].name}: "One more architectural refinement — extreme negative space cathedral."`,
+        `${agentStates[1].name}: "Splitting the bet. You hold the trend, I explore the gap."`,
+      ], commitA:`${agentStates[1].name}: platinum arc pendant, minimal identity (MUTATE)`, commitB:`${agentStates[0].name}: extreme negative-space cathedral ring (EXPLOIT)`});
+      // Pair 2: agents[5] ↔ agents[3]
+      addLog(`<b>${agentStates[5].name}</b> ↔ <b>${agentStates[3].name}</b> — design dialogue (3 turns)`, 'rp', 5500);
+      addLog(`<b>${agentStates[5].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet, gold organic branch geometry."`, 'cv', 5800);
+      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been evolving industrial toward organic — Forge Shard concept, mixed metal with irregular natural form. Textured hammer surfaces."`, 'cv', 6300);
+      addLog(`<b>${agentStates[5].name}</b>: "Both going organic — bracelet vs ring, different categories. 2 reports pointed here. This is the convergence moment."`, 'cv', 6800);
+      livePhaseData.dialogues.push({ pairA:agentStates[5].name, pairB:agentStates[3].name, turns:[
+        `${agentStates[5].name}: "2 reports confirm: organic/sculptural is the gap. Going all in — root form bracelet."`,
+        `${agentStates[3].name}: "Agreed. Forge Shard — mixed metal, irregular natural form, textured surfaces."`,
+        `${agentStates[5].name}: "Both organic — bracelet vs ring, different categories. 2 reports pointed here."`,
+      ], commitA:`${agentStates[5].name}: gold root form bracelet, organic sculpture (EXPLORE)`, commitB:`${agentStates[3].name}: mixed metal forge shard ring, industrial-organic (MUTATE)`});
+      // Pair 3: agents[2] ↔ agents[4]
+      addLog(`<b>${agentStates[2].name}</b> ↔ <b>${agentStates[4].name}</b> — design dialogue (3 turns)`, 'rp', 7300);
+      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. I'm returning to romantic roots — Bloom Fragment, champagne pearl cluster, organic pendant form."`, 'cv', 7600);
+      addLog(`<b>${agentStates[4].name}</b>: "2-cycle database confirms bridal/everyday maintains strongest margins. Staying — it's not saturated. Cushion cut, clean shank."`, 'cv', 8100);
+      addLog(`<b>${agentStates[2].name}</b>: "Romantic pendant vs commercial ring. Neither of us is in the minimal cluster. Smart positioning for the saturation cycle."`, 'cv', 8600);
+      livePhaseData.dialogues.push({ pairA:agentStates[2].name, pairB:agentStates[4].name, turns:[
+        `${agentStates[2].name}: "Minimal everywhere. Returning to romantic — Bloom Fragment, champagne pearl, organic pendant."`,
+        `${agentStates[4].name}: "2-cycle data: bridal/everyday margins strongest, not saturated. Cushion cut, clean shank."`,
+        `${agentStates[2].name}: "Romantic pendant vs commercial ring — neither of us in the minimal cluster."`,
+      ], commitA:`${agentStates[2].name}: yellow gold organic pendant, champagne pearl (EXPLORE)`, commitB:`${agentStates[4].name}: white gold cushion ring, commercial bridal (EXPLOIT)`});
+      addLog(`Cross-pollination complete. Divergence confirmed: 3 agents pivoting organic/sculptural, 3 maintaining minimal or commercial lane.`, 'rs', 9100);
       setProgress(20);
-      return 4800;
+      return 9500;
     },
     // Phase 1
     ()=>{
@@ -1805,6 +1916,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     cycle: cycleNum,
     date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
     time: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    mode: liveMode ? 'live' : 'scripted',
     winner: sortedDesigns[0],
     totalCredits, avgAesthetic, avgNovelty, avgProfit,
     corrAes, corrNov, corrPro, topCorr,
@@ -1814,6 +1926,19 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     designs, sortedDesigns,
     agentPerf, voteMatrix,
     agentSnapshot: agentStates.map(a=>({...a})),
+    // ── Full decision capture ──
+    crossPollDialogues:  livePhaseData.dialogues  ? JSON.parse(JSON.stringify(livePhaseData.dialogues))  : null,
+    blueprintDecisions:  (livePhaseData.blueprints||[]).length > 0
+      ? JSON.parse(JSON.stringify(livePhaseData.blueprints))
+      : designs.map(d=>({ agentIdx:d.agentIdx, agentName:d.agentName, strategy:d.strategy, cat:d.cat, name:d.name })),
+    voteRationales:      livePhaseData.voteRationales ? [...livePhaseData.voteRationales] : null,
+    agentMemoryLog:      agentStates.map(a=>({
+      name: a.name, emoji: a.emoji,
+      memory: JSON.parse(JSON.stringify(a.memory||[])),
+      beliefs: JSON.parse(JSON.stringify(a.beliefs||{})),
+      genome: { risk:a.risk, novelty:a.novelty, marketFit:a.marketFit, platBias:a.platBias,
+                styleTags:[...(a.styleTags||[])], philosophy:a.philosophy||'' }
+    })),
   };
 
   cycleReports.push(report);
@@ -1833,7 +1958,11 @@ function updateReportsNav() {
       <div class="rni-winner">"${r.winner.name}"</div>
     </div>
   `).join('');
-  if(cycleReports.length===3) document.getElementById('dl-all-btn').style.display='';
+  if(cycleReports.length===3) {
+    document.getElementById('dl-all-btn').style.display='';
+    const jsonBtn = document.getElementById('dl-json-btn');
+    if (jsonBtn) jsonBtn.style.display='';
+  }
   document.getElementById('reports-sub').textContent = `${cycleReports.length} of 3 cycle reports generated. Each report feeds forward into agent decision-making for the next cycle.`;
 }
 
@@ -2085,6 +2214,42 @@ function viewReport(cycleNum) {
       </div>`;
   }
 
+  // ── Section 10b: Cross-Pollination Dialogues ──
+  const cpDialoguesHtml = (r.crossPollDialogues||[]).map((d,pi) => {
+    const turnsHtml = (d.turns||[]).map((t,ti) =>
+      `<div style="padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.67rem;line-height:1.55">
+        <span style="color:var(--gold-dim);font-size:.55rem;letter-spacing:.08em">T${ti+1}</span> ${t}
+      </div>`
+    ).join('');
+    const commitLine = `<div style="font-size:.6rem;color:var(--dim);margin-top:.4rem;padding-top:.3rem;border-top:1px solid rgba(201,168,76,.15)">
+      <span style="color:var(--gold-dim)">▶ COMMIT:</span> ${d.commitA||'—'} / ${d.commitB||'—'}
+    </div>`;
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem">
+      <div style="font-size:.72rem;font-weight:700;margin-bottom:.5rem">Pair ${pi+1}: ${d.pairA} ↔ ${d.pairB}</div>
+      ${turnsHtml}${commitLine}
+    </div>`;
+  }).join('');
+
+  // ── Section 10c: Blueprint Decisions ──
+  const bpDecisionsHtml = (r.blueprintDecisions||[]).map(bp => {
+    const agent = r.agentPerf?.find(a=>a.name===(r.agentMemoryLog?.find(m=>m.name===bp.agentName)?.name||bp.agentName));
+    return `<div style="display:flex;gap:.6rem;align-items:baseline;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.67rem">
+      <span style="min-width:130px;font-weight:600">${bp.agentName||'—'}</span>
+      <span style="color:var(--gold);font-size:.6rem">${(bp.strategy||'?').toUpperCase()}</span>
+      <span style="color:var(--dim)">${bp.cat||'?'}${bp.metal?' · '+bp.metal:''}${bp.stone?' · '+bp.stone:''}${bp.technique?' via '+bp.technique:''}</span>
+      ${bp.description?`<span style="color:var(--faint);font-style:italic">${bp.description}</span>`:''}
+    </div>`;
+  }).join('');
+
+  // ── Section 10d: Vote Rationales ──
+  const voteRatHtml = r.voteRationales ? agentStates.map((a,i)=>{
+    const rat = r.voteRationales[i];
+    if (!rat) return '';
+    return `<div style="padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.67rem">
+      <b>${a.emoji} ${a.name}</b>: <span style="color:var(--faint);font-style:italic">${rat}</span>
+    </div>`;
+  }).join('') : '';
+
   // ── Section 11: Agent Genome Evolution ──
   const fmtShift = v => v>0?`<span class="evo-shift-up">+${v}</span>`:v<0?`<span class="evo-shift-dn">${v}</span>`:`<span class="evo-shift-nil">±0</span>`;
   const evoSectionHtml = (r.agentEvolution||[]).map(e => {
@@ -2177,6 +2342,12 @@ function viewReport(cycleNum) {
         </div>`:''}
       </div>
 
+      ${cpDialoguesHtml ? `<div class="rsec"><div class="rsec-hdr">Cross-Pollination Dialogues — 3-Turn Decision Record</div>${cpDialoguesHtml}</div>` : ''}
+
+      ${bpDecisionsHtml ? `<div class="rsec"><div class="rsec-hdr">Blueprint Decisions — Agent Design Commitments</div>${bpDecisionsHtml}</div>` : ''}
+
+      ${voteRatHtml ? `<div class="rsec"><div class="rsec-hdr">Vote Rationales — Agent Voting Logic</div>${voteRatHtml}</div>` : ''}
+
       ${evoSectionHtml ? `<div class="rsec"><div class="rsec-hdr">Agent Genome Evolution — Post-Cycle ${r.cycle} Adaptation (Active Next Cycle)</div><div class="evo-grid">${evoSectionHtml}</div></div>` : ''}
 
       <div class="rsec">
@@ -2186,6 +2357,16 @@ function viewReport(cycleNum) {
     </div>`;
 
   document.getElementById('report-view-area').innerHTML = html;
+
+  // ── Per-cycle print/download button (injected into header) ──
+  const hdrEl = document.querySelector('#report-view-area .rdoc-header');
+  if (hdrEl && !hdrEl.querySelector('.rdoc-dl-btn')) {
+    const dlBtn = document.createElement('div');
+    dlBtn.style.cssText = 'display:flex;gap:.5rem;margin-top:.6rem';
+    dlBtn.innerHTML = `<button class="btn btn-ghost btn-sm rdoc-dl-btn" onclick="printReport(${cycleNum})">🖨 Print Report</button>
+      <button class="btn btn-ghost btn-sm" onclick="downloadReportJSON(${cycleNum})">⬇ Download JSON</button>`;
+    hdrEl.appendChild(dlBtn);
+  }
 
   // Attach image events via DOM after render
   r.sortedDesigns.slice(0,3).forEach((d, i) => {
@@ -2218,28 +2399,172 @@ function viewReport(cycleNum) {
 }
 
 /* ══════════════════════════════════
-   EXPORT
+   EXPORT — PRINT & DOWNLOAD
 ══════════════════════════════════ */
-function exportAllReports() {
-  let content = 'JEWELFORGE — EPOCH INTELLIGENCE ARCHIVE\n';
-  content += '==========================================\n\n';
-  cycleReports.forEach(r => {
-    content += `CYCLE ${r.cycle} REPORT — ${r.date}\n`;
-    content += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()}⬡)\n\n`;
-    content += `AGENT DECISIONS:\n`;
-    r.designs.forEach(d => { content += `  ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.name} (${d.cat}) — Rank #${d.rank}\n`; });
-    content += `\nPROMPTS:\n`;
-    r.designs.sort((a,b)=>a.rank-b.rank).forEach(d => { content += `  [${d.name}] ${d.prompt}\n`; });
-    content += `\nTREND CONSENSUS:\n`;
-    content += `  Emerging: ${r.trendData.emerging.join(', ')}\n`;
-    content += `  Declining: ${r.trendData.declining.join(', ')}\n`;
-    content += `\nFORWARD INTELLIGENCE:\n`;
-    r.trendData.fi.forEach(f => { content += `  • ${f}\n`; });
-    content += '\n' + '─'.repeat(50) + '\n\n';
-  });
-  const blob = new Blob([content], {type:'text/plain'});
+
+/** Build a complete print-ready HTML document for one or all cycles. */
+function buildPrintableHTML(reportsArr) {
+  const title = reportsArr.length === 1
+    ? `JEWELFORGE — Cycle ${reportsArr[0].cycle} Intelligence Report`
+    : 'JEWELFORGE — Epoch Intelligence Archive';
+  const cycleBlocks = reportsArr.map(r => {
+    const dialogueBlocks = (r.crossPollDialogues||[]).map((d,pi) =>
+      `<div class="pr-pair"><div class="pr-pair-hdr">Pair ${pi+1}: ${d.pairA} ↔ ${d.pairB}</div>${
+        (d.turns||[]).map((t,ti)=>`<div class="pr-turn"><span class="pr-tn">T${ti+1}</span> ${t}</div>`).join('')
+      }<div class="pr-commit">▶ ${d.commitA||''} / ${d.commitB||''}</div></div>`
+    ).join('');
+    const bpRows = (r.blueprintDecisions||[]).map(bp =>
+      `<tr><td>${bp.agentName||'—'}</td><td>${(bp.strategy||'').toUpperCase()}</td><td>${bp.cat||'?'}</td><td>${bp.metal||'—'}</td><td>${bp.stone||'—'}</td><td>${bp.technique||'—'}</td><td>${bp.estMargin||'—'}%</td></tr>`
+    ).join('');
+    const voteRows = r.voteMatrix.map((row,vi)=>{
+      const aname = r.agentPerf[vi]?.name||'Agent';
+      const top2 = row.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2).map(x=>`"${r.designs.find(d=>d.agentIdx===x.i)?.name||'?'}" ${x.v.toLocaleString()}⬡`).join(', ');
+      const rat  = (r.voteRationales||[])[vi]||'';
+      return `<tr><td>${aname}</td><td>${top2}</td><td><em>${rat}</em></td></tr>`;
+    }).join('');
+    const evoRows = (r.agentEvolution||[]).map(e => {
+      const s=e.shift||{};
+      const fmt=v=>v>0?`<span style="color:#4a9">+${v}</span>`:v<0?`<span style="color:#e66">${v}</span>`:`<span style="color:#888">0</span>`;
+      return `<tr><td>${e.emoji} ${e.name}</td><td>${e.event.toUpperCase()}</td><td>Risk ${e.before.risk}→${e.after.risk} ${fmt(s.risk||0)}</td><td>Nov ${e.before.novelty}→${e.after.novelty} ${fmt(s.novelty||0)}</td><td>Mkt ${e.before.marketFit}→${e.after.marketFit} ${fmt(s.marketFit||0)}</td><td>${(e.newBeliefs?.dominant||'—')}</td></tr>`;
+    }).join('');
+    const memBlocks = (r.agentMemoryLog||[]).map(m =>
+      (m.memory||[]).filter(e=>e.phase===4).map(e=>
+        `<li><b>${m.emoji} ${m.name}</b>: ${e.summary}</li>`
+      ).join('')
+    ).join('');
+    const rankRows = r.sortedDesigns.map(d =>
+      `<tr${d.rank===1?' class="pr-winner"':''}><td>#${d.rank} ${d.rank===1?'🏆':''}</td><td>"${d.name}"</td><td>${d.agentName}</td><td>${d.cat}</td><td>${(d.strategy||'').toUpperCase()}</td><td>${d.credits.toLocaleString()}⬡</td><td>${d.aesthetic}</td><td>${d.novelty}</td><td>${d.profit}</td></tr>`
+    ).join('');
+    return `
+      <div class="pr-cycle-header">CYCLE ${r.cycle} — ${r.date} ${r.time} — Mode: ${r.mode||'scripted'}</div>
+      <h2>Winner: "${r.winner.name}" by ${r.winner.agentName} — ${r.winner.credits.toLocaleString()}⬡</h2>
+      <p class="pr-sub">Total pool: ${(r.totalCredits||0).toLocaleString()}⬡ · Gini: ${r.gini||0} · Winner share: ${r.winnerShare||0}%</p>
+
+      <h3>Design Rankings</h3>
+      <table><thead><tr><th>Rank</th><th>Design</th><th>Agent</th><th>Category</th><th>Strategy</th><th>Credits</th><th>AES</th><th>NOV</th><th>PRO</th></tr></thead><tbody>${rankRows}</tbody></table>
+
+      ${dialogueBlocks ? `<h3>Cross-Pollination Dialogues</h3>${dialogueBlocks}` : ''}
+
+      ${bpRows ? `<h3>Blueprint Decisions</h3><table><thead><tr><th>Agent</th><th>Strategy</th><th>Category</th><th>Metal</th><th>Stone</th><th>Technique</th><th>Margin</th></tr></thead><tbody>${bpRows}</tbody></table>` : ''}
+
+      ${voteRows ? `<h3>Vote Flow &amp; Rationales</h3><table><thead><tr><th>Voter</th><th>Top Allocations</th><th>Rationale</th></tr></thead><tbody>${voteRows}</tbody></table>` : ''}
+
+      <h3>Trend Intelligence</h3>
+      <p><b>Emerging:</b> ${(r.trendData?.emerging||[]).join(', ')} &nbsp;·&nbsp; <b>Declining:</b> ${(r.trendData?.declining||[]).join(', ')}</p>
+      <p><b>Saturation:</b> ${r.trendData?.saturation||'—'} &nbsp;·&nbsp; <b>Treasury:</b> ${r.trendData?.treasury||'—'}</p>
+      <ul>${(r.trendData?.fi||[]).map(f=>`<li>${f}</li>`).join('')}</ul>
+
+      ${evoRows ? `<h3>Agent Genome Evolution</h3><table><thead><tr><th>Agent</th><th>Event</th><th>Risk</th><th>Novelty</th><th>MarketFit</th><th>Dominant</th></tr></thead><tbody>${evoRows}</tbody></table>` : ''}
+
+      ${memBlocks ? `<h3>Agent Memory Log</h3><ul>${memBlocks}</ul>` : ''}
+
+      <h3>Image Generation Prompts</h3>
+      <table><thead><tr><th>Rank</th><th>Design</th><th>Prompt</th></tr></thead>
+      <tbody>${r.sortedDesigns.map(d=>`<tr><td>#${d.rank}</td><td>"${d.name}"</td><td style="font-size:.7em;color:#666">${d.prompt}</td></tr>`).join('')}</tbody></table>
+      <hr>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>${title}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Georgia',serif;font-size:13px;line-height:1.6;color:#1a1a1a;padding:20mm 18mm;max-width:960px;margin:0 auto}
+h1{font-size:22px;font-weight:bold;margin:0 0 6px;letter-spacing:.03em}
+h2{font-size:16px;font-weight:bold;margin:12px 0 4px;color:#4a3000}
+h3{font-size:13px;font-weight:bold;margin:14px 0 5px;text-transform:uppercase;letter-spacing:.07em;color:#555;border-bottom:1px solid #ddd;padding-bottom:3px}
+p{margin:3px 0 6px}
+ul{margin:4px 0 8px 16px}
+li{margin:2px 0}
+table{width:100%;border-collapse:collapse;margin:6px 0 12px;font-size:11.5px}
+th{background:#f5f0e8;border:1px solid #d4b896;padding:5px 7px;text-align:left;font-weight:bold;letter-spacing:.04em}
+td{border:1px solid #e0d5c5;padding:5px 7px;vertical-align:top}
+tr:nth-child(even) td{background:#fdfaf5}
+.pr-winner td{background:#fffae8;font-weight:600;border-color:#c8a830}
+.pr-cycle-header{font-size:11px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-top:18px 0 2px}
+.pr-sub{font-size:11px;color:#666;margin-bottom:10px}
+.pr-pair{border:1px solid #e0d5c5;border-radius:5px;padding:8px 10px;margin:6px 0;background:#fdfaf5}
+.pr-pair-hdr{font-weight:bold;font-size:12px;margin-bottom:6px;color:#4a3000}
+.pr-turn{padding:3px 0;border-bottom:1px solid #f0e8d8;font-size:11.5px}
+.pr-tn{color:#c8a830;font-size:10px;font-weight:bold;margin-right:4px}
+.pr-commit{font-size:10.5px;color:#666;margin-top:4px;padding-top:3px;border-top:1px solid #e8dcc8}
+hr{border:none;border-top:2px solid #e0d5c5;margin:20px 0}
+.cover{text-align:center;padding:40px 0 20px;border-bottom:3px solid #c8a830;margin-bottom:20px}
+.cover-sub{font-size:12px;color:#888;margin-top:6px}
+@media print{
+  @page{size:A4;margin:18mm 15mm}
+  body{padding:0;font-size:12px}
+  h3{page-break-after:avoid}
+  table{page-break-inside:avoid}
+  .pr-pair{page-break-inside:avoid}
+}
+</style>
+</head><body>
+<div class="cover">
+  <div style="font-size:28px;font-weight:bold;letter-spacing:.08em">JEWELFORGE</div>
+  <div style="font-size:14px;color:#c8a830;margin:4px 0">${title}</div>
+  <div class="cover-sub">Generated ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+  ${reportsArr.length===3?`<div class="cover-sub">Epoch complete — 3-cycle compound intelligence archive</div>`:''}
+</div>
+${cycleBlocks}
+<div style="text-align:center;font-size:10px;color:#aaa;margin-top:20px">JEWELFORGE AI Design Experiment — Export generated ${new Date().toISOString()}</div>
+</body></html>`;
+}
+
+/** Open print dialog for a single cycle. */
+function printReport(cycleNum) {
+  const r = cycleReports.find(x=>x.cycle===cycleNum);
+  if (!r) return;
+  const w = window.open('', '_blank');
+  w.document.write(buildPrintableHTML([r]));
+  w.document.close();
+  w.onload = () => { w.focus(); w.print(); };
+}
+
+/** Download a single report as JSON. */
+function downloadReportJSON(cycleNum) {
+  const r = cycleReports.find(x=>x.cycle===cycleNum);
+  if (!r) return;
+  const blob = new Blob([JSON.stringify(r, null, 2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'JewelForge_Epoch_Intelligence_Archive.txt'; a.click();
+  a.download = `JewelForge_Cycle${cycleNum}_Report.json`; a.click();
+}
+
+/** Export all reports as a rich printable HTML epoch archive. */
+function exportAllReports() {
+  if (!cycleReports.length) return;
+  const html = buildPrintableHTML(cycleReports);
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'JewelForge_Epoch_Intelligence_Archive.html'; a.click();
+}
+
+/** Export the full epoch as a JSON data archive (all data created during the experiment). */
+function exportEpochJSON() {
+  if (!cycleReports.length) return;
+  const archive = {
+    meta: {
+      exportDate: new Date().toISOString(),
+      mode: cycleReports[0]?.mode || 'scripted',
+      cycles: cycleReports.length,
+      epochComplete: cycleReports.length === 3,
+    },
+    agents: agentStates.map(a => ({
+      id: a.id, name: a.name, emoji: a.emoji, arch: a.arch, isUser: a.isUser,
+      genome: { risk:a.risk, novelty:a.novelty, marketFit:a.marketFit, platBias:a.platBias, styleTags:[...(a.styleTags||[])], philosophy:a.philosophy||'' },
+      reputation: a.reputation,
+      beliefs: JSON.parse(JSON.stringify(a.beliefs||{})),
+      memory: JSON.parse(JSON.stringify(a.memory||[])),
+    })),
+    cycleReports: JSON.parse(JSON.stringify(cycleReports)),
+    epochSummary: cycleReports.length === 3 ? {
+      winners: cycleReports.map(r=>({ cycle:r.cycle, design:r.winner.name, agent:r.winner.agentName, strategy:r.winner.strategy, credits:r.winner.credits })),
+      trendArc: cycleReports.map(r=>({ cycle:r.cycle, emerging:r.trendData.emerging, declining:r.trendData.declining, saturation:r.trendData.saturation })),
+      totalEpochCredits: cycleReports.reduce((s,r)=>s+(r.totalCredits||0),0),
+    } : null,
+  };
+  const blob = new Blob([JSON.stringify(archive, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `JewelForge_Epoch_Archive_${new Date().toISOString().slice(0,10)}.json`; a.click();
 }
 
 /* ══════════════════════════════════
@@ -2652,39 +2977,79 @@ function buildIntelLibraryHtml(cycleNum) {
   return `<div class="intel-lib"><div class="intel-lib-hdr">📚 Agent Intelligence Library — ${priorCycles.length}-Cycle Genome Evolution Archive</div>${rows}</div>`;
 }
 
-/* ── Live Phase 0: Cross-Pollination — one call per agent ── */
+/* ── Live Phase 0: Cross-Pollination — pre-reflection + 3-turn paired dialogues ── */
 async function livePhase0() {
-  livePhaseData = { crossPoll: [], blueprints: [], designs: [], voteMatrix: [], trendData: {} };
+  livePhaseData = { crossPoll: [], blueprints: [], designs: [], voteMatrix: [], trendData: {}, dialogues: [], voteRationales: [] };
   setProgress(5);
-  addLog(`Cycle ${currentCycle} initiated. Agents entering cross-pollination…`, '', 0);
+  addLog(`Cycle ${currentCycle} initiated. Agents entering pre-cross-poll reflection…`, '', 0);
   const prior = priorReportCtx();
 
-  for (let i = 0; i < agentStates.length; i++) {
-    const a       = agentStates[i];
-    const partner = agentStates[(i + 1) % agentStates.length];
-    setAgentStatus(a.id, 'Cross-pollinating…');
-    addLog(`<b>${a.name}</b> ↔ <b>${partner.name}</b> — reading genome vectors…`, 'rp', 0);
+  // ── Pre-reflection: derive each agent's initial direction from memory + genome (no LLM) ──
+  if (currentCycle > 1) addLog(buildIntelLibraryHtml(currentCycle), 'rp', 0);
+  addLog(`<b>[PRE-CROSS-POLL REFLECTION]</b> Each agent reviews historical intelligence before pairing.`, 'rp', 0);
+  agentStates.forEach(a => {
+    const mem  = (a.memory||[]).filter(m=>m.phase===4).slice(-2);
+    const lean = a.beliefs?.strategyBias || 'explore';
+    const dom  = a.beliefs?.dominant;
+    const avoid= (a.beliefs?.avoid||[]).slice(-1)[0];
+    const note = mem.length > 0
+      ? `Prior cycles: ${mem.map(m=>`C${m.cycle}:${m.event==='victory'?'WIN':m.event==='top3'?'TOP3':m.event==='midfield'?'MID':'BOT'}`).join(', ')}. Lean ${lean.toUpperCase()}${dom?`, dominant: ${dom}`:''}${avoid?`, avoiding: ${avoid}`:''}.`
+      : `Cold start. Genome: ${a.arch}. Lean: ${lean.toUpperCase()}.`;
+    addLog(`◈ <b>${a.emoji} ${a.name}</b>: "${note}"`, '', 0);
+    setAgentStatus(a.id, 'Reflecting…');
+  });
+  setProgress(10);
 
-    const sys = `You simulate a luxury jewelry design agent making one concrete design direction decision after cross-pollinating with a partner agent. The decision must be specific: a material, technique, category choice, or aesthetic direction. Stay true to the agent's genome values and philosophy.`;
-    const usr = `Cycle ${currentCycle}.${prior ? '\nMarket history:\n' + prior : ' First cycle.'}
+  // ── Paired 3-turn dialogues: pairs (0,1), (2,3), (4,5) ──
+  const pairs = [[0,1],[2,3],[4,5]];
+  for (const [idxA, idxB] of pairs) {
+    const a = agentStates[idxA], b = agentStates[idxB];
+    setAgentStatus(a.id, 'Dialoguing…');
+    setAgentStatus(b.id, 'Dialoguing…');
+    addLog(`<b>${a.emoji} ${a.name}</b> ↔ <b>${b.emoji} ${b.name}</b> — 3-turn design dialogue`, 'rp', 0);
 
-Agent making the decision:
-${agentGenomeStr(a)}
+    // Turn 1: A opens — states design direction + asks B
+    const t1 = extractJSON(await callLLM(
+      `You are ${a.name}, a luxury jewelry design agent. Open a design dialogue with your partner. State the specific piece of jewelry you are considering this cycle and ask one question about theirs. Be concrete: name a category, material, and aesthetic direction. Stay true to your genome.`,
+      `Cycle ${currentCycle}.${prior?'\nMarket history:\n'+prior:' First cycle.'}\nYour genome and history:\n${agentGenomeStr(a)}\nPartner: ${b.name} [${b.arch}] philosophy:"${b.philosophy}"\nProduce your opening message — state your design direction and ask one question.\nJSON: {"message":"1-2 sentence dialogue opening"}`, true),
+      { message: `I'm considering a ${a.styleTags[0]} piece this cycle. What direction are you exploring?` });
+    addLog(`<b>${a.name}</b>: "${t1.message}"`, 'cv', 0);
 
-Partner agent (source of influence):
-${agentGenomeStr(partner)}
+    // Turn 2: B responds — shares own direction, reacts to A
+    const t2 = extractJSON(await callLLM(
+      `You are ${b.name}, a luxury jewelry design agent responding to a design dialogue. React to your partner's direction, share your own specific piece, and note whether your categories overlap. Be concrete.`,
+      `Cycle ${currentCycle}.${prior?'\nMarket history:\n'+prior:''}\nYour genome and history:\n${agentGenomeStr(b)}\n${a.name} said: "${t1.message}"\nRespond and state your own design direction.\nJSON: {"message":"1-2 sentence response"}`, true),
+      { message: `Interesting direction. I'm pursuing a ${b.styleTags[0]} approach — different category, no collision.` });
+    addLog(`<b>${b.name}</b>: "${t2.message}"`, 'cv', 0);
 
-What specific design direction does ${a.name} commit to after this exchange with ${partner.name}?
-JSON: {"decision":"one concrete design direction sentence","influence":"what specifically they adopted from ${partner.name}","commitment":"the metal/stone/technique/category they locked in"}`;
+    // Turn 3 + Commit A: A synthesizes and commits
+    const t3a = extractJSON(await callLLM(
+      `You are ${a.name}, concluding a design dialogue. Synthesize what you've heard, state your final design direction for this cycle, and commit to a specific metal/stone/category/technique. Your commit must be concrete and informed by the exchange.`,
+      `Cycle ${currentCycle}.${prior?'\nMarket history:\n'+prior:''}\nYour genome:\n${agentGenomeStr(a)}\nDialogue:\n${a.name}: "${t1.message}"\n${b.name}: "${t2.message}"\nSynthesize and commit.\nJSON: {"message":"1-2 sentence synthesis","decision":"one concrete design direction","commitment":"metal/stone/technique/category locked in","influence":"what you adopted or rejected from ${b.name}"}`, true),
+      { message:`Committing to my direction.`, decision:`${a.styleTags[0]} design`, commitment:`${a.platBias>60?'platinum':'18k gold'} construction`, influence:`category awareness from ${b.name}` });
+    addLog(`<b>${a.name}</b>: "${t3a.message}"`, 'cv', 0);
+    livePhaseData.crossPoll[idxA] = { decision: t3a.decision, commitment: t3a.commitment, influence: t3a.influence };
 
-    const text   = await callLLM(sys, usr, true);
-    const parsed = extractJSON(text, { decision: 'pursuing refined minimalist forms', influence: `geometry from ${partner.name}`, commitment: 'platinum solitaire construction' });
-    livePhaseData.crossPoll[i] = parsed;
+    // Commit B: B commits based on full dialogue
+    const commitB = extractJSON(await callLLM(
+      `You are ${b.name}, making your final design commitment after a 3-turn dialogue. Commit to a specific piece of jewelry for this cycle. Your decision must reflect your genome, market history, and what you learned from the exchange.`,
+      `Cycle ${currentCycle}.${prior?'\nMarket history:\n'+prior:''}\nYour genome:\n${agentGenomeStr(b)}\nFull dialogue:\n${a.name}: "${t1.message}"\n${b.name}: "${t2.message}"\n${a.name}: "${t3a.message}"\nCommit your design direction.\nJSON: {"decision":"one concrete design direction","commitment":"metal/stone/technique/category locked in","influence":"what you adopted or rejected from ${a.name}"}`, true),
+      { decision:`${b.styleTags[0]} design`, commitment:`${b.platBias>60?'platinum':'18k gold'} construction`, influence:`category differentiation from ${a.name}` });
+    addLog(`<b>${b.name}</b> commits → ${commitB.decision}`, 'cv', 0);
+    livePhaseData.crossPoll[idxB] = { decision: commitB.decision, commitment: commitB.commitment, influence: commitB.influence };
+
+    livePhaseData.dialogues.push({
+      pairA: a.name, pairB: b.name,
+      turns: [ `${a.name}: "${t1.message}"`, `${b.name}: "${t2.message}"`, `${a.name}: "${t3a.message}"` ],
+      commitA: `${a.name}: ${t3a.commitment}`, commitB: `${b.name}: ${commitB.commitment}`
+    });
     setAgentStatus(a.id, 'Intent locked');
-    addLog(`<b>${a.name}</b> commits → ${parsed.decision}`, 'cv', 0);
+    setAgentStatus(b.id, 'Intent locked');
+    addLog(`<span style="font-size:.65rem;color:var(--dim)">◈ ${a.name} → ${t3a.commitment} · ${b.name} → ${commitB.commitment}</span>`, 'rs', 0);
+    setProgress(10 + pairs.indexOf([idxA,idxB]) * 3 + 3); // rough progress
   }
 
-  addLog('All agents cross-pollinated. Intent vectors locked.', 'rs', 0);
+  addLog('All 3 pairs complete — 3-turn dialogues. Intent vectors locked.', 'rs', 0);
   setProgress(20);
   return 800;
 }
@@ -2702,7 +3067,10 @@ async function livePhase1() {
     setAgentStatus(a.id, 'Drafting blueprint…');
     addLog(`<b>${a.name}</b> synthesizing blueprint…`, 'rp', 0);
 
-    const sys = `You simulate a luxury jewelry design agent producing a specific competition blueprint. It must reflect the agent's genome and cross-pollination decision exactly. Be concrete: name a category, metal, stone, technique, and one-sentence description.`;
+    const dialogueIdx = Math.floor(i / 2);
+    const dialogue    = livePhaseData.dialogues[dialogueIdx];
+    const dialogueStr = dialogue ? `\nCross-poll dialogue:\n${dialogue.turns.join('\n')}` : '';
+    const sys = `You simulate a luxury jewelry design agent producing a specific competition blueprint. It must reflect the agent's genome, cross-pollination dialogue, and prior market intelligence. Be concrete: name a category, metal, stone, technique, and one-sentence description.`;
     const usr = `Cycle ${currentCycle}.${prior ? '\nMarket history:\n' + prior : ''}
 
 Agent DNA:
@@ -2711,7 +3079,7 @@ ${agentGenomeStr(a)}
 Cross-pollination decision:
 Direction: ${cp.decision || 'explore new territory'}
 Commitment: ${cp.commitment || 'refined construction'}
-Influence absorbed: ${cp.influence || 'none'}
+Influence absorbed: ${cp.influence || 'none'}${dialogueStr}
 
 Produce ${a.name}'s design blueprint for this cycle.
 JSON: {"strategy":"explore|exploit|mutate|hedge","cat":"Ring|Earrings|Pendant|Bracelet|Necklace|Brooch","metal":"platinum|18k gold|rose gold|silver|mixed","stone":"diamond|emerald|sapphire|ruby|none|mixed","technique":"one specific craft technique","description":"one sentence blueprint","estMargin":65}`;
@@ -2823,6 +3191,7 @@ JSON: {"weights":[w0,w1,w2,w3,w4,w5],"rationale":"one sentence on voting logic"}
     const parsed = extractJSON(text, { weights: Array(6).fill(0).map((_,j)=>j===vi?0:10), rationale:'balanced allocation' });
     const row    = normalizeVoteRow(parsed.weights || [], vi, 10000);
     voteMatrix[vi] = row;
+    livePhaseData.voteRationales[vi] = parsed.rationale || '';
 
     const top2 = row.map((v, i) => ({ i, v })).sort((a, b) => b.v - a.v).filter(x => x.v > 0).slice(0, 2);
     const msg  = top2.map(x => `"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
