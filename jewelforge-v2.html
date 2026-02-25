@@ -441,6 +441,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
           <label>Higgsfield Image Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
           <input id="b-higgsfield-key" type="password" placeholder="KEY_ID:KEY_SECRET · takes priority over Pixazo">
           <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Higgsfield Flux image generation. Priority: Higgsfield → Pixazo → Pollinations (free).</div>
+          <button class="btn" style="margin-top:.45rem;font-size:.65rem;padding:.35rem .7rem;letter-spacing:.04em;width:100%" onclick="testHiggsfieldAPI()">⚡ Test Higgsfield API</button>
+          <div id="higgs-test-result" style="display:none;margin-top:.5rem"></div>
         </div>
         <div style="display:flex;gap:.4rem;margin-top:.9rem">
           <button class="btn btn-primary" style="flex:1;font-size:.72rem;padding:.45rem .8rem;letter-spacing:.05em" onclick="applyAPIKeys()">▶ Apply API Keys</button>
@@ -2249,6 +2251,53 @@ async function testClaudeAPI() {
     if (statusEl) { statusEl.innerHTML = `<span style="color:#e07070">✗ Claude API error: ${err.message}</span>`; statusEl.style.display = ''; }
   } finally {
     if (btn) { btn.textContent = '⚡ Test Claude API'; btn.disabled = false; }
+  }
+}
+
+async function testHiggsfieldAPI() {
+  const btn = document.querySelector('[onclick="testHiggsfieldAPI()"]');
+  const resultEl = document.getElementById('higgs-test-result');
+  const key = _keyHiggs || (document.getElementById('b-higgsfield-key')?.value || '').trim();
+
+  const show = (html) => { if (resultEl) { resultEl.innerHTML = html; resultEl.style.display = ''; } };
+
+  if (!key) {
+    show('<span style="color:#e07070;font-size:.6rem">✗ No Higgsfield key entered — paste KEY_ID:KEY_SECRET above first</span>');
+    return;
+  }
+
+  if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
+  show('<span style="color:var(--faint);font-size:.6rem">⏳ Sending test prompt to Higgsfield…</span>');
+
+  const authHeader = key.includes(':') ? `Key ${key}` : `Bearer ${key}`;
+  const testPrompt = 'fine jewelry, elegant diamond solitaire ring, platinum band, studio lighting, photorealistic, white background';
+
+  try {
+    const r = await fetch('https://platform.higgsfield.ai/flux-schnell/text-to-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+      body: JSON.stringify({ input: { prompt: testPrompt, aspect_ratio: '1:1', seed: 42, safety_tolerance: 2 } })
+    });
+    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || e.message || `HTTP ${r.status}`); }
+    const d = await r.json();
+
+    let imgUrl = d.images?.[0]?.url || d.url;
+    if (!imgUrl) {
+      const reqId = d.request_id || d.id;
+      if (!reqId) throw new Error('Higgsfield: unexpected response — no URL or request_id');
+      show('<span style="color:var(--faint);font-size:.6rem">⏳ Request queued — polling for result…</span>');
+      imgUrl = await _pollHiggsfield(reqId, authHeader);
+    }
+
+    show(`
+      <div style="font-size:.6rem;color:#7ecf7e;margin-bottom:.4rem">✓ Higgsfield API connected — image generated</div>
+      <img src="${imgUrl}" alt="Higgsfield test" style="width:100%;border-radius:.4rem;display:block"
+           onerror="this.style.display='none';this.previousSibling.insertAdjacentHTML('afterend','<div style=\\'font-size:.58rem;color:#e07070;margin-top:.3rem\\'>⚠ Image URL returned but failed to load</div>')" />
+    `);
+  } catch (err) {
+    show(`<span style="color:#e07070;font-size:.6rem">✗ Higgsfield error: ${err.message}</span>`);
+  } finally {
+    if (btn) { btn.textContent = '⚡ Test Higgsfield API'; btn.disabled = false; }
   }
 }
 
