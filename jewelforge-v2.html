@@ -1407,7 +1407,7 @@ async function generateImageUrl(prompt, seed) {
 
   // ── Higgsfield (priority) ──
   if (higgsKey) {
-    const authHeader = higgsKey.includes(':') ? `Key ${higgsKey}` : `Bearer ${higgsKey}`;
+    const authHeader = `Key ${higgsKey}`;
     const r = await fetch('https://platform.higgsfield.ai/flux-pro/kontext/max/text-to-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
@@ -2272,7 +2272,7 @@ async function testHiggsfieldAPI() {
   if (btn) { btn.textContent = 'Generating…'; btn.disabled = true; }
   show('<span style="color:var(--faint);font-size:.6rem">⏳ Sending test prompt to Higgsfield…</span>');
 
-  const authHeader = key.includes(':') ? `Key ${key}` : `Bearer ${key}`;
+  const authHeader = `Key ${key}`;
   const testPrompt = 'fine jewelry, elegant diamond solitaire ring, platinum band, studio lighting, photorealistic, white background';
 
   try {
