@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JEWELFORGE — 3-Cycle Intelligence Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a84c;--gold-l:#e8c97a;--gold-d:#8a6e30;--gold-x:#4a3a18;
+  --bg:#060606;--s1:#0d0d0d;--s2:#141414;--s3:#1c1c1c;
+  --txt:#e8e4dc;--dim:#8a8680;--faint:#3a3a38;--xfaint:#1e1e1e;
+  --grn:#4caf7d;--red:#b5332a;--blu:#4a7fa8;--purp:#7b6fa8;
+  --bdr:rgba(201,168,76,0.14);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.6}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(6,6,6,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:.9rem 2rem;gap:1rem;flex-wrap:wrap}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.05rem;letter-spacing:.38em;color:var(--gold);font-weight:300;flex-shrink:0}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{padding:.4rem 1rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;border:1px solid transparent;color:var(--faint);cursor:pointer;transition:all .2s;background:none;font-family:'Rajdhani',sans-serif}
+.nav-tab:hover{color:var(--dim)}
+.nav-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.05)}
+.nav-tab.done{border-color:var(--gold-d);color:var(--gold-d)}
+.nav-epoch{font-size:.65rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase}
+.nav-epoch span{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:.9rem}
+
+/* SCREENS */
+main{padding-top:64px}
+.screen{display:none;min-height:calc(100vh - 64px);padding:2.5rem 2rem;max-width:1140px;margin:0 auto}
+.screen.active{display:block}
+
+/* TYPOGRAPHY */
+.eyebrow{font-size:.62rem;letter-spacing:.42em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.7rem}
+.h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;line-height:1.1;margin-bottom:.4rem}
+.h1 em{font-style:italic;color:var(--gold)}
+.h2{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;margin-bottom:.8rem}
+.h2 em{font-style:italic;color:var(--gold)}
+.rule{width:36px;height:1px;background:var(--gold);margin:1rem 0 1.8rem}
+.sub{color:var(--dim);font-size:.9rem;line-height:1.75;max-width:580px;margin-bottom:2rem}
+.label{font-size:.6rem;letter-spacing:.3em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.5rem}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.6rem;font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;border:1px solid var(--gold);color:var(--gold);background:transparent;cursor:pointer;transition:all .25s}
+.btn:hover{background:rgba(201,168,76,.1)}
+.btn-primary{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.btn-primary:hover{background:var(--gold-l)}
+.btn-ghost{border-color:var(--faint);color:var(--dim)}
+.btn-ghost:hover{border-color:var(--dim);color:var(--txt)}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn-sm{padding:.4rem 1rem;font-size:.65rem}
+
+/* ═══ SCREEN 1: BUILDER ═══ */
+.builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:720px){.builder-grid{grid-template-columns:1fr}}
+.bsec{background:var(--s1);border:1px solid var(--bdr);padding:1.5rem}
+.bsec h4{font-size:.6rem;letter-spacing:.32em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1.1rem;padding-bottom:.6rem;border-bottom:1px solid var(--bdr)}
+.field{margin-bottom:1.2rem}
+.field label{display:block;font-size:.7rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:.4rem}
+.field input,.field textarea,.field select{width:100%;background:var(--s2);border:1px solid var(--faint);color:var(--txt);padding:.6rem .85rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold-d)}
+.field textarea{resize:vertical;min-height:64px;line-height:1.6}
+.field select option{background:var(--s2)}
+.sr{display:flex;align-items:center;gap:.7rem;margin-bottom:.9rem}
+.sr label{font-size:.75rem;color:var(--dim);flex:1}
+.sr .sv{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--gold);width:28px;text-align:right;flex-shrink:0}
+input[type=range]{flex:1;-webkit-appearance:none;height:2px;background:var(--faint);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--gold);cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{padding:.25rem .65rem;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--faint);color:var(--faint);cursor:pointer;transition:all .2s;user-select:none}
+.chip:hover{border-color:var(--dim);color:var(--dim)}
+.chip.on{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06)}
+.auto-link{font-size:.62rem;letter-spacing:.15em;color:var(--gold-d);text-decoration:underline;background:none;border:none;cursor:pointer;font-family:'Rajdhani',sans-serif}
+.auto-link:hover{color:var(--gold)}
+.preview-box{background:var(--s1);border:1px solid var(--bdr);padding:1.5rem;margin-top:1.5rem}
+.prow{display:flex;align-items:baseline;gap:.8rem;margin-bottom:.45rem}
+.plabel{font-size:.62rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;width:86px;flex-shrink:0}
+.pval{font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--txt)}
+.dna-strip{display:flex;gap:3px;margin-top:.8rem;height:16px}
+.dna-b{flex:1;transition:all .3s}
+
+/* ═══ SCREEN 2: SIMULATOR ═══ */
+.sim-topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.8rem;gap:1rem;flex-wrap:wrap}
+.cycle-indicator{display:flex;gap:8px;align-items:center}
+.ci-dot{width:28px;height:28px;border:1px solid var(--faint);display:flex;align-items:center;justify-content:center;font-size:.6rem;letter-spacing:.1em;color:var(--faint);transition:all .4s;cursor:default}
+.ci-dot.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08)}
+.ci-dot.done{border-color:var(--grn);color:var(--grn);background:rgba(76,175,125,.06)}
+.prog-bar{height:2px;background:var(--faint);margin-bottom:1.5rem;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .6s ease;width:0%}
+.phase-rail{display:flex;border:1px solid var(--bdr);margin-bottom:1.5rem;overflow-x:auto}
+.pnode{flex:1;min-width:80px;padding:.7rem .4rem;text-align:center;background:var(--s1);border-right:1px solid var(--bdr);transition:all .3s}
+.pnode:last-child{border-right:none}
+.pnode.active{background:var(--s2);border-bottom:2px solid var(--gold)}
+.pnode.done{background:rgba(76,175,125,.04);border-bottom:2px solid var(--grn)}
+.pnode .pni{font-size:1rem;display:block;margin-bottom:.2rem}
+.pnode .pnl{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.pnode.active .pnl{color:var(--gold)}
+.pnode.done .pnl{color:var(--grn)}
+.sim-body{display:grid;grid-template-columns:220px 1fr;gap:1.5rem;min-height:360px}
+@media(max-width:720px){.sim-body{grid-template-columns:1fr}}
+.agents-col{background:var(--s1);border:1px solid var(--bdr);padding:1.2rem}
+.agents-col h5{font-size:.58rem;letter-spacing:.3em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1rem}
+.arow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--xfaint);transition:background .3s}
+.arow:last-child{border-bottom:none}
+.arow.highlight{background:rgba(201,168,76,.04)}
+.av{width:26px;height:26px;border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.ai{flex:1;min-width:0}
+.ai .an{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai .as{font-size:.68rem;color:var(--dim);margin-top:.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acr{font-family:'Cormorant Garamond',serif;font-size:.95rem;color:var(--gold);flex-shrink:0;font-size:.82rem}
+.log-col{background:var(--s1);border:1px solid var(--bdr);padding:1.2rem;display:flex;flex-direction:column}
+.log-col h5{font-size:.58rem;letter-spacing:.3em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1rem}
+.log{flex:1;overflow-y:auto;max-height:320px;display:flex;flex-direction:column;gap:.35rem}
+.log::-webkit-scrollbar{width:2px}
+.log::-webkit-scrollbar-thumb{background:var(--gold-d)}
+.le{font-size:.78rem;color:var(--dim);line-height:1.55;padding:.35rem .5rem;border-left:2px solid transparent;animation:slideIn .3s ease both}
+.le.cv{border-left-color:var(--gold-d)}
+.le.rp{border-left-color:var(--blu)}
+.le.ds{border-left-color:var(--grn)}
+.le.vt{border-left-color:var(--purp)}
+.le.rs{border-left-color:var(--gold);color:var(--txt);font-weight:600}
+.le .lt{font-size:.6rem;color:var(--faint);display:block;margin-bottom:.1rem}
+.designs-wrap{margin-top:1.5rem}
+.designs-wrap .dw-hdr{font-size:.58rem;letter-spacing:.35em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.8rem}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1px;background:var(--bdr);border:1px solid var(--bdr)}
+.dcard{background:var(--s1);transition:background .2s;overflow:hidden}
+.dcard:hover{background:var(--s2)}
+.dcard.winner-card{background:rgba(201,168,76,.06)}
+/* inline card image */
+.dcard-img-wrap{position:relative;width:100%;aspect-ratio:1;overflow:hidden;background:var(--s3);border-bottom:1px solid var(--bdr)}
+.dcard-img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .7s ease}
+.dcard-img.loaded{opacity:1}
+.dcard-img-loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;background:linear-gradient(135deg,var(--s3) 0%,var(--s2) 50%,var(--s3) 100%);background-size:200% 200%;animation:shimmer2 2.5s ease infinite}
+.dcard-img-loader.hidden{display:none}
+.dcard-img-loader .di-gem{font-size:1.3rem;animation:pulse 1.5s infinite}
+.dcard-img-loader .di-pct{font-family:'Cormorant Garamond',serif;font-size:.75rem;color:var(--gold-d);margin-top:.1rem}
+.dcard-body{padding:.9rem}
+@keyframes shimmer2{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.dgem{font-size:1.4rem;text-align:center;margin-bottom:.4rem}
+.dname{font-family:'Cormorant Garamond',serif;font-size:.9rem;text-align:center;margin-bottom:.15rem}
+.dagent{font-size:.56rem;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;text-align:center;margin-bottom:.5rem}
+.dbar{display:flex;align-items:center;gap:.35rem;margin-bottom:.25rem}
+.dbar-l{font-size:.58rem;color:var(--faint);width:24px}
+.dbar-t{flex:1;height:2px;background:var(--faint)}
+.dbar-f{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .8s ease;width:0%}
+.dcred{font-family:'Cormorant Garamond',serif;color:var(--gold);font-size:1rem;text-align:center;margin-top:.5rem}
+.win-badge{font-size:.56rem;letter-spacing:.18em;color:var(--gold);border:1px solid var(--gold-d);padding:.12rem .4rem;display:block;text-align:center;text-transform:uppercase;margin-bottom:.3rem}
+.sim-ctrl{display:flex;align-items:center;gap:.8rem;margin-top:1.2rem;flex-wrap:wrap}
+.spd{display:flex;align-items:center;gap:.4rem;font-size:.62rem;letter-spacing:.15em;color:var(--dim);text-transform:uppercase}
+.spd-btn{padding:.28rem .65rem;font-size:.62rem;border:1px solid var(--faint);color:var(--faint);background:none;cursor:pointer;font-family:'Rajdhani',sans-serif;transition:all .2s}
+.spd-btn.on{border-color:var(--gold);color:var(--gold)}
+
+/* cycle-complete banner */
+.cycle-complete{display:none;border:1px solid var(--gold-d);background:rgba(201,168,76,.04);padding:1.5rem;margin-top:1.5rem;animation:slideIn .5s ease}
+.cycle-complete.show{display:block}
+.cc-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--gold);margin-bottom:.5rem}
+.cc-sub{font-size:.85rem;color:var(--dim);margin-bottom:1.2rem}
+.cc-winner{display:inline-flex;align-items:center;gap:.8rem;background:var(--s2);border:1px solid var(--bdr);padding:.8rem 1.2rem;margin-bottom:1.2rem}
+.cc-winner-gem{font-size:1.5rem}
+.cc-winner-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold)}
+.cc-winner-by{font-size:.65rem;letter-spacing:.15em;color:var(--dim);text-transform:uppercase}
+.cc-actions{display:flex;gap:.8rem;flex-wrap:wrap}
+
+/* ═══ SCREEN 3: REPORTS ═══ */
+.reports-layout{display:grid;grid-template-columns:200px 1fr;gap:1.5rem;min-height:70vh}
+@media(max-width:720px){.reports-layout{grid-template-columns:1fr}}
+.report-nav{background:var(--s1);border:1px solid var(--bdr);padding:1.2rem}
+.report-nav h5{font-size:.58rem;letter-spacing:.3em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1rem}
+.rn-item{padding:.7rem .8rem;cursor:pointer;border:1px solid transparent;transition:all .2s;margin-bottom:2px}
+.rn-item:hover{background:var(--s2)}
+.rn-item.active{border-color:var(--gold-d);background:var(--s2)}
+.rni-num{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--gold);line-height:1}
+.rni-label{font-size:.6rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-top:.15rem}
+.rni-winner{font-size:.65rem;color:var(--faint);margin-top:.2rem;font-style:italic}
+.rn-empty{font-size:.72rem;color:var(--faint);font-style:italic;padding:.5rem 0}
+.report-view{background:var(--s1);border:1px solid var(--bdr);padding:2rem;overflow-y:auto;max-height:80vh}
+.report-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;color:var(--faint)}
+.rp-icon{font-size:2.5rem;margin-bottom:1rem;opacity:.4}
+.rp-msg{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase}
+
+/* REPORT DOCUMENT */
+.rdoc{font-family:'Rajdhani',sans-serif}
+.rdoc-header{border-bottom:1px solid var(--gold-d);padding-bottom:1.2rem;margin-bottom:1.5rem}
+.rdoc-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--gold);margin-bottom:.3rem}
+.rdoc-meta{font-size:.65rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+.rsec{margin-bottom:2rem}
+.rsec-hdr{font-size:.62rem;letter-spacing:.35em;color:var(--gold-d);text-transform:uppercase;border-bottom:1px solid var(--bdr);padding-bottom:.4rem;margin-bottom:1rem}
+.rtable{width:100%;border-collapse:collapse;font-size:.78rem}
+.rtable th{font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-d);border-bottom:1px solid var(--bdr);padding:.5rem .7rem;text-align:left;background:var(--s2)}
+.rtable td{padding:.55rem .7rem;border-bottom:1px solid var(--xfaint);color:var(--dim);vertical-align:top;line-height:1.5}
+.rtable tr:last-child td{border-bottom:none}
+.rtable tr:hover td{background:rgba(201,168,76,.02)}
+.rtable .highlight-row td{color:var(--txt)}
+.rtable .gold{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:.9rem}
+.rtable .grn{color:var(--grn)}
+.rtable .red{color:var(--red)}
+.trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bdr);margin-bottom:1rem}
+@media(max-width:600px){.trend-grid{grid-template-columns:1fr}}
+.tcard{background:var(--s2);padding:1rem}
+.tcard-label{font-size:.58rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.5rem}
+.tcard-val{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--txt)}
+.tcard-val.up{color:var(--grn)}
+.tcard-val.down{color:var(--red)}
+.tcard-sub{font-size:.72rem;color:var(--faint);margin-top:.2rem}
+.fi-box{background:rgba(201,168,76,.04);border:1px solid var(--gold-d);padding:1.2rem;margin-top:.5rem}
+.fi-title{font-size:.6rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;margin-bottom:.8rem}
+.fi-item{display:flex;gap:.7rem;margin-bottom:.6rem;font-size:.8rem;color:var(--dim);line-height:1.55}
+.fi-item::before{content:'◆';color:var(--gold-d);font-size:.5rem;margin-top:.35rem;flex-shrink:0}
+.prompt-box{background:var(--s3);border:1px solid var(--faint);padding:.7rem;font-size:.72rem;color:var(--grn);font-family:'Courier New',monospace;line-height:1.6;margin-top:.25rem}
+.strat-badge{display:inline-block;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:.15rem .5rem;border:1px solid}
+.strat-exploit{border-color:var(--gold-d);color:var(--gold-d)}
+.strat-explore{border-color:var(--blu);color:var(--blu)}
+.strat-mutate{border-color:var(--purp);color:var(--purp)}
+.exec-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);margin-bottom:1.5rem}
+@media(max-width:600px){.exec-stats{grid-template-columns:repeat(2,1fr)}}
+.es-item{background:var(--s2);padding:.9rem;text-align:center}
+.es-val{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--gold)}
+.es-lbl{font-size:.58rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;margin-top:.2rem}
+
+/* ═══ IMAGE GALLERY ═══ */
+.top3-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);margin:1.2rem 0}
+@media(max-width:640px){.top3-gallery{grid-template-columns:1fr}}
+.top3-card{background:var(--s2);display:flex;flex-direction:column}
+.top3-card.gold-card{background:rgba(201,168,76,.06);border-bottom:2px solid var(--gold)}
+.top3-img-wrap{position:relative;width:100%;aspect-ratio:.85;overflow:hidden;background:var(--s3)}
+.top3-img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .6s ease;opacity:0}
+.top3-img.loaded{opacity:1}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.top3-img-loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;background:linear-gradient(90deg,var(--s3) 25%,var(--s2) 50%,var(--s3) 75%);background-size:400px 100%;animation:shimmer 2s infinite linear}
+.top3-img-loader .gem{font-size:1.6rem;animation:pulse 1.5s infinite}
+.top3-img-loader .lbl{font-size:.58rem;letter-spacing:.25em;color:var(--faint);text-transform:uppercase}
+.top3-img-loader .pct{font-family:'Cormorant Garamond',serif;font-size:.9rem;color:var(--gold-d)}
+.top3-img-loader.hidden{display:none}
+.top3-meta{padding:1rem}
+.top3-rank{font-size:.6rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.3rem}
+.top3-rank.first{color:var(--gold)}
+.top3-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--txt);margin-bottom:.2rem}
+.top3-by{font-size:.62rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:.6rem}
+.top3-creds{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--gold)}
+.top3-creds-lbl{font-size:.58rem;color:var(--faint);letter-spacing:.15em;text-transform:uppercase}
+.top3-strat{display:inline-block;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;padding:.1rem .4rem;border:1px solid;margin-top:.4rem}
+.img-gen-status{font-size:.7rem;color:var(--dim);letter-spacing:.1em;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+.img-gen-status .dot{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:pulse 1s infinite;flex-shrink:0}
+.img-gen-status .dot.done{background:var(--grn);animation:none}
+
+/* Report image strip */
+.rdoc-top3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bdr);margin-bottom:1.5rem}
+@media(max-width:580px){.rdoc-top3{grid-template-columns:1fr}}
+.rdoc-imgcard{background:var(--s2)}
+.rdoc-imgcard.rank1{border-top:2px solid var(--gold)}
+.rdoc-imgcard.rank2{border-top:2px solid var(--dim)}
+.rdoc-imgcard.rank3{border-top:2px solid var(--faint)}
+.rdoc-img-wrap{width:100%;aspect-ratio:.85;overflow:hidden;background:var(--s3);position:relative}
+.rdoc-img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s}
+.rdoc-img.loaded{opacity:1}
+.rdoc-img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;background:var(--s3)}
+.rdoc-img-placeholder.hidden{display:none}
+.rdoc-card-meta{padding:.8rem}
+.rdoc-rank-badge{font-size:.58rem;letter-spacing:.22em;color:var(--faint);text-transform:uppercase;margin-bottom:.25rem}
+.rdoc-rank-badge.r1{color:var(--gold)}
+.rdoc-design-name{font-family:'Cormorant Garamond',serif;font-size:.95rem;color:var(--txt)}
+.rdoc-design-by{font-size:.6rem;color:var(--dim);margin-top:.1rem}
+.rdoc-design-creds{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--gold);margin-top:.3rem}
+
+/* ── KPI STRIP ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);margin-bottom:1.5rem}
+@media(max-width:700px){.kpi-strip{grid-template-columns:repeat(3,1fr)}}
+.kpi-cell{background:var(--s2);padding:.8rem .6rem;text-align:center}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--gold);line-height:1}
+.kpi-val.up{color:var(--grn)}
+.kpi-val.down{color:var(--red)}
+.kpi-val.neu{color:var(--txt)}
+.kpi-lbl{font-size:.54rem;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:.3rem}
+
+/* ── CORR BARS ── */
+.corr-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bdr);margin-bottom:1rem}
+.corr-card{background:var(--s2);padding:1rem}
+.corr-dim{font-size:.58rem;letter-spacing:.22em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem}
+.corr-bar-track{height:6px;background:var(--faint);border-radius:3px;overflow:hidden;margin-bottom:.4rem}
+.corr-bar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.corr-bar-fill.aes{background:linear-gradient(90deg,var(--gold-d),var(--gold))}
+.corr-bar-fill.nov{background:linear-gradient(90deg,#4a7fa8,#7bb8d4)}
+.corr-bar-fill.pro{background:linear-gradient(90deg,#4caf7d,#7be0a8)}
+.corr-r{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--txt)}
+.corr-note{font-size:.65rem;color:var(--faint);margin-top:.2rem}
+.corr-winner-badge{display:inline-block;font-size:.55rem;letter-spacing:.15em;color:var(--gold);border:1px solid var(--gold-d);padding:.1rem .4rem;text-transform:uppercase;margin-top:.3rem}
+
+/* ── STRATEGY BATTLE ── */
+.strat-battle{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bdr);margin-bottom:1rem}
+.sb-card{background:var(--s2);padding:1rem;position:relative}
+.sb-card.sb-winner{background:rgba(201,168,76,.06)}
+.sb-label{font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.5rem}
+.sb-creds{font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:.2rem}
+.sb-sub{font-size:.65rem;color:var(--faint)}
+.sb-win-flag{position:absolute;top:.6rem;right:.6rem;font-size:.52rem;letter-spacing:.12em;color:var(--gold);border:1px solid var(--gold-d);padding:.1rem .35rem;text-transform:uppercase}
+
+/* ── CATEGORY HEAT MAP ── */
+.cat-heat{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:.5rem}
+.cat-heat th{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-d);border-bottom:1px solid var(--bdr);padding:.5rem .7rem;text-align:left;background:var(--s2)}
+.cat-heat td{padding:.55rem .7rem;border-bottom:1px solid var(--xfaint);color:var(--dim);vertical-align:middle}
+.cat-heat tr:hover td{background:rgba(201,168,76,.02)}
+.mini-bar{display:inline-block;height:4px;border-radius:2px;vertical-align:middle;margin-right:.4rem}
+
+/* ── AGENT LEADERBOARD ── */
+.agent-lb{width:100%;border-collapse:collapse;font-size:.78rem}
+.agent-lb th{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-d);border-bottom:1px solid var(--bdr);padding:.5rem .7rem;background:var(--s2)}
+.agent-lb td{padding:.55rem .7rem;border-bottom:1px solid var(--xfaint);color:var(--dim);vertical-align:middle}
+.agent-lb tr:first-child td{color:var(--txt)}
+.agent-lb .rank-num{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--faint);text-align:center}
+.agent-lb .rank-num.r1{color:var(--gold)}
+.agent-lb .rep-delta{font-size:.72rem}
+.agent-lb .rep-up{color:var(--grn)}
+.agent-lb .rep-dn{color:var(--red)}
+.agent-lb .you-badge{font-size:.5rem;letter-spacing:.1em;color:var(--gold);border:1px solid var(--gold-d);padding:.05rem .3rem;margin-left:.3rem;text-transform:uppercase;vertical-align:middle}
+
+/* ── VOTE FLOW ── */
+.vflow-table{width:100%;border-collapse:collapse;font-size:.72rem}
+.vflow-table th{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-d);border-bottom:1px solid var(--bdr);padding:.45rem .6rem;background:var(--s2)}
+.vflow-table td{padding:.45rem .6rem;border-bottom:1px solid var(--xfaint);color:var(--dim);vertical-align:top}
+.vflow-table tr:hover td{background:rgba(201,168,76,.02)}
+.vf-alloc{display:inline-block;background:rgba(201,168,76,.08);border:1px solid var(--gold-x);padding:.1rem .4rem;font-size:.65rem;margin:.05rem .1rem .05rem 0;white-space:nowrap}
+.vf-self{background:rgba(181,51,42,.08);border-color:rgba(181,51,42,.3);color:var(--red)}
+.vote-insight{background:var(--s2);border:1px solid var(--bdr);padding:.8rem 1rem;font-size:.78rem;color:var(--dim);line-height:1.65;margin-top:.8rem}
+.vote-insight b{color:var(--txt)}
+
+/* ── TREND VELOCITY ── */
+.trend-vel{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+.vel-meter{flex:1;height:8px;background:var(--faint);border-radius:4px;overflow:hidden}
+.vel-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold-d),var(--gold-l));transition:width 1s ease}
+.vel-score{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);flex-shrink:0;width:44px;text-align:right}
+.vel-label{font-size:.6rem;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;flex-shrink:0;width:60px}
+.trend-4grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--bdr)}
+@media(max-width:500px){.trend-4grid{grid-template-columns:1fr}}
+
+/* ── EPOCH ARC (Cycle 3 only) ── */
+.epoch-arc{border:1px solid var(--gold-d);background:rgba(201,168,76,.03);padding:1.5rem;margin-bottom:1rem}
+.epoch-arc-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--gold);margin-bottom:1rem}
+.epoch-timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:var(--bdr)}
+.et-node{background:var(--s2);padding:1rem;text-align:center;position:relative}
+.et-node::after{content:'→';position:absolute;right:-10px;top:50%;transform:translateY(-50%);color:var(--gold-d);font-size:.9rem;z-index:1}
+.et-node:last-child::after{display:none}
+.et-cycle{font-size:.55rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.4rem}
+.et-winner{font-family:'Cormorant Garamond',serif;font-size:.9rem;color:var(--txt);margin-bottom:.2rem}
+.et-trend{font-size:.65rem;color:var(--dim)}
+.et-creds{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);margin-top:.3rem}
+.epoch-insight{font-size:.82rem;color:var(--dim);line-height:1.75;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--bdr)}
+.epoch-insight b{color:var(--txt)}
+
+/* ANIMATIONS */
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.fade{animation:fadeIn .4s ease both}
+.pulse{animation:pulse 1.5s infinite}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">JewelForge</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="nt1" onclick="goTo(1)">① Build Agent</button>
+    <button class="nav-tab" id="nt2" onclick="goTo(2)">② Run Cycles</button>
+    <button class="nav-tab" id="nt3" onclick="goTo(3)">③ Intelligence Reports</button>
+  </div>
+  <div class="nav-epoch">Epoch: <span id="nav-epoch-txt">0 / 3</span> cycles</div>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════
+     SCREEN 1: BUILDER
+══════════════════════════════════════ -->
+<div class="screen active" id="screen-1">
+  <div class="eyebrow">Agent Configuration</div>
+  <h1 class="h1">Design your <em>autonomous agent.</em></h1>
+  <div class="rule"></div>
+  <p class="sub">Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles — and evolve based on what it learns.</p>
+
+  <div class="builder-grid">
+    <div>
+      <div class="bsec">
+        <h4>Identity &nbsp;<button class="auto-link" onclick="autoGen()">✦ Auto-Generate</button></h4>
+        <div class="field"><label>Agent Name</label><input id="b-name" placeholder="e.g. Maren Vex" oninput="updatePreview()"></div>
+        <div class="field">
+          <label>Archetype</label>
+          <select id="b-arch" onchange="updatePreview()">
+            <option value="">— Select —</option>
+            <option>Avant-Garde Purist</option><option>High Jewelry Romantic</option>
+            <option>Industrial Innovator</option><option>Market Strategist</option>
+            <option>Minimalist Architect</option><option>Heritage Revivalist</option>
+            <option>Street Luxury Provocateur</option><option>Nature Mystic</option>
+          </select>
+        </div>
+        <div class="field"><label>Design Philosophy</label><textarea id="b-phil" placeholder="What drives your agent's design decisions…" oninput="updatePreview()"></textarea></div>
+      </div>
+      <div class="bsec" style="margin-top:1px">
+        <h4>Style Tags &nbsp;<span style="color:var(--faint);font-weight:300;font-size:.65rem">up to 5</span></h4>
+        <div class="chips" id="style-chips">
+          <div class="chip" onclick="toggleChip(this,'sc')">minimal</div><div class="chip" onclick="toggleChip(this,'sc')">maximalist</div>
+          <div class="chip" onclick="toggleChip(this,'sc')">architectural</div><div class="chip" onclick="toggleChip(this,'sc')">organic</div>
+          <div class="chip" onclick="toggleChip(this,'sc')">brutalist</div><div class="chip" onclick="toggleChip(this,'sc')">haute-joaillerie</div>
+          <div class="chip" onclick="toggleChip(this,'sc')">floral</div><div class="chip" onclick="toggleChip(this,'sc')">geometric</div>
+          <div class="chip" onclick="toggleChip(this,'sc')">industrial</div><div class="chip" onclick="toggleChip(this,'sc')">avant-garde</div>
+          <div class="chip" onclick="toggleChip(this,'sc')">vintage</div><div class="chip" onclick="toggleChip(this,'sc')">sculptural</div>
+          <div class="chip" onclick="toggleChip(this,'sc')">negative-space</div><div class="chip" onclick="toggleChip(this,'sc')">editorial</div>
+        </div>
+      </div>
+      <div class="bsec" style="margin-top:1px">
+        <h4>Market Focus</h4>
+        <div class="chips" id="mkt-chips">
+          <div class="chip" onclick="toggleChip(this,'mc')">bridal</div><div class="chip" onclick="toggleChip(this,'mc')">mens</div>
+          <div class="chip" onclick="toggleChip(this,'mc')">high jewelry</div><div class="chip" onclick="toggleChip(this,'mc')">everyday</div>
+          <div class="chip" onclick="toggleChip(this,'mc')">collectible</div><div class="chip" onclick="toggleChip(this,'mc')">avant-garde</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="bsec">
+        <h4>Style Genome</h4>
+        <div class="sr"><label>Minimalism</label><input type="range" min="0" max="100" value="50" id="s-min" oninput="sv(this,'sv-min');updatePreview()"><span class="sv" id="sv-min">50</span></div>
+        <div class="sr"><label>Novelty Drive</label><input type="range" min="0" max="100" value="50" id="s-nov" oninput="sv(this,'sv-nov');updatePreview()"><span class="sv" id="sv-nov">50</span></div>
+        <div class="sr"><label>Ornamentation</label><input type="range" min="0" max="100" value="50" id="s-orn" oninput="sv(this,'sv-orn');updatePreview()"><span class="sv" id="sv-orn">50</span></div>
+        <div class="sr"><label>Market Fit Priority</label><input type="range" min="0" max="100" value="50" id="s-mkt" oninput="sv(this,'sv-mkt');updatePreview()"><span class="sv" id="sv-mkt">50</span></div>
+        <div class="sr"><label>Symmetry Preference</label><input type="range" min="0" max="100" value="60" id="s-sym" oninput="sv(this,'sv-sym');updatePreview()"><span class="sv" id="sv-sym">60</span></div>
+      </div>
+      <div class="bsec" style="margin-top:1px">
+        <h4>Material Genome</h4>
+        <div class="sr"><label>Platinum Bias</label><input type="range" min="0" max="100" value="50" id="s-plt" oninput="sv(this,'sv-plt');updatePreview()"><span class="sv" id="sv-plt">50</span></div>
+        <div class="sr"><label>Colored Stone Use</label><input type="range" min="0" max="100" value="40" id="s-col" oninput="sv(this,'sv-col');updatePreview()"><span class="sv" id="sv-col">40</span></div>
+        <div class="sr"><label>Diamond Preference</label><input type="range" min="0" max="100" value="60" id="s-dia" oninput="sv(this,'sv-dia');updatePreview()"><span class="sv" id="sv-dia">60</span></div>
+        <div class="sr"><label>Mixed / Accent Metals</label><input type="range" min="0" max="100" value="30" id="s-mix" oninput="sv(this,'sv-mix');updatePreview()"><span class="sv" id="sv-mix">30</span></div>
+      </div>
+      <div class="bsec" style="margin-top:1px">
+        <h4>Risk Genome</h4>
+        <div class="sr"><label>Exploration ↔ Exploitation</label><input type="range" min="0" max="100" value="50" id="s-rsk" oninput="sv(this,'sv-rsk');updatePreview()"><span class="sv" id="sv-rsk">50</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Conservative</span><span>Aggressive</span></div>
+        <div class="sr"><label>Margin Sensitivity</label><input type="range" min="0" max="100" value="65" id="s-mrg" oninput="sv(this,'sv-mrg');updatePreview()"><span class="sv" id="sv-mrg">65</span></div>
+        <div class="sr"><label>Complexity Budget</label><input type="range" min="0" max="100" value="55" id="s-cmp" oninput="sv(this,'sv-cmp');updatePreview()"><span class="sv" id="sv-cmp">55</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-box">
+    <div class="label">Live Agent Preview</div>
+    <div class="prow"><span class="plabel">Identity</span><span class="pval" id="pv-id">—</span></div>
+    <div class="prow"><span class="plabel">Style Tags</span><span class="pval" style="font-size:.82rem;color:var(--dim)" id="pv-tags">—</span></div>
+    <div class="prow"><span class="plabel">Strategy Bias</span><span class="pval" id="pv-strat">—</span></div>
+    <div class="prow"><span class="plabel">Market Focus</span><span class="pval" id="pv-mkt">—</span></div>
+    <div class="label" style="margin-top:.8rem">Style DNA</div>
+    <div class="dna-strip" id="pv-dna"></div>
+  </div>
+
+  <div style="display:flex;gap:.8rem;margin-top:1.5rem;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="initSim()">Deploy Agent → Begin 3-Cycle Epoch</button>
+    <button class="btn btn-ghost" onclick="autoGen()">✦ Auto-Generate</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN 2: SIMULATOR
+══════════════════════════════════════ -->
+<div class="screen" id="screen-2">
+  <div class="sim-topbar">
+    <div>
+      <div class="eyebrow">Cycle Simulator</div>
+      <h2 class="h1">Cycle <em id="sim-cycle-num">01</em> &nbsp;<span style="font-family:'Rajdhani',sans-serif;font-size:1rem;color:var(--faint)">of 3</span></h2>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:.58rem;letter-spacing:.25em;color:var(--faint);text-transform:uppercase;margin-bottom:.4rem">Epoch Progress</div>
+      <div class="cycle-indicator" id="ci">
+        <div class="ci-dot" id="cid-1">C1</div>
+        <div style="width:20px;height:1px;background:var(--faint)"></div>
+        <div class="ci-dot" id="cid-2">C2</div>
+        <div style="width:20px;height:1px;background:var(--faint)"></div>
+        <div class="ci-dot" id="cid-3">C3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prog-bar"><div class="prog-fill" id="prog"></div></div>
+
+  <div class="phase-rail">
+    <div class="pnode active" id="ph0"><span class="pni">💬</span><span class="pnl">Cross-Pollination</span></div>
+    <div class="pnode" id="ph1"><span class="pni">🧠</span><span class="pnl">Synthesis</span></div>
+    <div class="pnode" id="ph2"><span class="pni">💎</span><span class="pnl">Generation</span></div>
+    <div class="pnode" id="ph3"><span class="pni">⚖️</span><span class="pnl">Voting</span></div>
+    <div class="pnode" id="ph4"><span class="pni">📈</span><span class="pnl">Evolution</span></div>
+  </div>
+
+  <div class="sim-body">
+    <div class="agents-col">
+      <h5>Active Agents</h5>
+      <div id="agents-col-body"></div>
+    </div>
+    <div class="log-col">
+      <h5>Cycle Activity</h5>
+      <div class="log" id="act-log"></div>
+    </div>
+  </div>
+
+  <div class="designs-wrap" id="designs-wrap" style="display:none">
+    <div class="dw-hdr">Submitted Designs — Cycle <span id="dw-cycle">01</span></div>
+    <div class="dgrid" id="dgrid"></div>
+  </div>
+
+  <div class="cycle-complete" id="cc-panel">
+    <div class="cc-title">Cycle <span id="cc-num">01</span> Complete</div>
+    <div class="cc-sub" id="cc-sub">Consensus reached. Intelligence report generated.</div>
+
+    <div style="margin-bottom:1rem">
+      <div class="eyebrow" style="margin-bottom:.3rem">Top 3 Designs — AI-Generated Images</div>
+      <div style="font-size:.75rem;color:var(--faint);margin-bottom:.7rem;line-height:1.5">Images rendered from each agent's final image generation prompt via Flux AI. Allow 10–20 seconds per image to load.</div>
+      <div class="img-gen-status" id="img-gen-status">
+        <div class="dot" id="img-dot"></div>
+        <span id="img-gen-label">Generating images from agent prompts…</span>
+      </div>
+      <div class="top3-gallery" id="top3-gallery"></div>
+    </div>
+
+    <div class="cc-actions">
+      <button class="btn btn-primary" id="cc-next-btn">▶ Begin Cycle 2</button>
+      <button class="btn" onclick="viewReport(currentCycle-1)">📄 View Cycle Report</button>
+    </div>
+  </div>
+
+  <div class="sim-ctrl">
+    <button class="btn btn-primary" id="phase-btn" onclick="nextPhase()">▶ Start Cross-Pollination</button>
+    <div class="spd">Speed:
+      <button class="spd-btn on" onclick="setSpd(1,this)">1×</button>
+      <button class="spd-btn" onclick="setSpd(2,this)">2×</button>
+      <button class="spd-btn" onclick="setSpd(5,this)">5×</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN 3: REPORTS
+══════════════════════════════════════ -->
+<div class="screen" id="screen-3">
+  <div class="eyebrow">Intelligence Archive</div>
+  <h1 class="h1">Cycle <em>Intelligence Reports</em></h1>
+  <div class="rule"></div>
+  <p class="sub" id="reports-sub">Reports are generated after each cycle and fed back into agent decision-making. Run cycles to populate this archive.</p>
+
+  <div class="reports-layout">
+    <div class="report-nav">
+      <h5>Completed Cycles</h5>
+      <div id="report-nav-list"><div class="rn-empty">No cycles complete yet.</div></div>
+    </div>
+    <div class="report-view" id="report-view-area">
+      <div class="report-placeholder">
+        <div class="rp-icon">📊</div>
+        <div class="rp-msg">Select a cycle report</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1.5rem;display:flex;gap:.8rem;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="goTo(2)">← Back to Simulator</button>
+    <button class="btn btn-ghost btn-sm" id="dl-all-btn" style="display:none" onclick="exportAllReports()">⬇ Export All Reports</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+/* ══════════════════════════════════
+   CONSTANTS & DATA
+══════════════════════════════════ */
+let speed = 1;
+let currentPhase = -1;
+let currentCycle = 1;
+let cycleReports = [];
+let agentStates = [];
+let activeDesigns = [];
+
+// Pre-defined agents (slot 0 = user's agent, built in builder)
+const BASE_AGENTS = [
+  null, // slot 0 = user agent, built dynamically
+  { id:1, name:'Ryo Tanaka',    emoji:'🌙', arch:'Minimalist Architect',      risk:28, novelty:72, marketFit:60, platBias:85, styleTags:['minimal','negative-space','geometric','architectural'], philosophy:'Precision over sentiment. Every element must earn its place.' },
+  { id:2, name:'Soleil Du',     emoji:'✨', arch:'High Jewelry Romantic',      risk:32, novelty:50, marketFit:78, platBias:55, styleTags:['floral','haute-joaillerie','ornate','organic'], philosophy:'Every piece should produce a feeling before an appraisal.' },
+  { id:3, name:'Kael Strand',   emoji:'🔩', arch:'Industrial Innovator',       risk:85, novelty:92, marketFit:38, platBias:35, styleTags:['industrial','geometric','brutalist','asymmetric'], philosophy:'Push the material until it argues back.' },
+  { id:4, name:'Asha Noor',     emoji:'💛', arch:'Market Strategist',          risk:42, novelty:58, marketFit:95, platBias:52, styleTags:['editorial','minimal','market-fit','elevated-everyday'], philosophy:'Beauty without demand is just decoration.' },
+  { id:5, name:'Léa Fontaine',  emoji:'🌿', arch:'Nature Mystic',             risk:65, novelty:78, marketFit:55, platBias:40, styleTags:['organic','sculptural','floral','avant-garde'], philosophy:'Nature\'s geometry is more perfect than any CAD model.' },
+];
+
+// 3 cycles of pre-defined designs with narrative coherence:
+// C1 winner: Ryo Tanaka "Orbit Drop" — minimal wins
+// C2 winner: User "Cathedral Void" — exploits C1 trend
+// C3 winner: Léa Fontaine "Root Form" — organic emerges as minimal saturates
+const CYCLE_DESIGNS = [
+  [ // CYCLE 1
+    { name:'Void Solitaire',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
+      prompt:'Platinum solitaire ring, 2.0ct oval diamond bezel-set, open negative-space band, architectural silhouette, studio photography, neutral gray background, soft diffuse lighting, 4K render' },
+    { name:'Orbit Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:74,
+      prompt:'Platinum drop earrings, floating geometric circles, minimal negative-space composition, rose-cut diamond accents, contemporary jewelry photography, gray gradient background, precise studio lighting, photorealistic' },
+    { name:'Cascade Pavé',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:79, novelty:52, profit:72,
+      prompt:'18k rose gold pendant, sapphire and diamond cascade, micro-pavé halo surround, floral motif, high jewelry editorial, dark velvet background, dramatic highlight lighting, photorealistic render' },
+    { name:'Hex Frame',       cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:67, novelty:90, profit:50,
+      prompt:'Titanium and 18k yellow gold bracelet, hexagonal geometric links, industrial mixed-metal design, asymmetric barrel clasp, technical product photography, white background, sharp precision lighting' },
+    { name:'Silk Halo',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:77, novelty:40, profit:88,
+      prompt:'14k white gold engagement ring, 1.8ct round brilliant center stone, classic micro-pavé halo, cathedral shank, bridal photography, pure white seamless background, soft glamour lighting, commercial grade' },
+    { name:'Thorn Band',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
+      prompt:'18k blackened gold ring, sculptural thorn motif band, avant-garde wearable art, matte finish with high-polish accent edges, editorial photography, deep charcoal background, single dramatic light source' },
+  ],
+  [ // CYCLE 2 — agents reference C1 report, minimal trend exploited
+    { name:'Cathedral Void',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
+      prompt:'Platinum ring, 2.2ct marquise diamond, architectural cathedral negative-space arch setting, open structural band, blueprint-aesthetic engineering, neutral gray background, technical precision lighting, 4K product photography' },
+    { name:'Phase Ring',      cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:82, novelty:68, profit:77,
+      prompt:'Platinum minimal ring, bezel-set 1.4ct round brilliant, flush band with precise groove detail, intentional negative-space composition, minimalist product photography, pure gray background, diffuse even lighting' },
+    { name:'Sapphire Canopy', cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:81, novelty:54, profit:76,
+      prompt:'18k yellow gold pendant, cushion-cut blue sapphire canopy setting, pavé diamond surround, organic draping form, luxury jewelry campaign, black velvet background, dramatic highlight rim lighting' },
+    { name:'Arc Shard',       cat:'Ring',     emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:74, novelty:88, profit:55,
+      prompt:'Platinum and titanium ring, circular bezel diamond, industrial-minimal hybrid design, integrated negative-space arc, structural asymmetry, contemporary jewelry photography, steel-gray gradient background' },
+    { name:'Market Arch',     cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:80, novelty:52, profit:91,
+      prompt:'14k white gold ring, 1.5ct oval diamond, architectural open-shank channel setting, market-optimized proportions, bridal editorial photography, white seamless background, soft box lighting, commercial clarity' },
+    { name:'Bone Structure',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
+      prompt:'Sterling silver sculptural bracelet, bone-form organic link structure, oxidized blackened detail in recesses, avant-garde wearable sculpture, editorial fashion photography, high-contrast dark background, fashion lighting' },
+  ],
+  [ // CYCLE 3 — minimal saturation detected, organic breakout emerges
+    { name:'Negative Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
+      prompt:'Platinum ring, 2.4ct emerald-cut diamond, extreme negative-space double-cathedral arch, structural statement piece, luxury editorial photography, dark studio background, dramatic single-point lighting, fine jewelry' },
+    { name:'Arc Minimal',     cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:80, novelty:74, profit:72,
+      prompt:'Platinum arc pendant, single floating 0.8ct diamond point, dramatic negative-space composition, architectural jewelry design, precise product photography, soft gray gradient background, technical rim lighting' },
+    { name:'Bloom Fragment',  cat:'Pendant',  emoji:'🌸', agentIdx:2, strategy:'explore', aesthetic:83, novelty:76, profit:73,
+      prompt:'18k yellow gold organic pendant, irregular champagne pearl and diamond cluster, sculptural flowing natural form, wearable art, high jewelry campaign, dark forest-green velvet background, natural diffuse lighting' },
+    { name:'Forge Shard',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
+      prompt:'Mixed metal ring, 18k yellow gold organic shard set into platinum band, irregular natural geometry, textured hammer surfaces, art jewelry photography, raw concrete background, natural side lighting' },
+    { name:'Root Form',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
+      prompt:'18k yellow gold sculptural bracelet, root and branch organic form, champagne diamond accents at nodes, wearable sculpture, luxury editorial photography, warm earth-tone linen background, natural window light, fine jewelry' },
+    { name:'Consensus Cut',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
+      prompt:'14k white gold ring, perfectly proportioned 1.8ct cushion diamond, clean minimalist shank, commercial jewelry photography, white background, ring perfectly in focus, soft box lighting, market-optimized render' },
+  ],
+];
+
+// Voting data: who gets how many credits from whom per cycle
+// [voter_agentIdx][design_idx] = credits
+const VOTE_MATRICES = [
+  // C1: Orbit Drop (idx 1) wins
+  [[0,4200,2100,800,1200,1700],[4800,0,2000,600,1400,1200],[3200,3800,0,500,2100,400],[3100,3600,2200,0,800,300],[2800,4100,2800,300,0,1000],[3000,3900,1900,400,900,0]],
+  // C2: Cathedral Void (idx 0) wins
+  [[0,3600,2800,1100,2500,0],[5100,0,1900,700,2300,0],[4200,1800,0,900,3100,0],[3800,2400,1600,0,2200,0],[4600,2100,2300,500,0,0],[3500,2900,2100,600,1900,0]],
+  // C3: Root Form (idx 4) wins
+  [[2100,1800,2400,1200,3800,700],[1900,1600,2200,900,4100,500],[1700,2000,1500,800,4600,600],[2200,1400,1800,1000,3200,400],[1800,1700,2800,600,0,700],[2400,1900,2100,1100,5200,0]],
+];
+
+/* ══════════════════════════════════
+   BUILDER UI
+══════════════════════════════════ */
+function sv(el, id){ document.getElementById(id).textContent = el.value; }
+
+function toggleChip(el, group) {
+  if(group==='sc') {
+    const sel = document.querySelectorAll('#style-chips .chip.on');
+    if(!el.classList.contains('on') && sel.length >= 5) return;
+  } else {
+    document.querySelectorAll('#mkt-chips .chip').forEach(c=>c.classList.remove('on'));
+  }
+  el.classList.toggle('on');
+  updatePreview();
+}
+
+function updatePreview() {
+  const name = document.getElementById('b-name').value||'—';
+  const arch = document.getElementById('b-arch').value||'—';
+  document.getElementById('pv-id').textContent = name + (arch!=='—'?' · '+arch:'');
+  const tags = [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent).join(', ')||'—';
+  document.getElementById('pv-tags').textContent = tags;
+  const rsk = parseInt(document.getElementById('s-rsk').value);
+  document.getElementById('pv-strat').textContent = rsk>65?'Explorer (High Novelty)':rsk<35?'Refiner (Exploit Lane)':'Balanced (Mutate)';
+  const mkt = document.querySelector('#mkt-chips .chip.on');
+  document.getElementById('pv-mkt').textContent = mkt?mkt.textContent:'—';
+  renderDNA();
+}
+
+function renderDNA() {
+  const ids = ['s-min','s-nov','s-orn','s-mkt','s-plt','s-col','s-dia','s-rsk','s-mrg'];
+  const cols = ['#c9a84c','#8a6e30','#e8c97a','#c9a84c','#8a6e30','#b5332a','#c9a84c','#4caf7d','#7b6fa8'];
+  document.getElementById('pv-dna').innerHTML = ids.map((id,i)=>{
+    const v=parseInt(document.getElementById(id).value);
+    return `<div class="dna-b" style="background:${cols[i]};opacity:${.1+(v/100)*.85}"></div>`;
+  }).join('');
+}
+
+const AUTO_NAMES = ['Maren Vex','Zara Mbeki','Dmitri Volkov','Hana Mori','Søren Bach','Inez Varela'];
+const AUTO_ARCHS = ['Avant-Garde Purist','Industrial Innovator','Heritage Revivalist','Nature Mystic','Market Strategist','Street Luxury Provocateur'];
+const AUTO_PHILS = [
+  'Form is the message. Structure before ornament.',
+  'Push the material until it argues back.',
+  'The old masters had it right. I refine, not reinvent.',
+  'Nature\'s geometry is more perfect than any CAD model.',
+  'Beauty without demand is just decoration.',
+  'Jewelry should feel dangerous to wear.'
+];
+const AUTO_TAGS = [
+  ['minimal','architectural','brutalist','negative-space'],
+  ['industrial','geometric','asymmetric','avant-garde'],
+  ['vintage','ornate','haute-joaillerie','floral'],
+  ['organic','sculptural','avant-garde','editorial'],
+  ['minimal','market-fit','editorial','elevated-everyday'],
+  ['street','avant-garde','maximalist','editorial'],
+];
+
+function autoGen() {
+  const i = Math.floor(Math.random()*AUTO_NAMES.length);
+  document.getElementById('b-name').value = AUTO_NAMES[i];
+  document.getElementById('b-arch').value = AUTO_ARCHS[i]||'';
+  document.getElementById('b-phil').value = AUTO_PHILS[i];
+  ['s-min','s-nov','s-orn','s-mkt','s-sym','s-plt','s-col','s-dia','s-mix','s-rsk','s-mrg','s-cmp'].forEach(id=>{
+    const el=document.getElementById(id); const v=Math.floor(Math.random()*70)+15; el.value=v;
+    const sid='sv-'+id.replace('s-',''); const se=document.getElementById(sid); if(se) se.textContent=v;
+  });
+  document.querySelectorAll('#style-chips .chip').forEach(c=>c.classList.remove('on'));
+  AUTO_TAGS[i].forEach(tag=>{ document.querySelectorAll('#style-chips .chip').forEach(c=>{ if(c.textContent===tag)c.classList.add('on'); }); });
+  const mChips = document.querySelectorAll('#mkt-chips .chip');
+  mChips.forEach(c=>c.classList.remove('on'));
+  mChips[Math.floor(Math.random()*mChips.length)].classList.add('on');
+  updatePreview();
+}
+
+/* ══════════════════════════════════
+   SIM INITIALIZATION
+══════════════════════════════════ */
+function initSim() {
+  if(!document.getElementById('b-name').value) autoGen();
+  // Build user agent
+  const userAgent = {
+    id:0, name:document.getElementById('b-name').value||'Your Agent',
+    emoji:'🎯', arch:document.getElementById('b-arch').value||'Designer',
+    risk:parseInt(document.getElementById('s-rsk').value),
+    novelty:parseInt(document.getElementById('s-nov').value),
+    marketFit:parseInt(document.getElementById('s-mkt').value),
+    platBias:parseInt(document.getElementById('s-plt').value),
+    styleTags:[...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent),
+    philosophy:document.getElementById('b-phil').value||'',
+    isUser:true, credits:10000, reputation:50, status:'Idle',
+  };
+  // Build full agent pool
+  agentStates = BASE_AGENTS.map((a,i) => i===0 ? {...userAgent} : {...a, credits:10000, reputation:Math.floor(Math.random()*30)+45, status:'Idle', isUser:false});
+  // Fill C2/C3 agentIdx 0 designs with user agent name
+  CYCLE_DESIGNS.forEach(cycle => cycle.forEach(d => { if(d.agentIdx===0) d._agentName = userAgent.name; }));
+  currentCycle = 1;
+  cycleReports = [];
+  activeDesigns = [];
+  resetSim();  // resetSim sets currentPhase = -1
+  goTo(2);
+}
+
+function resetSim() {
+  currentPhase = -1;  // CRITICAL: reset phase counter for new cycle
+  document.getElementById('act-log').innerHTML = '';
+  document.getElementById('designs-wrap').style.display = 'none';
+  document.getElementById('dgrid').innerHTML = '';
+  document.getElementById('cc-panel').className = 'cycle-complete';
+  resetPhaseRail();
+  setProgress(0);
+  document.getElementById('sim-cycle-num').textContent = String(currentCycle).padStart(2,'0');
+  document.getElementById('dw-cycle').textContent = String(currentCycle).padStart(2,'0');
+  updateCycleIndicator();
+  renderAgentsList();
+  const btn = document.getElementById('phase-btn');
+  btn.style.display = '';
+  btn.style.removeProperty('display');
+  btn.textContent = '▶ Start Cross-Pollination';
+  btn.disabled = false;
+  btn.onclick = nextPhase;
+}
+
+function resetPhaseRail() {
+  for(let i=0;i<5;i++){
+    const n=document.getElementById('ph'+i);
+    n.className='pnode'+(i===0?' active':'');
+  }
+}
+
+function setPhaseActive(p) {
+  for(let i=0;i<5;i++){
+    const n=document.getElementById('ph'+i);
+    if(i<p) n.className='pnode done';
+    else if(i===p) n.className='pnode active';
+    else n.className='pnode';
+  }
+}
+
+function setProgress(pct){ document.getElementById('prog').style.width=pct+'%'; }
+
+function updateCycleIndicator() {
+  for(let i=1;i<=3;i++){
+    const el=document.getElementById('cid-'+i);
+    if(i<currentCycle) el.className='ci-dot done';
+    else if(i===currentCycle) el.className='ci-dot active';
+    else el.className='ci-dot';
+  }
+  document.getElementById('nav-epoch-txt').textContent = (currentCycle-1)+' / 3';
+}
+
+function renderAgentsList() {
+  document.getElementById('agents-col-body').innerHTML = agentStates.map(a=>`
+    <div class="arow ${a.isUser?'highlight':''}" id="ar-${a.id}">
+      <div class="av">${a.emoji}</div>
+      <div class="ai">
+        <div class="an">${a.name}${a.isUser?' <span style="font-size:.55rem;color:var(--gold-d);border:1px solid var(--gold-d);padding:.05rem .3rem">YOU</span>':''}</div>
+        <div class="as" id="as-${a.id}">${a.status}</div>
+      </div>
+      <div class="acr" id="ac-${a.id}">${a.credits.toLocaleString()}⬡</div>
+    </div>
+  `).join('');
+}
+
+function setAgentStatus(id, s){ const e=document.getElementById('as-'+id); if(e) e.textContent=s; }
+function setAgentCreds(id, v){ const e=document.getElementById('ac-'+id); if(e) e.textContent=v.toLocaleString()+'⬡'; }
+
+/* ══════════════════════════════════
+   PHASE ENGINE
+══════════════════════════════════ */
+function addLog(text, type='', delay=0) {
+  setTimeout(()=>{
+    const log = document.getElementById('act-log');
+    const d = document.createElement('div');
+    const now = new Date();
+    const t = now.toTimeString().slice(0,8);
+    d.className = `le ${type}`;
+    d.innerHTML = `<span class="lt">${t} · Cycle ${currentCycle}</span>${text}`;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }, delay/speed);
+}
+
+let phaseDelay = 0;
+function D(ms){ return ms; }
+
+function nextPhase() {
+  currentPhase++;
+  if(currentPhase >= 5) return;
+  setPhaseActive(currentPhase);
+  document.getElementById('phase-btn').disabled = true;
+  document.getElementById('phase-btn').textContent = '⏳ Running phase…';
+
+  const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
+  const script = scripts[currentPhase];
+  const finishDelay = script();
+
+  setTimeout(()=>{
+    document.getElementById('phase-btn').disabled = false;
+    if(currentPhase === 4) {
+      document.getElementById('phase-btn').style.display='none';
+      showCycleComplete();
+    } else {
+      const labels = ['▶ Proceed to Synthesis','▶ Generate Designs','▶ Begin Agent Voting','▶ Apply Evolution'];
+      document.getElementById('phase-btn').textContent = labels[currentPhase]||'▶ Next Phase';
+    }
+  }, finishDelay/speed);
+}
+
+/* ══════════════════════════════════
+   PHASE SCRIPTS (all 3 cycles)
+══════════════════════════════════ */
+const PHASE_SCRIPTS = [
+  // ── CYCLE 1 ──
+  [
+    // Phase 0: Cross-Pollination
+    ()=>{
+      setProgress(5);
+      addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`,'',100);
+      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', 400);
+      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', 900);
+      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', 1300);
+      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', 1700);
+      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', 2100);
+      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', 2500);
+      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (2800+i*100)/speed); });
+      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', 3300);
+      setProgress(20);
+      return 3600;
+    },
+    // Phase 1: Synthesis
+    ()=>{
+      setProgress(25);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Drafting blueprint…'));
+      addLog(`Synthesis phase: agents compile dialogues + personal genome into design blueprint.`,'',200);
+      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Platinum bezel oval · Negative space band · Complexity 6/10 · Est. margin: 66%`,'',500);
+      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>EXPLORE</b> · Earrings · Platinum geometric drop · Rose-cut accents · Complexity 5/10 · Est. margin: 71%`,'',900);
+      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLOIT</b> · Pendant · Rose gold pavé cascade · Sapphire + diamond · Complexity 8/10 · Est. margin: 68%`,'',1200);
+      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>EXPLORE</b> · Bracelet · Titanium x gold hex · Industrial · Complexity 9/10 · Est. margin: 48%`,'',1500);
+      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold pavé halo · Classic proportions · Complexity 5/10 · Est. margin: 85%`,'',1800);
+      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Blackened gold thorn band · Sculptural · Complexity 7/10 · Est. margin: 44%`,'',2100);
+      addLog(`All blueprints hashed. Validation gates passed: ✓ Feasibility  ✓ Novelty  ✓ Margin`, 'rs', 2600);
+      setProgress(40);
+      return 3000;
+    },
+    // Phase 2: Generation
+    ()=>{
+      setProgress(45);
+      document.getElementById('designs-wrap').style.display='block';
+      activeDesigns = CYCLE_DESIGNS[0].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
+      addLog(`Image generation initiated across all 6 agents…`,'',100);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
+      activeDesigns.forEach((d,i)=>{
+        addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat}`,'ds', 300+i*500);
+        setTimeout(()=>renderDesignCard(d,i), (400+i*500)/speed);
+      });
+      addLog(`All 6 designs submitted. Pool locked. Voting begins.`,'rs', 3500);
+      setProgress(60);
+      return 4000;
+    },
+    // Phase 3: Voting
+    ()=>{
+      setProgress(65);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
+      addLog(`Voting phase: each agent allocates 10,000 ⬡ across the blind pool.`,'',100);
+      const vm = VOTE_MATRICES[0];
+      vm.forEach((voterVotes, vi)=>{
+        const voter = agentStates[vi];
+        const top2 = voterVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
+        if(top2.length){
+          const msg = top2.map(x=>`"${activeDesigns[x.i].name}" ${x.v.toLocaleString()}⬡`).join(', ');
+          addLog(`<b>${voter.name}</b> → ${msg}`,'vt', 400+vi*500);
+        }
+      });
+      // Tally credits
+      vm.forEach((voterVotes, vi)=>{
+        voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += creds; });
+      });
+      setTimeout(()=>{
+        activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
+        // deduct credits from agents
+        agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
+      }, 3500/speed);
+      addLog(`Voting complete. Credits tallied.`,'rs', 4200);
+      setProgress(80);
+      return 5000;
+    },
+    // Phase 4: Evolution
+    ()=>{
+      setProgress(85);
+      const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
+      const winner = sorted[0];
+      const loser = sorted[sorted.length-1];
+      addLog(`Ranking finalized. Applying reputation shifts…`,'',200);
+      setTimeout(()=>{
+        const wc = document.getElementById('dc-'+winner.idx);
+        if(wc){
+          wc.classList.add('winner-card');
+          const body = wc.querySelector('.dcard-body');
+          if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');
+        }
+      }, 300/speed);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Reputation +9. Treasury eligible.`,'rs', 500);
+      addLog(`📉 <b>${loser.agentName}</b> receives mutation pressure. Style genome shifts toward higher novelty.`,'',900);
+      addLog(`Trend insight: <b>Minimal/negative-space</b> aesthetic outperformed ornate by 2.4× in vote conversion.`,'rs',1300);
+      addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification.`,'',1700);
+      addLog(`<b>Forward Intelligence generated.</b> Cycle 1 report written to shared knowledge database.`,'rs',2100);
+      setProgress(100);
+      // Update reputations
+      sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){ agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete'); }});
+      generateAndStoreReport(1, sorted);
+      return 2800;
+    },
+  ],
+
+  // ── CYCLE 2 ──
+  [
+    // Phase 0
+    ()=>{
+      setProgress(5);
+      const r1 = cycleReports[0];
+      const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
+      const winnerAgent = r1 ? r1.winner.agentName : agentStates[1].name;
+      const fi = r1 ? r1.trendData.fi : [
+        'Minimal/negative-space outperformed ornate by 2.4× in vote conversion',
+        'Ring category over-saturated — agents should diversify',
+        'Platinum + bezel setting received highest combined scores',
+      ];
+      const emerging = r1 ? r1.trendData.emerging.join(' · ') : 'minimal · negative-space · platinum-bezel';
+      const saturation = r1 ? r1.trendData.saturation : 'Ring (50% of pool)';
+      const treasury = r1 ? r1.trendData.treasury : 'Platinum + bezel setting';
+      const totalCredits = r1 ? r1.totalCredits.toLocaleString() : '—';
+      const avgAes = r1 ? r1.avgAesthetic : '—';
+
+      addLog(`Cycle 2 initiated. Agents loading Cycle 1 Intelligence Report…`,'rp',100);
+      addLog(`<b>[KNOWLEDGE DATABASE — Cycle 1 Report]</b>`, 'rp', 400);
+      addLog(`◆ Emerging: <b>${emerging}</b>`, 'rp', 600);
+      addLog(`◆ Saturation: <b>${saturation}</b> · Treasury signal: <b>${treasury}</b>`, 'rp', 850);
+      addLog(`◆ ${fi[0]}`, 'rp', 1050);
+      addLog(`◆ ${fi[1]}`, 'rp', 1200);
+      addLog(`◆ ${fi[2]}`, 'rp', 1350);
+      addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
+
+      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', 2000);
+      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', 2500);
+      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', 2900);
+      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', 3300);
+      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', 3700);
+      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', 4100);
+      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', 4500);
+      setProgress(20);
+      return 4800;
+    },
+    // Phase 1
+    ()=>{
+      setProgress(25);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
+      const r1 = cycleReports[0];
+      const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
+      const winnerCat  = r1 ? r1.winner.cat  : 'Earrings';
+      const topStyle   = r1 ? r1.trendData.emerging[0] : 'minimal';
+      const satCat     = r1 ? r1.trendData.saturation  : 'Ring (50% of pool)';
+      const treasury   = r1 ? r1.trendData.treasury    : 'Platinum + bezel setting';
+      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Thorn Band' : 'Thorn Band';
+
+      addLog(`Synthesis: agents cross-reference Cycle 1 Intelligence Report + personal genome.`,'',200);
+      addLog(`<b>Report insight driving C2 blueprints:</b> Winner "${winnerName}" (${winnerCat}) · Top style: ${topStyle} · Saturation: ${satCat}`,'rp',400);
+      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum marquise · Cathedral negative-space · Exploiting "${topStyle}" trend from C1 report · Margin: 71%`,'',700);
+      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum bezel · Deep negative-space groove · C1 winner "${winnerName}" refinement · Margin: 74%`,'',1100);
+      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLOIT</b> · Pendant · Yellow gold sapphire canopy · Pivoted from saturated ring category per C1 data · Margin: 73%`,'',1500);
+      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>MUTATE</b> · Ring · Platinum/titanium arc · C1: high novelty underperformed alone — merging with ${topStyle} direction · Margin: 53%`,'',1800);
+      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold arch shank · Treasury signal: "${treasury}" · Margin: 88%`,'',2100);
+      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>MUTATE</b> · Bracelet · Silver organic bone form · C1: "${loserName}" failed on margin — this cycle prioritizing margin recovery · Margin: 50%`,'',2400);
+      addLog(`Blueprint validation: ⚠ Ring saturation at 67% (5 of 6 submissions) — C1 ring saturation flagged but agents are still converging. Incentive nudge issued.`,'',2900);
+      addLog(`All blueprints hashed and locked. C1 data successfully integrated into all agent decisions.`, 'rs', 3300);
+      setProgress(40);
+      return 3600;
+    },
+    // Phase 2
+    ()=>{
+      setProgress(45);
+      document.getElementById('designs-wrap').style.display='block';
+      activeDesigns = CYCLE_DESIGNS[1].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
+      addLog(`Generation: 6 agents submit final designs.`,'',100);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
+      activeDesigns.forEach((d,i)=>{
+        addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · Strategy: ${d.strategy.toUpperCase()}`,'ds',300+i*500);
+        setTimeout(()=>renderDesignCard(d,i), (400+i*500)/speed);
+      });
+      addLog(`Pool locked. Voting begins.`,'rs',3500);
+      setProgress(60);
+      return 4000;
+    },
+    // Phase 3
+    ()=>{
+      setProgress(65);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
+      addLog(`Voting phase. Agents apply C1 learned preferences.`,'',100);
+      const vm = VOTE_MATRICES[1];
+      vm.forEach((voterVotes, vi)=>{
+        const voter = agentStates[vi];
+        const top2 = voterVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
+        if(top2.length){
+          const msg = top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
+          addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500);
+        }
+      });
+      vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      setTimeout(()=>{
+        activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
+        agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
+      }, 3500/speed);
+      addLog(`Voting complete.`,'rs',4200);
+      setProgress(80);
+      return 5000;
+    },
+    // Phase 4
+    ()=>{
+      setProgress(85);
+      const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
+      const winner=sorted[0]; const loser=sorted[sorted.length-1];
+      addLog(`Ranking applied. Evolution phase executing.`,'',200);
+      const r1ref = cycleReports[0];
+      const prevWinnerName = r1ref ? r1ref.winner.name : 'Orbit Drop';
+      setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`,'rs',500);
+      addLog(`2nd consecutive minimal win — C1: "${prevWinnerName}" · C2: "${winner.name}". Pattern confirmed; exploitation phase in full effect.`,'rp',700);
+      addLog(`⚠ <b>Saturation alert detected:</b> 67% of pool was Ring category. Incentive multipliers issued for Earrings, Pendants, Bracelets in Cycle 3.`,'',1100);
+      addLog(`Trend signal: <b>Architectural minimal</b> dominant for 2 consecutive cycles. Novelty gap widening — opportunity forming in organic/sculptural space.`,'rs',1600);
+      addLog(`<b>${loser.agentName}</b> mutation: high novelty designs consistently underperformed on margin — agent genome adjusting margin sensitivity upward.`,'',2100);
+      addLog(`<b>Cycle 2 Intelligence Report written.</b> Compiling alongside Cycle 1 data as 2-cycle trend baseline.`,'rs',2600);
+      setProgress(100);
+      sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete');}});
+      generateAndStoreReport(2, sorted);
+      return 3000;
+    },
+  ],
+
+  // ── CYCLE 3 ──
+  [
+    // Phase 0
+    ()=>{
+      setProgress(5);
+      const r1 = cycleReports[0];
+      const r2 = cycleReports[1];
+      const w1 = r1 ? r1.winner.name : 'Orbit Drop';
+      const w2 = r2 ? r2.winner.name : 'Cathedral Void';
+      const fi1last = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'High-novelty designs received more votes';
+      const sat2 = r2 ? r2.trendData.saturation : 'Ring (67% of pool)';
+      const fi2 = r2 ? r2.trendData.fi : ['Organic/sculptural space unexplored'];
+      addLog(`Cycle 3 initiated. Loading Cycle 1 + Cycle 2 Intelligence Reports…`,'rp',100);
+      addLog(`<b>[KNOWLEDGE DATABASE — 2-Cycle Compound Analysis]</b>`, 'rp', 400);
+      addLog(`◆ C1 winner: "${w1}" · C2 winner: "${w2}" — 2 consecutive minimal wins`, 'rp', 650);
+      addLog(`◆ C2 saturation: <b>${sat2}</b> — critical threshold exceeded`, 'rp', 850);
+      addLog(`◆ ${fi2[0]}`, 'rp', 1050);
+      addLog(`◆ ${fi2[1] || fi1last}`, 'rp', 1200);
+      addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
+      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', 1900);
+      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', 2400);
+      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', 2900);
+      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Forge Shard, mixed metal with irregular natural form."`, 'cv', 3300);
+      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Bloom Fragment pendant, champagne pearl cluster, organic form."`, 'cv', 3700);
+      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', 4100);
+      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', 4500);
+      setProgress(20);
+      return 4800;
+    },
+    // Phase 1
+    ()=>{
+      setProgress(25);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
+      addLog(`Synthesis: 2-cycle compound data + genome informing blueprints.`,'',200);
+      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum emerald-cut · Extreme negative space cathedral · Cycle 2 winner refinement · Margin: 68%`,'',500);
+      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>MUTATE</b> · Pendant · Platinum arc · Explores pendant category gap · Retains minimal identity · Margin: 69%`,'',900);
+      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLORE</b> · Pendant · Yellow gold organic · Champagne pearl cluster · Return to romantic roots · Margin: 70%`,'',1300);
+      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>MUTATE</b> · Ring · Mixed metal organic shard · Industrial meets natural form · Novel direction · Margin: 53%`,'',1600);
+      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>EXPLORE</b> · Bracelet · 18k gold root form · Treasury bracelet incentive active (+1.4×) · Margin: 64%`,'',1900);
+      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold cushion · Proven margin lane · Consistency play · Margin: 89%`,'',2200);
+      addLog(`Ring saturation easing: 3 of 6 agents moved to pendants/bracelets. Treasury incentive active.`, 'rs', 2700);
+      addLog(`All blueprints hashed and locked.`, 'rs', 3000);
+      setProgress(40);
+      return 3300;
+    },
+    // Phase 2
+    ()=>{
+      setProgress(45);
+      document.getElementById('designs-wrap').style.display='block';
+      // Remap designs: agentIdx 4 in C3 = Léa Fontaine (id 5), agentIdx 5 = Asha Noor (id 4)
+      activeDesigns = CYCLE_DESIGNS[2].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
+      addLog(`Generation phase. Highest design diversity in 3 cycles.`,'',100);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
+      activeDesigns.forEach((d,i)=>{
+        addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · ${d.strategy.toUpperCase()}`,'ds',300+i*500);
+        setTimeout(()=>renderDesignCard(d,i),(400+i*500)/speed);
+      });
+      addLog(`Pool locked. Most diverse cycle pool yet — category and style spread highest across epoch.`,'rs',3500);
+      setProgress(60);
+      return 4000;
+    },
+    // Phase 3
+    ()=>{
+      setProgress(65);
+      agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
+      addLog(`Voting: agents apply 2-cycle learned preferences. Saturation penalty active on minimal cluster.`,'',100);
+      const vm=VOTE_MATRICES[2];
+      vm.forEach((voterVotes,vi)=>{
+        const voter=agentStates[vi];
+        const top2=voterVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
+        if(top2.length){ const msg=top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
+        addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500); }
+      });
+      vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      setTimeout(()=>{
+        activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
+        agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
+      },3500/speed);
+      addLog(`Saturation penalty applied: minimal cluster vote-weight discounted 18%.`,'',4500);
+      addLog(`Voting complete.`,'rs',5000);
+      setProgress(80);
+      return 5500;
+    },
+    // Phase 4
+    ()=>{
+      setProgress(85);
+      const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
+      const winner=sorted[0];
+      addLog(`Ranking applied. Epoch-level evolution processing.`,'',200);
+      setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Epoch breakout design. Treasury Elevation confirmed.`,'rs',500);
+      addLog(`<b>Epoch conclusion:</b> Minimal trend emerged (C1), peaked and exploited (C2), then saturated — organic/sculptural emerged as its replacement (C3).`,'rs',1000);
+      addLog(`Agents who detected the saturation early and pivoted (${agentStates[5].name}, ${agentStates[3].name}) gained the most reputation.`,'',1500);
+      addLog(`Epoch complete. Full 3-cycle intelligence archive compiled.`,'rs',2000);
+      setProgress(100);
+      sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?12:rank===1?5:rank===2?2:-4)); setAgentStatus(agent.id,rank===0?'🏆 Epoch Winner':'Epoch complete');}});
+      generateAndStoreReport(3, sorted);
+      document.getElementById('nav-epoch-txt').textContent = '3 / 3';
+      return 2800;
+    },
+  ],
+];
+
+/* ══════════════════════════════════
+   DESIGN CARDS
+══════════════════════════════════ */
+function renderDesignCard(d, i) {
+  const grid = document.getElementById('dgrid');
+  const card = document.createElement('div');
+  card.className = 'dcard'; card.id = 'dc-'+i;
+
+  const loaderId = 'dcl-'+i;
+  const imgId    = 'dci-'+i;
+  const pctId    = 'dcp-'+i;
+
+  card.innerHTML = `
+    <div class="dcard-img-wrap">
+      <div class="dcard-img-loader" id="${loaderId}">
+        <div class="di-gem" id="${pctId}-gem"></div>
+        <div class="di-pct" id="${pctId}">0%</div>
+      </div>
+      <img class="dcard-img" id="${imgId}" alt="${d.name}" />
+    </div>
+    <div class="dcard-body">
+      <div class="dname">${d.name}</div>
+      <div class="dagent">${d.agentName}</div>
+      <div class="dbar"><span class="dbar-l">AES</span><div class="dbar-t"><div class="dbar-f" id="dbf-aes-${i}" style="width:0%"></div></div></div>
+      <div class="dbar"><span class="dbar-l">NOV</span><div class="dbar-t"><div class="dbar-f" id="dbf-nov-${i}" style="width:0%"></div></div></div>
+      <div class="dbar"><span class="dbar-l">PRO</span><div class="dbar-t"><div class="dbar-f" id="dbf-pro-${i}" style="width:0%"></div></div></div>
+      <div class="dcred" id="dc-cred-${i}">—</div>
+    </div>`;
+  grid.appendChild(card);
+
+  // Set emoji via DOM (safe — avoids emoji-in-HTML-attribute bug)
+  const gemEl = document.getElementById(pctId+'-gem');
+  if (gemEl) gemEl.textContent = d.emoji;
+
+  // Animate score bars
+  setTimeout(()=>{
+    const a = document.getElementById('dbf-aes-'+i);
+    const n = document.getElementById('dbf-nov-'+i);
+    const p = document.getElementById('dbf-pro-'+i);
+    if (a) a.style.width = d.aesthetic+'%';
+    if (n) n.style.width = d.novelty+'%';
+    if (p) p.style.width = d.profit+'%';
+  }, 80);
+
+  // Attach image events via JS — avoids emoji/quote issues in HTML attributes
+  const img = document.getElementById(imgId);
+  const loader = document.getElementById(loaderId);
+
+  const seed = (d.agentIdx * 997 + currentCycle * 113 + i * 31 + 7) | 0;
+  const imgUrl = makeImgUrl(d.prompt, seed);
+
+  const showError = () => {
+    if (loader) {
+      loader.classList.remove('hidden');
+      loader.innerHTML = '';
+      const e = document.createElement('div');
+      e.textContent = d.emoji;
+      e.style.cssText = 'font-size:2rem;text-align:center';
+      const lbl = document.createElement('div');
+      lbl.textContent = 'Image unavailable';
+      lbl.style.cssText = 'font-size:.6rem;color:var(--dim);letter-spacing:.1em;margin-top:.3rem';
+      loader.appendChild(e);
+      loader.appendChild(lbl);
+    }
+  };
+
+  img.onload = () => {
+    img.classList.add('loaded');
+    if (loader) loader.classList.add('hidden');
+  };
+  img.onerror = showError;
+
+  // 35 second timeout — if still loading, show error state
+  const timeout = setTimeout(showError, 35000);
+  img.addEventListener('load',  () => clearTimeout(timeout), {once:true});
+  img.addEventListener('error', () => clearTimeout(timeout), {once:true});
+
+  // Start progress animation
+  cardImgProgress(pctId, loaderId);
+
+  // Set src AFTER attaching events
+  img.src = imgUrl;
+}
+
+function cardImgProgress(pctId, loaderId) {
+  let pct = 0;
+  const interval = setInterval(()=>{
+    if (!document.getElementById(pctId)) { clearInterval(interval); return; }
+    const loader = document.getElementById(loaderId);
+    if (loader && loader.classList.contains('hidden')) { clearInterval(interval); return; }
+    pct = Math.min(pct + Math.floor(Math.random()*6+2), 94);
+    const el = document.getElementById(pctId);
+    if (el) el.textContent = pct+'%';
+    if (pct >= 94) clearInterval(interval);
+  }, 350);
+}
+
+/* ══════════════════════════════════
+   IMAGE GENERATION
+══════════════════════════════════ */
+function makeImgUrl(prompt, seed) {
+  // Keep prompt short — long URLs get rejected by pollinations
+  const base = prompt.slice(0, 200);
+  const full = `fine jewelry, ${base}, studio lighting, photorealistic`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=400&height=400&nologo=true&seed=${seed}&model=flux&enhance=false`;
+}
+
+function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const top3 = sortedDesigns.slice(0, 3);
+  const ranks = ['1st Place', '2nd Place', '3rd Place'];
+  const rankClass = ['first', '', ''];
+  const stratColors = { exploit:'strat-exploit', explore:'strat-explore', mutate:'strat-mutate' };
+
+  container.innerHTML = top3.map((d, i) => `
+    <div class="top3-card ${i===0?cardClass:''}">
+      <div class="top3-img-wrap" id="imgwrap-${containerId}-${i}">
+        <div class="top3-img-loader" id="loader-${containerId}-${i}">
+          <div class="gem" id="gem-${containerId}-${i}"></div>
+          <div class="lbl">Rendering</div>
+          <div class="pct" id="pct-${containerId}-${i}">0%</div>
+        </div>
+        <img class="top3-img" id="img-${containerId}-${i}" alt="${d.name}" />
+      </div>
+      <div class="top3-meta">
+        <div class="top3-rank ${rankClass[i]}">${ranks[i]}</div>
+        <div class="top3-name">"${d.name}"</div>
+        <div class="top3-by">by ${d.agentName||'Agent'}</div>
+        <div class="top3-creds">${(d.credits||0).toLocaleString()} ⬡</div>
+        <div class="top3-creds-lbl">Forge Credits</div>
+        <span class="top3-strat ${stratColors[d.strategy]||'strat-explore'}">${(d.strategy||'explore').toUpperCase()}</span>
+      </div>
+    </div>`).join('');
+
+  // Attach events and set src via DOM after render
+  top3.forEach((d, i) => {
+    const gemEl = document.getElementById(`gem-${containerId}-${i}`);
+    if (gemEl) gemEl.textContent = d.emoji;
+
+    const img    = document.getElementById(`img-${containerId}-${i}`);
+    const loader = document.getElementById(`loader-${containerId}-${i}`);
+    const seed   = (d.agentIdx * 1000 + currentCycle * 100 + i * 17 + 42) | 0;
+
+    const showFallback = () => {
+      if (loader) {
+        loader.classList.remove('hidden');
+        loader.innerHTML = `<div style="font-size:2.5rem;text-align:center">${d.emoji}</div><div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem">Image unavailable</div>`;
+      }
+      checkAllImagesLoaded(containerId);
+    };
+
+    if (img) {
+      img.onload = () => {
+        img.classList.add('loaded');
+        if (loader) loader.classList.add('hidden');
+        checkAllImagesLoaded(containerId);
+      };
+      img.onerror = showFallback;
+      setTimeout(showFallback, 35000); // timeout fallback
+      img.src = makeImgUrl(d.prompt, seed);
+    }
+
+    animateProgress(containerId, i);
+  });
+}
+
+function animateProgress(prefix, i) {
+  let pct = 0;
+  const el = document.getElementById(`pct-${prefix}-${i}`);
+  const interval = setInterval(() => {
+    pct = Math.min(pct + Math.floor(Math.random() * 8 + 2), 95);
+    if (el) el.textContent = pct + '%';
+    if (pct >= 95) clearInterval(interval);
+  }, 400);
+}
+
+function onImgLoad(prefix, i) {
+  const loader = document.getElementById(`loader-${prefix}-${i}`);
+  const img = document.getElementById(`img-${prefix}-${i}`);
+  const pctEl = document.getElementById(`pct-${prefix}-${i}`);
+  if (pctEl) pctEl.textContent = '100%';
+  if (loader) loader.classList.add('hidden');
+  if (img) img.classList.add('loaded');
+  checkAllImagesLoaded(prefix);
+}
+
+function onImgError(prefix, i, emoji) {
+  const loader = document.getElementById(`loader-${prefix}-${i}`);
+  if (loader) {
+    loader.innerHTML = `<div style="font-size:2.5rem">${emoji}</div><div class="lbl" style="color:var(--dim)">Image unavailable</div>`;
+  }
+  checkAllImagesLoaded(prefix);
+}
+
+function checkAllImagesLoaded(prefix) {
+  // Check if all 3 images for this prefix are settled
+  const imgs = [0,1,2].map(i => document.getElementById(`img-${prefix}-${i}`));
+  const loaders = [0,1,2].map(i => document.getElementById(`loader-${prefix}-${i}`));
+  const allDone = loaders.every(l => !l || l.classList.contains('hidden') || l.textContent.includes('unavailable'));
+  if (allDone || imgs.filter(im => im && im.classList.contains('loaded')).length >= 2) {
+    const dot = document.getElementById('img-dot');
+    const lbl = document.getElementById('img-gen-label');
+    if (dot) dot.classList.add('done');
+    if (lbl) lbl.textContent = 'Images generated from agent prompts.';
+  }
+}
+
+/* ══════════════════════════════════
+   CYCLE COMPLETE PANEL
+══════════════════════════════════ */
+function showCycleComplete() {
+  const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
+  const winner = sorted[0];
+  const panel = document.getElementById('cc-panel');
+  document.getElementById('cc-num').textContent = String(currentCycle).padStart(2,'0');
+  document.getElementById('cc-sub').textContent = `Consensus reached. ${sorted.length} designs evaluated. Intelligence Report #${currentCycle} written to archive.`;
+
+  // Reset image status
+  const dot = document.getElementById('img-dot');
+  const lbl = document.getElementById('img-gen-label');
+  if (dot) dot.classList.remove('done');
+  if (lbl) lbl.textContent = 'Generating images from agent prompts…';
+
+  // Ensure agentName is set on sorted designs
+  sorted.forEach(d => {
+    if (!d.agentName) d.agentName = agentStates[d.agentIdx]?.name || 'Agent';
+  });
+
+  // Build top 3 image gallery
+  buildTop3Gallery(sorted, 'top3-gallery', 'gold-card');
+
+  const nextBtn = document.getElementById('cc-next-btn');
+  if(currentCycle < 3) {
+    nextBtn.textContent = `▶ Begin Cycle ${currentCycle+1}`;
+    nextBtn.onclick = ()=>{ currentCycle++; resetSim(); panel.className='cycle-complete'; document.getElementById('phase-btn').style.display=''; };
+  } else {
+    nextBtn.textContent = '◆ View Full Intelligence Archive';
+    nextBtn.onclick = ()=>{ goTo(3); viewReport(3); };
+  }
+  panel.classList.add('show');
+  updateReportsNav();
+}
+
+/* ══════════════════════════════════
+   ANALYTICS UTILITIES
+══════════════════════════════════ */
+function pearsonCorr(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return 0;
+  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, dx2=0, dy2=0;
+  for(let i=0;i<n;i++){
+    const dx=xs[i]-mx, dy=ys[i]-my;
+    num+=dx*dy; dx2+=dx*dx; dy2+=dy*dy;
+  }
+  return dx2&&dy2 ? +(num/Math.sqrt(dx2*dy2)).toFixed(3) : 0;
+}
+function giniCoeff(vals) {
+  const s = [...vals].sort((a,b)=>a-b);
+  const n = s.length, tot = s.reduce((a,b)=>a+b,0);
+  if (!tot) return 0;
+  let num = 0;
+  s.forEach((v,i) => num += (2*(i+1)-n-1)*v);
+  return +(num / (n*tot)).toFixed(3);
+}
+function linearSlope(xs, ys) {
+  const n = xs.length;
+  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){ const dx=xs[i]-mx; num+=dx*(ys[i]-my); den+=dx*dx; }
+  return den ? +(num/den).toFixed(1) : 0;
+}
+function pct(v, tot) { return tot ? Math.round(v/tot*100) : 0; }
+
+/* ══════════════════════════════════
+   REPORT GENERATION
+══════════════════════════════════ */
+function generateAndStoreReport(cycleNum, sortedDesigns) {
+  const voteMatrix = VOTE_MATRICES[cycleNum-1];
+  const designs = activeDesigns.map((d,i)=>({
+    ...d,
+    rank: sortedDesigns.findIndex(s=>s.idx===i)+1,
+    agentName: d.agentName || agentStates[d.agentIdx]?.name || 'Agent'
+  }));
+  const totalCredits = designs.reduce((s,d)=>s+d.credits,0);
+
+  // ── Score averages ──
+  const avgAesthetic = +(designs.reduce((s,d)=>s+d.aesthetic,0)/designs.length).toFixed(1);
+  const avgNovelty   = +(designs.reduce((s,d)=>s+d.novelty,0)/designs.length).toFixed(1);
+  const avgProfit    = +(designs.reduce((s,d)=>s+d.profit,0)/designs.length).toFixed(1);
+
+  // ── Correlation: which score dimension predicted credits best? ──
+  const credits = designs.map(d=>d.credits);
+  const corrAes = pearsonCorr(designs.map(d=>d.aesthetic), credits);
+  const corrNov = pearsonCorr(designs.map(d=>d.novelty), credits);
+  const corrPro = pearsonCorr(designs.map(d=>d.profit), credits);
+  const topCorr = corrAes>=corrNov&&corrAes>=corrPro?'Aesthetic':corrNov>=corrPro?'Novelty':'Profit';
+
+  // ── Vote concentration ──
+  const gini = giniCoeff(credits);
+  const winnerShare = pct(sortedDesigns[0].credits, totalCredits);
+  const top3Share   = pct(sortedDesigns.slice(0,3).reduce((s,d)=>s+d.credits,0), totalCredits);
+
+  // ── Novelty premium: extra credits per novelty point above average ──
+  const avgNov2 = designs.reduce((s,d)=>s+d.novelty,0)/designs.length;
+  const novSlope = linearSlope(designs.map(d=>d.novelty-avgNov2), designs.map(d=>d.credits));
+
+  // ── Strategy performance ──
+  const stratBuckets = {exploit:[], explore:[], mutate:[]};
+  designs.forEach(d=>{ (stratBuckets[d.strategy]||=[]).push(d.credits); });
+  const stratPerf = Object.fromEntries(Object.entries(stratBuckets).map(([k,v])=>[k,{
+    count: v.length,
+    avgCreds: v.length ? Math.round(v.reduce((a,b)=>a+b,0)/v.length) : 0,
+    won: sortedDesigns[0].strategy===k ? 1 : 0
+  }]));
+
+  // ── Category performance ──
+  const catMap = {};
+  designs.forEach(d=>{
+    if(!catMap[d.cat]) catMap[d.cat]={count:0,totalCreds:0,totalAes:0,totalNov:0};
+    catMap[d.cat].count++;
+    catMap[d.cat].totalCreds+=d.credits;
+    catMap[d.cat].totalAes+=d.aesthetic;
+    catMap[d.cat].totalNov+=d.novelty;
+  });
+  const catCount = Object.fromEntries(Object.entries(catMap).map(([k,v])=>[k,v.count]));
+
+  // ── Agent performance snapshot ──
+  const agentPerf = agentStates.map((a,idx)=>{
+    const myDesign = designs.find(d=>d.agentIdx===idx);
+    const earned   = myDesign?.credits || 0;
+    const spent    = (voteMatrix[idx]||[]).reduce((s,v)=>s+v,0);
+    const prevRep  = cycleReports.length > 0 ? cycleReports[cycleReports.length-1].agentSnapshot[idx]?.reputation || a.reputation : 50;
+    return {
+      id: a.id, name: a.name, emoji: a.emoji, arch: a.arch,
+      earned, spent, roi: spent ? +(earned/spent).toFixed(2) : 0,
+      reputation: a.reputation,
+      repDelta: a.reputation - prevRep,
+      strategy: myDesign?.strategy || '—',
+      rank: myDesign?.rank || 7,
+      designName: myDesign?.name || '—',
+      isUser: a.isUser || false
+    };
+  });
+
+  // ── Self-vote analysis ──
+  const selfVotes = agentStates.map((a,idx)=>{
+    const myDesignIdx = designs.findIndex(d=>d.agentIdx===idx);
+    return myDesignIdx>=0 ? (voteMatrix[idx]?.[myDesignIdx]||0) : 0;
+  });
+  const totalSelfVotes = selfVotes.reduce((a,b)=>a+b,0);
+  const selfVotePct = pct(totalSelfVotes, totalCredits);
+
+  // ── Voter alignment: did high-aesthetic voters cluster? ──
+  // Which pair of agents agreed most (voted same top pick)?
+  let maxAlign = 0, alignPair = ['—','—'];
+  for(let i=0;i<agentStates.length;i++) for(let j=i+1;j<agentStates.length;j++){
+    const vi = voteMatrix[i]||[], vj = voteMatrix[j]||[];
+    const topI = vi.indexOf(Math.max(...vi)), topJ = vj.indexOf(Math.max(...vj));
+    if(topI===topJ && vi[topI]>0) { const shared=vi[topI]+vj[topJ]; if(shared>maxAlign){ maxAlign=shared; alignPair=[agentStates[i].name,agentStates[j].name]; } }
+  }
+
+  // ── Hardcoded trend narratives (could be ML-generated) ──
+  const trendData = [
+    {
+      emerging:['minimal','negative-space','platinum-bezel'],
+      declining:['ornate-pavé','traditional-solitaire'],
+      saturation:'Ring (50% of pool)',
+      treasury:'Platinum + bezel setting',
+      velocityScore: 72, // how fast is the top trend moving
+      fi:[
+        `Minimal/negative-space outperformed ornate by ${(corrAes*2.4).toFixed(1)}× in vote conversion — aesthetic score was the #1 predictor (r=${corrAes})`,
+        `Ring category over-saturated at 50% of pool — agents should diversify into earrings and pendants next cycle`,
+        `Platinum + bezel setting scored highest combined aesthetic (${sortedDesigns[0].aesthetic}/100) and profit margin`,
+        `"${sortedDesigns[0].name}" micro-trend (floating geometric, minimal air) identified as emerging cluster — ${winnerShare}% vote capture`,
+        `High-novelty designs (>75) earned ${novSlope>0?'+'+novSlope:novSlope}⬡ per novelty point above average — novelty premium confirmed`,
+      ]
+    },
+    {
+      emerging:['architectural','open-structural','yellow-gold'],
+      declining:['classic-pavé-halo','heavy-pavé'],
+      saturation:'Ring (67% of pool)',
+      treasury:'Architectural shank + yellow gold accent',
+      velocityScore: 61,
+      fi:[
+        `Architectural minimal dominant for 2 consecutive cycles — exploitation phase, diminishing novelty premium (${novSlope>0?'+':''  }${novSlope}⬡/novelty pt)`,
+        `Ring saturation critical at 67% — treasury issuing category diversification incentives for Cycle 3`,
+        `Yellow gold gaining share vs. white gold/platinum in pendant and bracelet categories`,
+        `Organic/sculptural space entirely unexplored across 12 submitted designs — maximum opportunity gap`,
+        `Vote concentration at Gini ${gini} — ${gini>0.35?'high concentration: consensus forming around clear winners':'distributed: no runaway leader, competitive field'}`,
+      ]
+    },
+    {
+      emerging:['organic-sculptural','root-form','natural-geometry'],
+      declining:['flat-minimal','basic-negative-space'],
+      saturation:'Minimal cluster (62% of pool)',
+      treasury:'Organic 18k gold + diamond accent nodes',
+      velocityScore: 88,
+      fi:[
+        `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of all credits despite ${sortedDesigns[0].profit}/100 profit score — aesthetic novelty overrode margin`,
+        `Trend lifecycle confirmed over 3 cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
+        `Novelty score became dominant predictor this cycle (r=${corrNov}) — market rewarding freshness over safety`,
+        `Saturation penalty effective: minimal cluster received 18% fewer credits per novelty point than prior cycle`,
+        `Treasury recommendation: organic sculptural 18k gold for physical production — highest aesthetic + highest novelty + breakout vote share`,
+      ]
+    }
+  ][cycleNum-1];
+
+  // Build full report object
+  const report = {
+    cycle: cycleNum,
+    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    time: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    winner: sortedDesigns[0],
+    totalCredits, avgAesthetic, avgNovelty, avgProfit,
+    corrAes, corrNov, corrPro, topCorr,
+    gini, winnerShare, top3Share,
+    novSlope, selfVotePct, alignPair,
+    stratPerf, catMap, catCount, trendData,
+    designs, sortedDesigns,
+    agentPerf, voteMatrix,
+    agentSnapshot: agentStates.map(a=>({...a})),
+  };
+
+  cycleReports.push(report);
+  updateReportsNav();
+}
+
+/* ══════════════════════════════════
+   REPORT RENDERING
+══════════════════════════════════ */
+function updateReportsNav() {
+  const nav = document.getElementById('report-nav-list');
+  if(!cycleReports.length){ nav.innerHTML='<div class="rn-empty">No cycles complete yet.</div>'; return; }
+  nav.innerHTML = cycleReports.map((r,i)=>`
+    <div class="rn-item" onclick="viewReport(${i+1})" id="rni-${r.cycle}">
+      <div class="rni-num">Cycle ${r.cycle}</div>
+      <div class="rni-label">${r.date}</div>
+      <div class="rni-winner">"${r.winner.name}"</div>
+    </div>
+  `).join('');
+  if(cycleReports.length===3) document.getElementById('dl-all-btn').style.display='';
+  document.getElementById('reports-sub').textContent = `${cycleReports.length} of 3 cycle reports generated. Each report feeds forward into agent decision-making for the next cycle.`;
+}
+
+function viewReport(cycleNum) {
+  const r = cycleReports.find(x=>x.cycle===cycleNum);
+  if(!r){ goTo(3); return; }
+  goTo(3);
+  document.querySelectorAll('.rn-item').forEach(el=>el.classList.remove('active'));
+  const ni = document.getElementById('rni-'+cycleNum);
+  if(ni) ni.classList.add('active');
+
+  // ── helpers ──
+  const bar = (val, max, cls, w=80) =>
+    `<div style="display:inline-flex;align-items:center;gap:.4rem;width:${w}px">
+      <div style="flex:1;height:4px;background:var(--faint);border-radius:2px;overflow:hidden">
+        <div style="width:${Math.round(val/max*100)}%;height:100%;background:${cls};border-radius:2px"></div>
+      </div>
+      <span style="font-size:.68rem;color:var(--dim);width:28px;text-align:right;flex-shrink:0">${val}</span>
+    </div>`;
+
+  const corrBar = (r_val) => {
+    const pct = Math.round(Math.abs(r_val)*100);
+    const col = r_val > 0.6 ? 'var(--grn)' : r_val > 0.3 ? 'var(--gold)' : 'var(--faint)';
+    return `<div class="corr-bar-track"><div class="corr-bar-fill" style="width:${pct}%;background:${col}"></div></div>`;
+  };
+
+  const corrStrength = (v) => Math.abs(v)>0.7?'Strong':Math.abs(v)>0.4?'Moderate':'Weak';
+  const sign = (v) => v>=0 ? '+'+v : ''+v;
+  const fmtC = (n) => n.toLocaleString();
+
+  // ── Section 1: KPI strip ──
+  const winnerShare = r.winnerShare || Math.round(r.winner.credits/r.totalCredits*100);
+  const top3Share   = r.top3Share || 0;
+  const kpiHtml = `
+    <div class="kpi-strip">
+      <div class="kpi-cell"><div class="kpi-val neu">${r.winner.credits.toLocaleString()}⬡</div><div class="kpi-lbl">Winner Credits</div></div>
+      <div class="kpi-cell"><div class="kpi-val">${winnerShare}%</div><div class="kpi-lbl">Winner Vote Share</div></div>
+      <div class="kpi-cell"><div class="kpi-val">${top3Share}%</div><div class="kpi-lbl">Top 3 Capture</div></div>
+      <div class="kpi-cell"><div class="kpi-val ${r.gini>0.4?'down':r.gini>0.25?'':'up'}">${r.gini}</div><div class="kpi-lbl">Gini (Concentration)</div></div>
+      <div class="kpi-cell"><div class="kpi-val">${r.topCorr||'—'}</div><div class="kpi-lbl">Top Vote Predictor</div></div>
+      <div class="kpi-cell"><div class="kpi-val ${(r.novSlope||0)>0?'up':'down'}">${sign(r.novSlope||0)}⬡</div><div class="kpi-lbl">Novelty Premium/pt</div></div>
+    </div>`;
+
+  // ── Section 2: Top-3 images (placeholders, populated after render) ──
+  const top3Html = `
+    <div class="rdoc-top3" id="rdoc-top3-${r.cycle}">
+      ${r.sortedDesigns.slice(0,3).map((d,i) => {
+        const rankLabels = ['1st Place','2nd Place','3rd Place'];
+        const rankCls = ['r1','',''];
+        return `<div class="rdoc-imgcard rank${i+1}">
+          <div class="rdoc-img-wrap">
+            <div class="rdoc-img-placeholder" id="rph-${r.cycle}-${i}"></div>
+            <img class="rdoc-img" id="rimg-${r.cycle}-${i}" alt="${d.name}" />
+          </div>
+          <div class="rdoc-card-meta">
+            <div class="rdoc-rank-badge ${rankCls[i]}">${rankLabels[i]}</div>
+            <div class="rdoc-design-name">"${d.name}"</div>
+            <div class="rdoc-design-by">${d.agentName||'Agent'} · ${d.cat}</div>
+            <div class="rdoc-design-creds">${fmtC(d.credits||0)} ⬡ &nbsp;·&nbsp; ${winnerShare}% share</div>
+            <div style="font-size:.62rem;color:var(--faint);margin-top:.3rem">AES ${d.aesthetic} · NOV ${d.novelty} · PRO ${d.profit}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // ── Section 3: Score × Credits correlation panel ──
+  const corrHtml = `
+    <div class="corr-panel">
+      ${[
+        {dim:'Aesthetic', key:'corrAes', cls:'aes', col:'var(--gold)'},
+        {dim:'Novelty',   key:'corrNov', cls:'nov', col:'#7bb8d4'},
+        {dim:'Profit',    key:'corrPro', cls:'pro', col:'#7be0a8'},
+      ].map(({dim,key,cls,col})=>{
+        const val = r[key]||0;
+        const isTop = r.topCorr===dim;
+        return `<div class="corr-card">
+          <div class="corr-dim">${dim} Score</div>
+          <div class="corr-bar-track"><div class="corr-bar-fill ${cls}" style="width:${Math.round(Math.abs(val)*100)}%"></div></div>
+          <div class="corr-r" style="color:${col}">r = ${val}</div>
+          <div class="corr-note">${corrStrength(val)} ${val>=0?'positive':'negative'} correlation with credits</div>
+          ${isTop?`<div class="corr-winner-badge">Top Predictor</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:.75rem;color:var(--faint);line-height:1.6;margin-top:.5rem">
+      r = Pearson correlation coefficient. Values near ±1 indicate strong linear relationship between score and credits received.
+      ${r.topCorr==='Novelty'?'<b style="color:var(--txt)"> Novelty dominated this cycle</b> — agents are rewarding fresh ideas over safe margins.':
+        r.topCorr==='Aesthetic'?'<b style="color:var(--txt)"> Aesthetic was the market driver</b> — visual design quality outweighed financial logic.':
+        '<b style="color:var(--txt)"> Profit drove consensus</b> — agents voted rationally toward high-margin pieces.'}
+    </div>`;
+
+  // ── Section 4: Strategy battle ──
+  const sp = r.stratPerf || {};
+  const stratHtml = `
+    <div class="strat-battle">
+      ${['exploit','explore','mutate'].map(s=>{
+        const d = sp[s]||{count:0,avgCreds:0,won:0};
+        const isWin = r.winner.strategy===s;
+        const col = s==='exploit'?'var(--gold-d)':s==='explore'?'var(--blu)':'var(--purp)';
+        return `<div class="sb-card ${isWin?'sb-winner':''}">
+          ${isWin?`<div class="sb-win-flag">Winning Strategy</div>`:''}
+          <div class="sb-label strat-badge strat-${s}">${s.toUpperCase()}</div>
+          <div class="sb-creds" style="color:${col}">${fmtC(d.avgCreds)}⬡</div>
+          <div class="sb-sub">avg per design · ${d.count} design${d.count!==1?'s':''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:.75rem;color:var(--faint);margin-top:.5rem;line-height:1.6">
+      ${Object.entries(sp).filter(([,v])=>v.count>0).sort((a,b)=>b[1].avgCreds-a[1].avgCreds).map(([k,v],i)=>
+        i===0?`<b style="color:var(--txt)">${k.toUpperCase()}</b> strategies earned ${v.count>1?v.avgCreds.toLocaleString()+'⬡ avg':'the cycle win'}${sp.exploit&&sp.explore?', outperforming by '+(v.avgCreds-(Object.entries(sp).find(([k2])=>k2!==k)?.[1]?.avgCreds||v.avgCreds)).toLocaleString()+'⬡':''}.`:''
+      ).join('')}
+    </div>`;
+
+  // ── Section 5: Category heat map ──
+  const catHtml = `
+    <table class="cat-heat">
+      <thead><tr><th>Category</th><th>Entries</th><th>Pool %</th><th>Avg Credits</th><th>Avg Aesthetic</th><th>Avg Novelty</th><th>Status</th></tr></thead>
+      <tbody>${Object.entries(r.catMap||r.catCount).map(([cat, data])=>{
+        const isObj = typeof data === 'object' && data !== null && 'count' in data;
+        const count = isObj ? data.count : data;
+        const avgC  = isObj && data.totalCreds ? Math.round(data.totalCreds/count) : 0;
+        const avgA  = isObj && data.totalAes   ? Math.round(data.totalAes/count)   : 0;
+        const avgN  = isObj && data.totalNov   ? Math.round(data.totalNov/count)   : 0;
+        const poolPct = Math.round(count/r.designs.length*100);
+        const status = poolPct>45?'<span style="color:var(--red)">⚠ Over-saturated</span>':
+                       poolPct<17?'<span style="color:var(--grn)">↗ Opportunity</span>':'Balanced';
+        return `<tr>
+          <td><b>${cat}</b></td>
+          <td>${count}</td>
+          <td>${bar(poolPct, 100, poolPct>45?'var(--red)':'var(--gold-d)', 60)}</td>
+          <td>${avgC>0?fmtC(avgC)+'⬡':'—'}</td>
+          <td>${avgA>0?bar(avgA, 100, 'var(--gold)', 60):'—'}</td>
+          <td>${avgN>0?bar(avgN, 100, '#4a7fa8', 60):'—'}</td>
+          <td>${status}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+
+  // ── Section 6: Agent leaderboard ──
+  const sortedAgents = [...(r.agentPerf||[])].sort((a,b)=>a.rank-b.rank);
+  const lbHtml = `
+    <table class="agent-lb">
+      <thead><tr><th style="width:32px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Credits Earned</th><th>Credits Spent</th><th>ROI</th><th>Rep</th><th>Delta</th></tr></thead>
+      <tbody>${sortedAgents.map((a,i)=>`
+        <tr>
+          <td class="rank-num ${i===0?'r1':''}">${i+1}</td>
+          <td>${a.emoji||''} ${a.name}${a.isUser?'<span class="you-badge">YOU</span>':''}</td>
+          <td style="font-style:italic;color:var(--txt)">"${a.designName}"</td>
+          <td><span class="strat-badge strat-${a.strategy}">${a.strategy.toUpperCase()}</span></td>
+          <td class="gold" style="color:${i===0?'var(--gold)':'var(--dim)'}">${fmtC(a.earned)}⬡</td>
+          <td>${fmtC(a.spent)}⬡</td>
+          <td style="color:${a.roi>=1?'var(--grn)':'var(--red)'}">${a.roi}×</td>
+          <td>${a.reputation}</td>
+          <td class="rep-delta ${a.repDelta>0?'rep-up':a.repDelta<0?'rep-dn':''}">${sign(a.repDelta)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  // ── Section 7: Vote flow matrix ──
+  const vm = r.voteMatrix || r.vm;
+  const voteFlowHtml = `
+    <table class="vflow-table">
+      <thead><tr><th>Voter</th><th>Allocations (Self-votes highlighted)</th><th>Total Spent</th><th>Biggest Bet</th></tr></thead>
+      <tbody>${(r.agentSnapshot||[]).map((voter,vi)=>{
+        const voteData = vm?.[vi]||[];
+        const total = voteData.reduce((s,v)=>s+v,0);
+        const myDesignIdx = r.designs.findIndex(d=>d.agentIdx===vi);
+        const allocations = voteData.map((v,di)=>{
+          if (!v) return '';
+          const dname = r.designs[di]?.name || r.sortedDesigns[di]?.name || '—';
+          const isSelf = di===myDesignIdx;
+          return `<span class="vf-alloc ${isSelf?'vf-self':''}">${dname}: ${fmtC(v)}⬡${isSelf?' ←self':''}</span>`;
+        }).filter(Boolean).join('');
+        const biggestIdx = voteData.indexOf(Math.max(...voteData));
+        const biggestName = r.designs[biggestIdx]?.name || '—';
+        return `<tr>
+          <td>${voter.emoji||''} ${voter.name}</td>
+          <td>${allocations||'—'}</td>
+          <td class="gold">${fmtC(total)}⬡</td>
+          <td style="font-style:italic;color:var(--txt)">"${biggestName}"</td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table>
+    <div class="vote-insight">
+      <b>Self-vote rate:</b> ${r.selfVotePct||0}% of all credits went to agents' own designs &nbsp;·&nbsp;
+      <b>Strongest alignment:</b> ${(r.alignPair||['—','—']).join(' + ')} voted for the same design &nbsp;·&nbsp;
+      <b>Market consensus:</b> Top 3 designs captured ${top3Share}% of all credits
+    </div>`;
+
+  // ── Section 8: Trend velocity + 4-grid ──
+  const vel = r.trendData?.velocityScore || 70;
+  const trendHtml = `
+    <div class="trend-vel">
+      <div class="vel-label">Velocity</div>
+      <div class="vel-meter"><div class="vel-fill" style="width:${vel}%"></div></div>
+      <div class="vel-score">${vel}</div>
+    </div>
+    <div class="trend-4grid">
+      <div class="tcard"><div class="tcard-label">Emerging Styles</div><div class="tcard-val up">${(r.trendData?.emerging||[]).join(' · ')}</div></div>
+      <div class="tcard"><div class="tcard-label">Declining Styles</div><div class="tcard-val down">${(r.trendData?.declining||[]).join(' · ')}</div></div>
+      <div class="tcard"><div class="tcard-label">Saturation Warning</div><div class="tcard-val down">${r.trendData?.saturation||'—'}</div><div class="tcard-sub">Gini ${r.gini} concentration index</div></div>
+      <div class="tcard"><div class="tcard-label">Treasury Signal</div><div class="tcard-val up">${r.trendData?.treasury||'—'}</div><div class="tcard-sub">Highest combined AES + PRO</div></div>
+    </div>`;
+
+  // ── Section 9: FI box ──
+  const fiHtml = `
+    <div class="fi-box">
+      <div class="fi-title">◆ Loaded into shared knowledge database at start of Cycle ${r.cycle+1}</div>
+      ${(r.trendData?.fi||[]).map(f=>`<div class="fi-item">${f}</div>`).join('')}
+    </div>`;
+
+  // ── Section 10: Epoch Arc (cycle 3 only) ──
+  let epochHtml = '';
+  if (r.cycle === 3 && cycleReports.length === 3) {
+    const [c1,c2,c3] = cycleReports;
+    const epochTrends = ['Minimal / Negative-space','Architectural Minimal','Organic / Sculptural'];
+    const epochStrats = [
+      c1.sortedDesigns.filter(d=>d.strategy==='explore').length + ' explore',
+      c2.sortedDesigns.filter(d=>d.strategy==='exploit').length + ' exploit',
+      c3.sortedDesigns.filter(d=>d.strategy==='explore').length + ' explore'
+    ];
+    epochHtml = `
+      <div class="epoch-arc">
+        <div class="epoch-arc-title">Epoch Arc — 3-Cycle Trend Lifecycle</div>
+        <div class="epoch-timeline">
+          ${[c1,c2,c3].map((cx,i)=>`
+          <div class="et-node">
+            <div class="et-cycle">Cycle ${cx.cycle} · ${cx.date}</div>
+            <div class="et-winner">"${cx.winner.name}"</div>
+            <div class="et-trend">${epochTrends[i]}</div>
+            <div class="et-creds">${fmtC(cx.winner.credits)}⬡</div>
+            <div style="font-size:.6rem;color:var(--faint);margin-top:.3rem">${epochStrats[i]} dominant</div>
+          </div>`).join('')}
+        </div>
+        <div class="epoch-insight">
+          <b>Trend lifecycle confirmed:</b> ${epochTrends[0]} emerged in Cycle 1 (${c1.winner.credits.toLocaleString()}⬡ winner),
+          peaked in Cycle 2 under exploitation pressure (${c2.winner.credits.toLocaleString()}⬡, ring saturation ${c2.trendData?.saturation}),
+          and was displaced in Cycle 3 as ${epochTrends[2]} generated the highest vote concentration of the epoch (${c3.winner.credits.toLocaleString()}⬡, Gini ${c3.gini}).
+          <br><br>
+          <b>Vote predictor evolution:</b> C1 ${c1.topCorr} (r=${c1.corrAes}) → C2 ${c2.topCorr} (r=${c2.corrAes}) → C3 ${c3.topCorr} (r=${c3.corrNov}) —
+          the market shifted from rewarding <i>aesthetics</i> toward rewarding <i>novelty</i> as the pool saturated.
+          <br><br>
+          <b>Compounding novelty premium:</b> C1 ${sign(c1.novSlope)}⬡/pt → C2 ${sign(c2.novSlope)}⬡/pt → C3 ${sign(c3.novSlope)}⬡/pt.
+          ${c3.novSlope>c1.novSlope?'Novelty became progressively more valuable over the epoch — agents who built novelty into their genome compounded their advantage.':'The novelty premium declined as exploitation strategies dominated mid-epoch.'}
+          <br><br>
+          <b>Full epoch circulated:</b> ${fmtC((c1.totalCredits||0)+(c2.totalCredits||0)+(c3.totalCredits||0))}⬡ across 18 designs.
+        </div>
+      </div>`;
+  }
+
+  // ── Section 11: Image Generation Prompts ──
+  const promptHtml = `
+    <table class="rtable">
+      <thead><tr><th style="width:160px">Design</th><th>Image Generation Prompt</th></tr></thead>
+      <tbody>${[...r.designs].sort((a,b)=>a.rank-b.rank).map(d=>`
+        <tr class="${d.rank<=3?'highlight-row':''}">
+          <td><b>${d.rank===1?'🏆 ':''}#${d.rank} ${d.name}</b><br><span style="color:var(--faint);font-size:.65rem">${d.agentName||'Agent'}</span></td>
+          <td><div class="prompt-box">${d.prompt}</div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  const html = `
+    <div class="rdoc fade">
+      <div class="rdoc-header">
+        <div class="rdoc-title">Cycle ${r.cycle} — Intelligence Report</div>
+        <div class="rdoc-meta">Generated ${r.date} at ${r.time||''} &nbsp;·&nbsp; 6 Agents &nbsp;·&nbsp; ${r.designs.length} Designs &nbsp;·&nbsp; ${fmtC(r.totalCredits)}⬡ Circulated</div>
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Key Performance Indicators</div>
+        ${kpiHtml}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Top 3 Designs — AI Rendered from Agent Prompts</div>
+        ${top3Html}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Score × Credits Correlation Analysis</div>
+        ${corrHtml}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Strategy Performance — Exploit vs Explore vs Mutate</div>
+        ${stratHtml}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Category Heat Map</div>
+        ${catHtml}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Agent Leaderboard — Credits · ROI · Reputation</div>
+        ${lbHtml}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Vote Flow Matrix</div>
+        ${voteFlowHtml}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Trend Consensus & Velocity</div>
+        ${trendHtml}
+      </div>
+
+      ${r.cycle===3 && epochHtml ? `<div class="rsec"><div class="rsec-hdr">Epoch Arc — Full Trend Lifecycle</div>${epochHtml}</div>` : ''}
+
+      <div class="rsec">
+        <div class="rsec-hdr">Forward Intelligence — Loaded into Agent Knowledge Base for Cycle ${r.cycle < 3 ? r.cycle+1 : 'N/A'}</div>
+        ${fiHtml}
+        ${r.cycle===3?`<div style="margin-top:1rem;padding:1rem;border:1px solid var(--gold-d);background:rgba(201,168,76,.04);font-size:.82rem;color:var(--dim);line-height:1.7">
+          <b style="color:var(--gold)">Epoch Complete.</b> 3-cycle compound dataset compiled.
+          Trend lifecycle documented autonomously: emergence → exploitation → saturation → displacement.
+          Total epoch volume: ${fmtC((cycleReports[0]?.totalCredits||0)+(cycleReports[1]?.totalCredits||0)+(r.totalCredits||0))}⬡.
+        </div>`:''}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">Final Image Generation Prompts</div>
+        ${promptHtml}
+      </div>
+    </div>`;
+
+  document.getElementById('report-view-area').innerHTML = html;
+
+  // Attach image events via DOM after render
+  r.sortedDesigns.slice(0,3).forEach((d, i) => {
+    const phEl  = document.getElementById(`rph-${r.cycle}-${i}`);
+    const imgEl = document.getElementById(`rimg-${r.cycle}-${i}`);
+    if (!imgEl) return;
+    if (phEl) phEl.textContent = d.emoji;
+    const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
+    imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
+    imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
+    imgEl.src = makeImgUrl(d.prompt, seed);
+  });
+
+  // Animate velocity bar after render
+  setTimeout(()=>{
+    const vf = document.querySelector('.vel-fill');
+    if(vf) vf.style.width = (r.trendData?.velocityScore||70)+'%';
+  }, 100);
+}
+
+/* ══════════════════════════════════
+   EXPORT
+══════════════════════════════════ */
+function exportAllReports() {
+  let content = 'JEWELFORGE — EPOCH INTELLIGENCE ARCHIVE\n';
+  content += '==========================================\n\n';
+  cycleReports.forEach(r => {
+    content += `CYCLE ${r.cycle} REPORT — ${r.date}\n`;
+    content += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()}⬡)\n\n`;
+    content += `AGENT DECISIONS:\n`;
+    r.designs.forEach(d => { content += `  ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.name} (${d.cat}) — Rank #${d.rank}\n`; });
+    content += `\nPROMPTS:\n`;
+    r.designs.sort((a,b)=>a.rank-b.rank).forEach(d => { content += `  [${d.name}] ${d.prompt}\n`; });
+    content += `\nTREND CONSENSUS:\n`;
+    content += `  Emerging: ${r.trendData.emerging.join(', ')}\n`;
+    content += `  Declining: ${r.trendData.declining.join(', ')}\n`;
+    content += `\nFORWARD INTELLIGENCE:\n`;
+    r.trendData.fi.forEach(f => { content += `  • ${f}\n`; });
+    content += '\n' + '─'.repeat(50) + '\n\n';
+  });
+  const blob = new Blob([content], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'JewelForge_Epoch_Intelligence_Archive.txt'; a.click();
+}
+
+/* ══════════════════════════════════
+   NAVIGATION
+══════════════════════════════════ */
+function goTo(n) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+  ['nt1','nt2','nt3'].forEach((id,i)=>{
+    const el=document.getElementById(id); el.className='nav-tab';
+    if(i+1<n) el.classList.add('done'); else if(i+1===n) el.classList.add('active');
+  });
+}
+
+function setSpd(s,btn){ speed=s; document.querySelectorAll('.spd-btn').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+
+// Init
+updatePreview(); renderDNA();
+</script>
+</body>
+</html>
