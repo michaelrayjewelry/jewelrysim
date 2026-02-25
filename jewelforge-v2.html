@@ -2096,6 +2096,7 @@ async function callLLM(systemPrompt, userPrompt, json = false) {
 }
 
 function extractJSON(text, fallback) {
+  if (!text || typeof text !== 'string') return fallback ?? {};
   try { return JSON.parse(text); } catch {}
   const m = text.match(/\{[\s\S]*\}/);
   if (m) { try { return JSON.parse(m[0]); } catch {} }
@@ -2132,125 +2133,193 @@ function priorReportCtx() {
   ).join('\n');
 }
 
-/* ── Live Phase 0: Cross-Pollination ── */
+/* ── Live Phase 0: Cross-Pollination — one call per agent ── */
 async function livePhase0() {
   livePhaseData = {};
+  livePhaseData.crossPoll = [];
   setProgress(5);
-  addLog(`Cycle ${currentCycle} initiated. Connecting agents for live cross-pollination…`, '', 100);
-  const profiles = agentStates.map(agentGenomeStr).join('\n');
-  const prior    = priorReportCtx();
-  const sys = `You simulate a luxury jewelry design AI competition. Generate cross-pollination dialogues between designer agents sharing their cycle strategy. Be specific about jewelry choices (metal, stone, category, technique). Each line: one agent speaking.`;
-  const usr = `Cycle ${currentCycle}. Generate 7 dialogue lines between these agents.\n${prior ? 'Prior cycles:\n'+prior+'\n' : 'First cycle — cold start.\n'}\nAgents:\n${profiles}\n\nJSON: {"dialogues":["AgentA → AgentB: \\"quote\\"","AgentC: \\"statement\\"", ...]}`;
-  addLog('Calling AI to generate agent dialogues…', 'rp', 300);
-  const text   = await callLLM(sys, usr, true);
-  const parsed = extractJSON(text, { dialogues: [] });
-  (parsed.dialogues || []).forEach((line, i) => addLog(line.replace(/^"|"$/g, ''), 'cv', 900 + i * 600));
-  agentStates.forEach((a, i) => setTimeout(() => setAgentStatus(a.id, 'Conversing…'), (3800 + i * 100) / speed));
-  addLog('All agents complete cross-pollination. Intent vectors stored.', 'rs', 5500);
+  addLog(`Cycle ${currentCycle} initiated. Agents entering cross-pollination…`, '', 0);
+  const prior = priorReportCtx();
+
+  for (let i = 0; i < agentStates.length; i++) {
+    const a       = agentStates[i];
+    const partner = agentStates[(i + 1) % agentStates.length];
+    setAgentStatus(a.id, 'Cross-pollinating…');
+    addLog(`<b>${a.name}</b> ↔ <b>${partner.name}</b> — reading genome vectors…`, 'rp', 0);
+
+    const sys = `You simulate a luxury jewelry design agent making one concrete design direction decision after cross-pollinating with a partner agent. The decision must be specific: a material, technique, category choice, or aesthetic direction. Stay true to the agent's genome values and philosophy.`;
+    const usr = `Cycle ${currentCycle}.${prior ? '\nMarket history:\n' + prior : ' First cycle.'}
+
+Agent making the decision:
+${agentGenomeStr(a)}
+
+Partner agent (source of influence):
+${agentGenomeStr(partner)}
+
+What specific design direction does ${a.name} commit to after this exchange with ${partner.name}?
+JSON: {"decision":"one concrete design direction sentence","influence":"what specifically they adopted from ${partner.name}","commitment":"the metal/stone/technique/category they locked in"}`;
+
+    const text   = await callLLM(sys, usr, true);
+    const parsed = extractJSON(text, { decision: 'pursuing refined minimalist forms', influence: `geometry from ${partner.name}`, commitment: 'platinum solitaire construction' });
+    livePhaseData.crossPoll[i] = parsed;
+    setAgentStatus(a.id, 'Intent locked');
+    addLog(`<b>${a.name}</b> commits → ${parsed.decision}`, 'cv', 0);
+  }
+
+  addLog('All agents cross-pollinated. Intent vectors locked.', 'rs', 0);
   setProgress(20);
-  livePhaseData.dialogues = parsed.dialogues || [];
-  return 6200;
+  return 800;
 }
 
-/* ── Live Phase 1: Synthesis ── */
+/* ── Live Phase 1: Synthesis — one blueprint call per agent ── */
 async function livePhase1() {
   setProgress(25);
-  agentStates.forEach(a => setAgentStatus(a.id, 'Drafting blueprint…'));
-  addLog('Synthesis: agents compiling dialogues + genome into design blueprints…', '', 200);
-  const profiles = agentStates.map(agentGenomeStr).join('\n');
-  const dlg      = (livePhaseData.dialogues || []).join('\n');
-  const prior    = priorReportCtx();
-  const sys = `You simulate a jewelry design competition. Create design blueprints for 6 agents based on their genome and cross-pollination. Ensure category variety — not all rings. Each blueprint is one agent's plan for their submission.`;
-  const usr = `Cycle ${currentCycle} synthesis.\nAgents:\n${profiles}\nDialogues:\n${dlg}\n${prior ? 'Prior cycles:\n'+prior : ''}\n\nJSON: {"blueprints":[{"agentIdx":0,"strategy":"explore","cat":"Ring","metal":"platinum","description":"concise blueprint","estMargin":68}, ...]} — exactly 6 entries, agentIdx 0-5, vary categories`;
-  addLog('Calling AI to synthesize blueprints…', 'rp', 300);
-  const text   = await callLLM(sys, usr, true);
-  const parsed = extractJSON(text, { blueprints: [] });
-  const bps    = Array.from({ length: 6 }, (_, i) =>
-    (parsed.blueprints || []).find(b => Number(b.agentIdx) === i) || (parsed.blueprints || [])[i] || {}
-  );
-  bps.forEach((bp, i) => {
-    const a = agentStates[i]; if (!a) return;
-    addLog(`<b>${a.name}</b> — <b>${(bp.strategy||'explore').toUpperCase()}</b> · ${bp.cat||'Ring'} · ${bp.description||'…'} · Est. margin: ${bp.estMargin||65}%`, '', 600 + i * 400);
-  });
-  addLog('All blueprints hashed. Validation: ✓ Feasibility ✓ Novelty ✓ Margin', 'rs', 3800);
+  livePhaseData.blueprints = [];
+  const prior = priorReportCtx();
+  addLog('Synthesis: each agent compiling DNA + cross-poll intent into a blueprint…', '', 0);
+
+  for (let i = 0; i < agentStates.length; i++) {
+    const a  = agentStates[i];
+    const cp = livePhaseData.crossPoll[i] || {};
+    setAgentStatus(a.id, 'Drafting blueprint…');
+    addLog(`<b>${a.name}</b> synthesizing blueprint…`, 'rp', 0);
+
+    const sys = `You simulate a luxury jewelry design agent producing a specific competition blueprint. It must reflect the agent's genome and cross-pollination decision exactly. Be concrete: name a category, metal, stone, technique, and one-sentence description.`;
+    const usr = `Cycle ${currentCycle}.${prior ? '\nMarket history:\n' + prior : ''}
+
+Agent DNA:
+${agentGenomeStr(a)}
+
+Cross-pollination decision:
+Direction: ${cp.decision || 'explore new territory'}
+Commitment: ${cp.commitment || 'refined construction'}
+Influence absorbed: ${cp.influence || 'none'}
+
+Produce ${a.name}'s design blueprint for this cycle.
+JSON: {"strategy":"explore|exploit|mutate|hedge","cat":"Ring|Earrings|Pendant|Bracelet|Necklace|Brooch","metal":"platinum|18k gold|rose gold|silver|mixed","stone":"diamond|emerald|sapphire|ruby|none|mixed","technique":"one specific craft technique","description":"one sentence blueprint","estMargin":65}`;
+
+    const text   = await callLLM(sys, usr, true);
+    const parsed = extractJSON(text, { strategy:'explore', cat:'Ring', metal:'platinum', stone:'diamond', technique:'prong setting', description:'A refined solitaire exploring clean geometry.', estMargin:65 });
+    livePhaseData.blueprints[i] = { agentIdx: i, ...parsed };
+    setAgentStatus(a.id, 'Blueprint locked');
+    addLog(`<b>${a.name}</b> → <b>${(parsed.strategy||'explore').toUpperCase()}</b> · ${parsed.cat||'Ring'} · ${parsed.metal||'platinum'} ${parsed.stone||'diamond'} · ${parsed.technique||'—'} · Est. margin ${parsed.estMargin||65}%`, '', 0);
+  }
+
+  addLog('All blueprints hashed. Validation: ✓ Feasibility ✓ Novelty ✓ Margin', 'rs', 0);
   setProgress(40);
-  livePhaseData.blueprints = bps;
-  return 4400;
+  return 800;
 }
 
-/* ── Live Phase 2: Generation ── */
+/* ── Live Phase 2: Generation — one design call per agent ── */
 async function livePhase2() {
   setProgress(45);
   document.getElementById('designs-wrap').style.display = 'block';
-  agentStates.forEach(a => setAgentStatus(a.id, 'Rendering…'));
-  addLog('Generation: AI producing final design submissions…', '', 100);
   const EMOJIS = ['💍','🌑','✨','🔷','💎','🌿','⬡','🔩','💛','🌸','🔥','🦴'];
-  const agentList = agentStates.map((a, i) => {
-    const bp = (livePhaseData.blueprints || [])[i] || {};
-    return `${i}.${a.name}(${a.arch}) novelty=${a.novelty} risk=${a.risk} mktFit=${a.marketFit} blueprint="${bp.description||''}" strategy=${bp.strategy||'explore'} cat=${bp.cat||'Ring'}`;
-  }).join('\n');
-  const sys = `You create luxury jewelry design entries for an AI competition. Each design needs an evocative 2-3 word name, category, scores (0-100), strategy, and a 40-60 word photorealistic Flux AI image prompt. Vary categories across Ring/Earrings/Pendant/Bracelet/Necklace.`;
-  const usr = `Cycle ${currentCycle} generation. Create 6 unique designs, one per agent.\nAgents:\n${agentList}\n\nJSON: {"designs":[{"agentIdx":0,"name":"Name","cat":"Ring","emoji":"💍","strategy":"explore","aesthetic":85,"novelty":72,"profit":68,"prompt":"40-60 word Flux prompt with metal, stone, style, photography, background, lighting"},...]}`;
-  addLog('Calling AI to generate 6 design submissions…', 'rp', 200);
-  const text   = await callLLM(sys, usr, true);
-  const parsed = extractJSON(text, { designs: [] });
-  activeDesigns = agentStates.map((a, idx) => {
-    const m  = (parsed.designs || []).find(d => Number(d.agentIdx) === idx) || (parsed.designs || [])[idx] || {};
-    const bp = (livePhaseData.blueprints || [])[idx] || {};
-    return {
-      name: m.name || `Design ${idx + 1}`, cat: m.cat || bp.cat || 'Ring',
-      emoji: m.emoji || EMOJIS[idx % EMOJIS.length], agentIdx: idx, agentName: a.name,
-      strategy: m.strategy || bp.strategy || 'explore',
-      aesthetic: Math.min(100, Math.max(0, Number(m.aesthetic) || 70)),
-      novelty:   Math.min(100, Math.max(0, Number(m.novelty)   || 70)),
-      profit:    Math.min(100, Math.max(0, Number(m.profit)    || 65)),
-      prompt: m.prompt || `Fine jewelry ${m.name||'piece'}, platinum diamond, editorial studio photography, neutral background, soft lighting, photorealistic`,
-      credits: 0
+  const prior  = priorReportCtx();
+  addLog('Generation: agents finalizing their design submissions…', '', 0);
+  activeDesigns = [];
+
+  for (let i = 0; i < agentStates.length; i++) {
+    const a  = agentStates[i];
+    const bp = livePhaseData.blueprints[i] || {};
+    const cp = livePhaseData.crossPoll[i] || {};
+    setAgentStatus(a.id, 'Rendering design…');
+    addLog(`<b>${a.name}</b> generating submission…`, 'rp', 0);
+
+    const sys = `You are a luxury jewelry design AI producing one agent's final competition entry. The design must precisely reflect the agent's genome and approved blueprint. Create an evocative name, exact scores, and a detailed photorealistic Flux image prompt.`;
+    const usr = `Cycle ${currentCycle}.${prior ? '\nMarket history:\n' + prior : ''}
+
+Agent DNA:
+${agentGenomeStr(a)}
+
+Approved blueprint:
+Category: ${bp.cat||'Ring'}, Metal: ${bp.metal||'platinum'}, Stone: ${bp.stone||'diamond'}
+Technique: ${bp.technique||'prong setting'}, Strategy: ${bp.strategy||'explore'}
+Direction: ${bp.description||'refined solitaire'}
+Cross-poll influence: ${cp.commitment||'none'}
+
+Produce ${a.name}'s final competition submission.
+JSON: {"name":"2-3 word evocative title","cat":"${bp.cat||'Ring'}","emoji":"one emoji","aesthetic":85,"novelty":72,"profit":68,"prompt":"45-60 word Flux photorealistic prompt — include metal finish, stone type, setting technique, studio lighting, background, macro photography style"}`;
+
+    const text   = await callLLM(sys, usr, true);
+    const parsed = extractJSON(text, { name:`Design ${i+1}`, cat:bp.cat||'Ring', emoji:EMOJIS[i%EMOJIS.length], aesthetic:70, novelty:70, profit:65, prompt:`Fine ${bp.metal||'platinum'} ${bp.cat||'ring'} with ${bp.stone||'diamond'}, studio lighting, photorealistic` });
+
+    const design = {
+      name:      parsed.name || `Design ${i + 1}`,
+      cat:       parsed.cat  || bp.cat || 'Ring',
+      emoji:     parsed.emoji || EMOJIS[i % EMOJIS.length],
+      agentIdx:  i,
+      agentName: a.name,
+      strategy:  bp.strategy || 'explore',
+      aesthetic: Math.min(100, Math.max(0, Number(parsed.aesthetic) || 70)),
+      novelty:   Math.min(100, Math.max(0, Number(parsed.novelty)   || 70)),
+      profit:    Math.min(100, Math.max(0, Number(parsed.profit)    || 65)),
+      prompt:    parsed.prompt || `Fine jewelry ${parsed.name||'piece'}, platinum diamond, editorial studio photography, soft lighting, photorealistic`,
+      credits:   0
     };
-  });
-  activeDesigns.forEach((d, i) => {
-    addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · ${d.strategy.toUpperCase()}`, 'ds', 500 + i * 500);
-    setTimeout(() => renderDesignCard(d, i), (600 + i * 500) / speed);
-  });
-  addLog('Pool locked. 6 designs submitted. Voting begins.', 'rs', 4500);
+    activeDesigns.push(design);
+    setAgentStatus(a.id, 'Submitted');
+    addLog(`<b>${a.name}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()} · AES ${design.aesthetic} NOV ${design.novelty} PRO ${design.profit}`, 'ds', 0);
+    renderDesignCard(design, i);
+  }
+
+  addLog('Pool locked. 6 designs submitted. Voting begins.', 'rs', 0);
   setProgress(60);
   livePhaseData.designs = activeDesigns;
-  return 5200;
+  return 800;
 }
 
-/* ── Live Phase 3: Voting ── */
+/* ── Live Phase 3: Voting — one vote call per agent ── */
 async function livePhase3() {
   setProgress(65);
-  agentStates.forEach(a => setAgentStatus(a.id, 'Voting…'));
-  addLog('Voting: each agent allocates 10,000⬡ across the blind design pool…', '', 100);
-  const designList = activeDesigns.map((d, i) =>
-    `${i}."${d.name}"(${d.cat},${d.strategy}) AES=${d.aesthetic} NOV=${d.novelty} PRO=${d.profit} by:${d.agentName}`
+  const prior = priorReportCtx();
+  addLog('Voting: each agent evaluating the pool and allocating 10,000⬡…', '', 0);
+
+  // Build blind design summary (no agent attribution — pure scores only)
+  const designSummary = activeDesigns.map((d, i) =>
+    `Design ${i}: "${d.name}" (${d.cat}, ${d.strategy}) AES=${d.aesthetic} NOV=${d.novelty} PRO=${d.profit}`
   ).join('\n');
-  const agentList = agentStates.map((a, i) =>
-    `${i}.${a.name}: novelty_pref=${a.novelty} mktFit=${a.marketFit} risk=${a.risk}`
-  ).join('\n');
-  const sys = `You simulate blind voting in a jewelry design competition. Each agent allocates vote weight across designs based on their aesthetic preferences. High-novelty agents prefer novel designs; high-marketFit agents prefer profitable ones. Self-votes (agent i voting for design at their own agentIdx) must be 0.`;
-  const usr = `Cycle ${currentCycle} voting. Raw preference weights (0-100), will be auto-normalized to 10,000⬡.\nDesigns:\n${designList}\nAgents:\n${agentList}\n\nJSON: {"votes":[[0,42,21,8,12,17],...]} — 6×6 matrix. Row i=agent i weights for designs 0-5. Row i col i=0 (no self-vote).`;
-  addLog('Calling AI to generate vote allocations…', 'rp', 200);
-  const text   = await callLLM(sys, usr, true);
-  const parsed = extractJSON(text, { votes: [] });
-  const vm = agentStates.map((_, vi) => normalizeVoteRow((parsed.votes || [])[vi], vi, 10000));
-  livePhaseData.voteMatrix = vm;
-  vm.forEach((row, vi) => {
+
+  const voteMatrix = [];
+  for (let vi = 0; vi < agentStates.length; vi++) {
+    const a  = agentStates[vi];
+    const bp = livePhaseData.blueprints[vi] || {};
+    setAgentStatus(a.id, 'Voting…');
+    addLog(`<b>${a.name}</b> evaluating the design pool…`, 'rp', 0);
+
+    const sys = `You simulate a jewelry design competition judge agent allocating vote credits based on their aesthetic genome. Self-vote (the design at their own agentIdx) must always be 0. Allocations reflect the agent's novelty preference, market-fit bias, and risk tolerance.`;
+    const usr = `Cycle ${currentCycle} — blind voting.
+
+Voter agent DNA:
+${agentGenomeStr(a)}
+Voter's own submission is Design ${vi} — weight for Design ${vi} must be 0.
+Voter's strategy this cycle: ${bp.strategy||'explore'}, focused on ${bp.cat||'Ring'} in ${bp.metal||'platinum'}.
+${prior ? 'Market history:\n' + prior + '\n' : ''}
+Design pool (blind — allocate by aesthetic fit to your genome, not authorship):
+${designSummary}
+
+Allocate ${a.name}'s 10,000⬡. Design ${vi} = 0 (self).
+JSON: {"weights":[w0,w1,w2,w3,w4,w5],"rationale":"one sentence on voting logic"}`;
+
+    const text   = await callLLM(sys, usr, true);
+    const parsed = extractJSON(text, { weights: Array(6).fill(0).map((_,j)=>j===vi?0:10), rationale:'balanced allocation' });
+    const row    = normalizeVoteRow(parsed.weights || [], vi, 10000);
+    voteMatrix[vi] = row;
+
     const top2 = row.map((v, i) => ({ i, v })).sort((a, b) => b.v - a.v).filter(x => x.v > 0).slice(0, 2);
-    if (top2.length) {
-      const msg = top2.map(x => `"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
-      addLog(`<b>${agentStates[vi].name}</b> → ${msg}`, 'vt', 600 + vi * 500);
-    }
-  });
-  vm.forEach((row, vi) => row.forEach((c, di) => { if (di < activeDesigns.length) activeDesigns[di].credits += c; }));
-  setTimeout(() => {
-    activeDesigns.forEach((d, i) => { const e = document.getElementById('dc-cred-' + i); if (e) e.textContent = d.credits.toLocaleString() + '⬡'; });
-    agentStates.forEach((a, vi) => { const spent = vm[vi].reduce((s, v) => s + v, 0); a.credits = 10000 - spent; setAgentCreds(a.id, a.credits); setAgentStatus(a.id, 'Voted'); });
-  }, 4000 / speed);
-  addLog(`Voting complete. Credits tallied across ${activeDesigns.length} designs.`, 'rs', 4800);
+    const msg  = top2.map(x => `"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
+    addLog(`<b>${a.name}</b> → ${msg} — ${parsed.rationale || ''}`, 'vt', 0);
+    setAgentStatus(a.id, 'Voted');
+  }
+
+  livePhaseData.voteMatrix = voteMatrix;
+  voteMatrix.forEach((row, vi) => row.forEach((c, di) => { if (di < activeDesigns.length) activeDesigns[di].credits += c; }));
+  activeDesigns.forEach((d, i) => { const e = document.getElementById('dc-cred-' + i); if (e) e.textContent = d.credits.toLocaleString() + '⬡'; });
+  agentStates.forEach((a, vi) => { const spent = voteMatrix[vi].reduce((s, v) => s + v, 0); a.credits = 10000 - spent; setAgentCreds(a.id, a.credits); setAgentStatus(a.id, 'Voted'); });
+
+  addLog(`Voting complete. Credits tallied across ${activeDesigns.length} designs.`, 'rs', 0);
   setProgress(80);
-  return 5500;
+  return 800;
 }
 
 /* ── Live Phase 4: Evolution ── */
@@ -2258,25 +2327,34 @@ async function livePhase4() {
   setProgress(85);
   const sorted = [...activeDesigns].map((d, i) => ({ ...d, idx: i })).sort((a, b) => b.credits - a.credits);
   const winner = sorted[0];
-  addLog('Ranking finalized. AI generating trend intelligence…', '', 200);
+  addLog('Ranking finalized. AI generating trend intelligence…', '', 0);
+
   const resultsSummary = sorted.map((d, i) =>
     `#${i+1} "${d.name}"(${d.cat},${d.strategy}) ${d.credits.toLocaleString()}⬡ AES=${d.aesthetic} NOV=${d.novelty} PRO=${d.profit} by ${d.agentName}`
   ).join('\n');
+  const bpSummary = (livePhaseData.blueprints || []).map((bp, i) =>
+    `${agentStates[i]?.name||'Agent'}: ${bp.strategy||'?'} ${bp.cat||'?'} ${bp.metal||'?'} ${bp.stone||'?'} via ${bp.technique||'?'}`
+  ).join('\n');
   const prior = priorReportCtx();
-  const sys = `You analyze jewelry design competition results and generate strategic forward intelligence for agents. Be specific about aesthetic trends, category saturation, and strategy signals. Each insight ≤ 110 characters.`;
-  const usr = `Cycle ${currentCycle} results:\n${resultsSummary}\n${prior ? 'Prior cycles:\n'+prior : ''}\n\nJSON: {"insights":["...","...","...","...","..."],"emerging":["style1","style2","style3"],"declining":["style4","style5"],"saturation":"category warning","treasury":"best material+style combination","velocityScore":75}`;
-  addLog('Calling AI to generate trend report…', 'rp', 400);
+
+  const sys = `You analyze luxury jewelry design competition results and extract forward market intelligence for agents. Be specific about winning aesthetics, category signals, and strategic patterns. Each insight ≤ 110 characters.`;
+  const usr = `Cycle ${currentCycle} results:\n${resultsSummary}\n\nBlueprint strategies this cycle:\n${bpSummary}\n${prior ? '\nPrior cycles:\n'+prior : ''}\n\nJSON: {"insights":["...","...","...","...","..."],"emerging":["style1","style2","style3"],"declining":["style4","style5"],"saturation":"category warning","treasury":"best material+style combination","velocityScore":75}`;
+
+  addLog('Calling AI for trend report…', 'rp', 0);
   const text   = await callLLM(sys, usr, true);
   const parsed = extractJSON(text, { insights:[], emerging:[], declining:[], saturation:'—', treasury:'—', velocityScore:70 });
+
   setTimeout(() => {
     const wc = document.getElementById('dc-' + winner.idx);
     if (wc) { wc.classList.add('winner-card'); const body = wc.querySelector('.dcard-body'); if (body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>'); }
   }, 300 / speed);
-  addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`, 'rs', 500);
-  (parsed.insights || []).forEach((ins, i) => addLog(ins, i < 2 ? 'rs' : '', 1000 + i * 500));
-  if (parsed.saturation && parsed.saturation !== '—') addLog(`Saturation: <b>${parsed.saturation}</b>`, '', 3800);
-  addLog(`<b>Cycle ${currentCycle} Intelligence Report written to archive.</b>`, 'rs', 4300);
+
+  addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`, 'rs', 0);
+  (parsed.insights || []).forEach(ins => addLog(ins, 'rs', 0));
+  if (parsed.saturation && parsed.saturation !== '—') addLog(`Saturation: <b>${parsed.saturation}</b>`, '', 0);
+  addLog(`<b>Cycle ${currentCycle} Intelligence Report written to archive.</b>`, 'rs', 0);
   setProgress(100);
+
   sorted.forEach((d, rank) => {
     const agent = agentStates[d.agentIdx];
     if (agent) {
@@ -2284,15 +2362,18 @@ async function livePhase4() {
       setAgentStatus(agent.id, rank === 0 ? 'Winner' : 'Cycle complete');
     }
   });
+
   livePhaseData.trendData = {
-    emerging: parsed.emerging || [], declining: parsed.declining || [],
-    saturation: parsed.saturation || '—', treasury: parsed.treasury || '—',
+    emerging:      parsed.emerging || [],
+    declining:     parsed.declining || [],
+    saturation:    parsed.saturation || '—',
+    treasury:      parsed.treasury || '—',
     velocityScore: Number(parsed.velocityScore) || 70,
-    fi: parsed.insights || []
+    fi:            parsed.insights || []
   };
   generateAndStoreReport(currentCycle, sorted);
   if (currentCycle === 3) document.getElementById('nav-epoch-txt').textContent = '3 / 3';
-  return 5000;
+  return 800;
 }
 
 /* ── Live Phase Dispatcher ── */
