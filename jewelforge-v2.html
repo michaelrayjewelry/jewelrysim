@@ -1305,9 +1305,10 @@ function renderDesignCard(d, i) {
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Set src — async when Pixazo key present, direct URL for Pollinations
-  const pixazoKey = (document.getElementById('b-imgkey')?.value || '').trim();
-  if (pixazoKey) {
+  // Set src — use custom image API if any key is present, otherwise Pollinations
+  const hasImgKey = !!(document.getElementById('b-higgsfield-key')?.value || '').trim() ||
+                    !!(document.getElementById('b-imgkey')?.value || '').trim();
+  if (hasImgKey) {
     generateImageUrl(d.prompt, seed)
       .then(url => { img.src = url; })
       .catch(() => showError());
@@ -1475,7 +1476,13 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
       };
       img.onerror = showFallback;
       setTimeout(showFallback, 35000); // timeout fallback
-      img.src = makeImgUrl(d.prompt, seed);
+      const _hasKey = !!(document.getElementById('b-higgsfield-key')?.value || '').trim() ||
+                      !!(document.getElementById('b-imgkey')?.value || '').trim();
+      if (_hasKey) {
+        generateImageUrl(d.prompt, seed).then(url => { img.src = url; }).catch(showFallback);
+      } else {
+        img.src = makeImgUrl(d.prompt, seed);
+      }
     }
 
     animateProgress(containerId, i);
@@ -2098,7 +2105,13 @@ function viewReport(cycleNum) {
     const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
     imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
     imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
-    imgEl.src = makeImgUrl(d.prompt, seed);
+    const _rHasKey = !!(document.getElementById('b-higgsfield-key')?.value || '').trim() ||
+                     !!(document.getElementById('b-imgkey')?.value || '').trim();
+    if (_rHasKey) {
+      generateImageUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { if(imgEl) imgEl.style.display='none'; });
+    } else {
+      imgEl.src = makeImgUrl(d.prompt, seed);
+    }
   });
 
   // Animate velocity bar after render
