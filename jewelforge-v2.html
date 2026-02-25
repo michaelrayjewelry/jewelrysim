@@ -425,10 +425,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
           <div class="chip" id="mode-live" onclick="setLiveMode(true)">Live AI ✦</div>
         </div>
         <div style="font-size:.62rem;color:var(--faint);line-height:1.6;margin-bottom:.7rem" id="mode-desc">Pre-written narratives with deterministic outcomes. Fast, no API required.</div>
-        <div class="field" id="apikey-field" style="display:none">
+        <div class="field" id="apikey-field">
           <label>API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
-          <input id="b-apikey" type="password" placeholder="sk-proj-… (OpenAI) · sk-ant-… (Anthropic) · blank = free Pollinations AI">
-          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Leave blank for Pollinations AI (free). OpenAI key → GPT-4o-mini. Anthropic key → Claude Haiku.</div>
+          <input id="b-apikey" type="password" placeholder="sk-ant-… (Anthropic Claude) · blank = Pollinations AI (free)">
+          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Paste your Anthropic key for Claude AI. Leave blank to use Pollinations AI (free, no key needed).</div>
         </div>
       </div>
     </div>
@@ -2038,19 +2038,23 @@ function setLiveMode(on) {
   const scripted = document.getElementById('mode-scripted');
   const live     = document.getElementById('mode-live');
   const desc     = document.getElementById('mode-desc');
-  const apiField = document.getElementById('apikey-field');
   if (on) {
     scripted.classList.remove('on'); live.classList.add('on');
     desc.textContent = 'Agent dialogues, designs, and votes generated live by AI — every run is unique and unpredictable.';
-    if (apiField) apiField.style.display = '';
   } else {
     live.classList.remove('on'); scripted.classList.add('on');
     desc.textContent = 'Pre-written narratives with deterministic outcomes. Fast, no API required.';
-    if (apiField) apiField.style.display = 'none';
   }
 }
 
+let _llmLastCall = 0;
+
 async function callLLM(systemPrompt, userPrompt, json = false) {
+  // Rate limit: 1 call per 5 seconds
+  const wait = Math.max(0, _llmLastCall + 5000 - Date.now());
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  _llmLastCall = Date.now();
+
   const key = (document.getElementById('b-apikey')?.value || '').trim();
   const jsonSuffix = json ? '\n\nRespond with valid JSON only. No markdown, no explanation.' : '';
   const msgs = [
@@ -2058,24 +2062,7 @@ async function callLLM(systemPrompt, userPrompt, json = false) {
     { role: 'user', content: userPrompt + jsonSuffix }
   ];
 
-  // ── OpenAI (sk-proj-… or sk-… but not sk-ant-) ──
-  if (key.length > 20 && !key.startsWith('sk-ant-')) {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: msgs,
-        max_tokens: 2048,
-        ...(json ? { response_format: { type: 'json_object' } } : {})
-      })
-    });
-    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `OpenAI ${r.status}`); }
-    const d = await r.json();
-    return d.choices[0].message.content;
-  }
-
-  // ── Anthropic Claude Haiku (sk-ant-…) ──
+  // ── Anthropic Claude (sk-ant-…) ──
   if (key.startsWith('sk-ant-')) {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
