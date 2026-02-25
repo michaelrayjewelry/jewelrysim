@@ -2062,37 +2062,52 @@ async function callLLM(systemPrompt, userPrompt, json = false) {
     { role: 'user', content: userPrompt + jsonSuffix }
   ];
 
-  // ── Anthropic Claude (sk-ant-…) ──
-  if (key.startsWith('sk-ant-')) {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': key, 'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 2048,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt + jsonSuffix }]
-      })
-    });
-    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Anthropic ${r.status}`); }
-    const d = await r.json();
-    return d.content[0].text;
-  }
+  const MAX_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // ── Anthropic Claude (sk-ant-…) ──
+      if (key.startsWith('sk-ant-')) {
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': key, 'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001', max_tokens: 2048,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userPrompt + jsonSuffix }]
+          })
+        });
+        if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Anthropic ${r.status}`); }
+        const d = await r.json();
+        return d.content[0].text;
+      }
 
-  // ── Default: Pollinations AI (free, no key needed) ──
-  const body = { model: 'openai', messages: msgs, seed: Math.floor(Math.random() * 99999), private: true };
-  if (json) body.response_format = { type: 'json_object' };
-  const r = await fetch('https://text.pollinations.ai/openai', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (!r.ok) throw new Error(`Pollinations ${r.status}`);
-  const d = await r.json();
-  return d.choices[0].message.content;
+      // ── Default: Pollinations AI (free, no key needed) ──
+      const body = { model: 'openai', messages: msgs, seed: Math.floor(Math.random() * 99999), private: true };
+      if (json) body.response_format = { type: 'json_object' };
+      const r = await fetch('https://text.pollinations.ai/openai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error(`Pollinations ${r.status}`);
+      const d = await r.json();
+      return d.choices[0].message.content;
+
+    } catch (err) {
+      const isNetwork = err instanceof TypeError || (err.message || '').toLowerCase().includes('fetch');
+      if (isNetwork && attempt < MAX_RETRIES) {
+        addLog(`⏳ Network hiccup — retrying in 15s (attempt ${attempt} of ${MAX_RETRIES})…`, 'rp', 0);
+        await new Promise(r => setTimeout(r, 15000));
+        _llmLastCall = Date.now(); // reset rate-limit window after the wait
+      } else {
+        throw err;
+      }
+    }
+  }
 }
 
 function extractJSON(text, fallback) {
