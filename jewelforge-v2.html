@@ -427,8 +427,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         <div style="font-size:.62rem;color:var(--faint);line-height:1.6;margin-bottom:.7rem" id="mode-desc">Pre-written narratives with deterministic outcomes. Fast, no API required.</div>
         <div class="field" id="apikey-field" style="display:none">
           <label>API Key <span style="font-weight:300;font-size:.6rem;color:var(--faint)">(optional)</span></label>
-          <input id="b-apikey" type="password" placeholder="sk-ant-… or leave blank for free Pollinations AI">
-          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Leave blank for Pollinations AI (free, no account). Add an Anthropic key for Claude-quality responses.</div>
+          <input id="b-apikey" type="password" placeholder="sk-proj-… (OpenAI) · sk-ant-… (Anthropic) · blank = free Pollinations AI">
+          <div style="font-size:.58rem;color:var(--faint);margin-top:.3rem;line-height:1.55">Leave blank for Pollinations AI (free). OpenAI key → GPT-4o-mini. Anthropic key → Claude Haiku.</div>
         </div>
       </div>
     </div>
@@ -2053,20 +2053,39 @@ function setLiveMode(on) {
 async function callLLM(systemPrompt, userPrompt, json = false) {
   const key = (document.getElementById('b-apikey')?.value || '').trim();
   const jsonSuffix = json ? '\n\nRespond with valid JSON only. No markdown, no explanation.' : '';
+  const msgs = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt + jsonSuffix }
+  ];
 
+  // ── OpenAI (sk-proj-… or sk-… but not sk-ant-) ──
+  if (key.length > 20 && !key.startsWith('sk-ant-')) {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: msgs,
+        max_tokens: 2048,
+        ...(json ? { response_format: { type: 'json_object' } } : {})
+      })
+    });
+    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `OpenAI ${r.status}`); }
+    const d = await r.json();
+    return d.choices[0].message.content;
+  }
+
+  // ── Anthropic Claude Haiku (sk-ant-…) ──
   if (key.startsWith('sk-ant-')) {
-    // Anthropic Claude Haiku
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
+        'x-api-key': key, 'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
+        model: 'claude-haiku-4-5-20251001', max_tokens: 2048,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt + jsonSuffix }]
       })
@@ -2076,11 +2095,7 @@ async function callLLM(systemPrompt, userPrompt, json = false) {
     return d.content[0].text;
   }
 
-  // Default: Pollinations AI (free, no key needed)
-  const msgs = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt + jsonSuffix }
-  ];
+  // ── Default: Pollinations AI (free, no key needed) ──
   const body = { model: 'openai', messages: msgs, seed: Math.floor(Math.random() * 99999), private: true };
   if (json) body.response_format = { type: 'json_object' };
   const r = await fetch('https://text.pollinations.ai/openai', {
