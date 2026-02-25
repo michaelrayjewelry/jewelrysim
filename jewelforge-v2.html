@@ -1408,10 +1408,10 @@ async function generateImageUrl(prompt, seed) {
   // ── Higgsfield (priority) ──
   if (higgsKey) {
     const authHeader = higgsKey.includes(':') ? `Key ${higgsKey}` : `Bearer ${higgsKey}`;
-    const r = await fetch('https://platform.higgsfield.ai/flux-schnell/text-to-image', {
+    const r = await fetch('https://platform.higgsfield.ai/flux-pro/kontext/max/text-to-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-      body: JSON.stringify({ input: { prompt: fullPrompt, aspect_ratio: '1:1', seed, safety_tolerance: 2 } })
+      body: JSON.stringify({ prompt: fullPrompt, aspect_ratio: '1:1', seed, safety_tolerance: 2 })
     });
     if (!r.ok) throw new Error(`Higgsfield ${r.status}`);
     const d = await r.json();
@@ -2276,12 +2276,12 @@ async function testHiggsfieldAPI() {
   const testPrompt = 'fine jewelry, elegant diamond solitaire ring, platinum band, studio lighting, photorealistic, white background';
 
   try {
-    const r = await fetch('https://platform.higgsfield.ai/flux-schnell/text-to-image', {
+    const r = await fetch('https://platform.higgsfield.ai/flux-pro/kontext/max/text-to-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-      body: JSON.stringify({ input: { prompt: testPrompt, aspect_ratio: '1:1', seed: 42, safety_tolerance: 2 } })
+      body: JSON.stringify({ prompt: testPrompt, aspect_ratio: '1:1', seed: 42, safety_tolerance: 2 })
     });
-    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || e.message || `HTTP ${r.status}`); }
+    if (!r.ok) { const body = await r.text().catch(()=>''); let msg = `HTTP ${r.status}`; try { const e = JSON.parse(body); msg = e.error?.message || e.message || e.detail || JSON.stringify(e) || msg; } catch(_){} throw new Error(`${msg}${body && !body.startsWith('{') ? ' — '+body.slice(0,120) : ''}`); }
     const d = await r.json();
 
     let imgUrl = d.images?.[0]?.url || d.url;
