@@ -745,6 +745,24 @@ let apiKeysCommitted = false; // true once user clicks Submit
 // Genome snapshots per cycle for before→after deltas
 let genomeSnapshots = []; // array of arrays: genomeSnapshots[cycleIdx] = [{...agentGenome}]
 
+// ── Claude-Flow Agent Economy Globals ──
+let patternBank = [];       // Pattern Memory Bank: stores design patterns with outcome data
+let qTable = {};            // Q-Learning Strategy Router: strategy×category → expected reward
+let rationaleStore = [];    // Design Rationale Persistence: per-agent, per-cycle reasoning + outcomes
+let traitEffectiveness = {}; // EWC Trait Tracker: genome trait → correlation/importance data
+
+function initQTable() {
+  const strategies = ['exploit','explore','mutate'];
+  const categories = ['Ring','Pendant','Earrings','Bracelet'];
+  qTable = {};
+  strategies.forEach(s => {
+    qTable[s] = {};
+    categories.forEach(c => {
+      qTable[s][c] = { totalCredits: 0, count: 0, avgCredits: 0, lastCycle: 0 };
+    });
+  });
+}
+
 function setMode(mode) {
   simMode = mode;
   document.getElementById('mode-sim').classList.toggle('active', mode==='sim');
@@ -933,7 +951,160 @@ CURRENT STATE:
     });
   }
 
+  // EWC Trait Effectiveness (injected into every prompt)
+  genome += traitEffectivenessContext(g.id);
+
   return genome;
+}
+
+/* ══════════════════════════════════
+   retrievePatterns() — Pattern Memory Bank retrieval
+   Scores stored design patterns by relevance to the agent
+   and returns top 3 as formatted context string.
+══════════════════════════════════ */
+function retrievePatterns(agent) {
+  if (patternBank.length === 0) return '';
+  const agentIdx = agent.id;
+  const scored = patternBank.map(p => {
+    let score = p.confidence * 2; // base confidence weight
+    score += p.rank <= 3 ? 1.5 : 0.5; // rank bonus
+    if (p.category === (agent.marketFocus || '').split(',')[0]) score += 3; // category alignment
+    // Strategy alignment with agent risk genome
+    const agentStrategy = agent.risk > 65 ? 'explore' : agent.risk < 35 ? 'exploit' : 'mutate';
+    if (p.strategy === agentStrategy) score += 2;
+    // Genome similarity (within 15 pts on key traits)
+    const traitPairs = [['novelty','novelty'],['marketFit','marketFit'],['risk','risk'],['platBias','platBias'],['manufacturability','manufacturability'],['wearability','wearability']];
+    traitPairs.forEach(([agentTrait, patTrait]) => {
+      if (Math.abs((agent[agentTrait]||50) - (p.genomeTraits?.[patTrait]||50)) <= 15) score += 1;
+    });
+    // Recency bonus
+    if (p.cycle === cycleReports.length) score += 1;
+    return { ...p, relevanceScore: score };
+  });
+  scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  const top3 = scored.slice(0, 3);
+  let ctx = `\n\nHISTORICAL DESIGN PRECEDENTS (top ${top3.length} relevant from ${patternBank.length} stored):`;
+  top3.forEach((p, i) => {
+    ctx += `\n  ${i+1}. "${p.name}" (Cycle ${p.cycle}, Rank #${p.rank}, ${p.credits.toLocaleString()}⬡, confidence: ${(p.confidence*100).toFixed(0)}%)`;
+    ctx += `\n     ${p.strategy.toUpperCase()} · ${p.category} · ${p.materials || '?'} · ${p.form || '?'}`;
+    ctx += `\n     Scores: AES:${p.aesthetic} NOV:${p.novelty} PRO:${p.profit} WEAR:${p.wearability||'?'} MFG:${p.makeable||'?'}`;
+    ctx += `\n     Reasoning: ${(p.reasoning || '—').slice(0, 100)}`;
+    ctx += `\n     Trend context: ${(p.emergingTrends || []).slice(0, 2).join(', ') || '—'}`;
+  });
+  return ctx;
+}
+
+/* ══════════════════════════════════
+   qTableContext() — Q-Learning Strategy Router
+   Formats non-zero Q-table entries as market intelligence.
+══════════════════════════════════ */
+function qTableContext() {
+  if (!qTable || Object.keys(qTable).length === 0) return '';
+  const entries = [];
+  let bestCombo = null, bestAvg = 0;
+  Object.entries(qTable).forEach(([strat, cats]) => {
+    Object.entries(cats).forEach(([cat, data]) => {
+      if (data.count > 0) {
+        entries.push({ strat, cat, avg: Math.round(data.avgCredits), count: data.count, lastCycle: data.lastCycle });
+        if (data.avgCredits > bestAvg) { bestAvg = data.avgCredits; bestCombo = { strat, cat }; }
+      }
+    });
+  });
+  if (entries.length === 0) return '';
+  let ctx = `\n\nQ-TABLE MARKET INTELLIGENCE (learned strategy×category rewards):`;
+  entries.sort((a, b) => b.avg - a.avg);
+  entries.forEach(e => {
+    const star = bestCombo && e.strat === bestCombo.strat && e.cat === bestCombo.cat ? ' ★' : '';
+    ctx += `\n  ${e.strat.toUpperCase()} + ${e.cat}: avg ${e.avg.toLocaleString()}⬡ (${e.count} sample${e.count>1?'s':''})${star}`;
+  });
+  // Per-strategy averages
+  const stratAvgs = {};
+  Object.entries(qTable).forEach(([strat, cats]) => {
+    let total = 0, count = 0;
+    Object.values(cats).forEach(d => { if (d.count > 0) { total += d.avgCredits; count++; } });
+    if (count > 0) stratAvgs[strat] = Math.round(total / count);
+  });
+  if (Object.keys(stratAvgs).length > 0) {
+    ctx += `\n  Strategy averages: ${Object.entries(stratAvgs).map(([k,v])=>`${k.toUpperCase()}: ${v.toLocaleString()}⬡`).join(' | ')}`;
+  }
+  return ctx;
+}
+
+/* ══════════════════════════════════
+   traitEffectivenessContext() — EWC Trait Tracker
+   Shows top 8 most impactful genome traits with correlation
+   direction, winner averages, and EWC recommendations.
+══════════════════════════════════ */
+function traitEffectivenessContext(agentIdx) {
+  if (!traitEffectiveness || Object.keys(traitEffectiveness).length === 0) return '';
+  const agent = agentStates[agentIdx];
+  if (!agent) return '';
+  const entries = Object.entries(traitEffectiveness)
+    .filter(([,v]) => v.samples > 0)
+    .map(([trait, data]) => ({
+      trait,
+      correlation: data.cumulativeCorrelation,
+      importance: data.importanceWeight,
+      winnerAvg: data.lastCycleValue,
+      agentVal: agent[trait] ?? 50,
+      samples: data.samples,
+      direction: data.direction
+    }))
+    .sort((a, b) => b.importance - a.importance)
+    .slice(0, 8);
+  if (entries.length === 0) return '';
+  let ctx = `\nGENOME TRAIT EFFECTIVENESS (EWC analysis, ${entries[0].samples} cycle${entries[0].samples>1?'s':''} of data):`;
+  entries.forEach(e => {
+    const dir = e.correlation > 0.1 ? 'POSITIVE (higher = more credits)' : e.correlation < -0.1 ? 'NEGATIVE (lower = more credits)' : 'NEUTRAL';
+    const delta = e.agentVal - e.winnerAvg;
+    const vs = delta > 5 ? `above winners by ${delta.toFixed(0)}` : delta < -5 ? `below winners by ${Math.abs(delta).toFixed(0)}` : 'aligned with winners';
+    const ewc = e.importance > 0.4 && e.samples >= 2 ? ' ⚡PROVEN — shift cautiously' : '';
+    ctx += `\n  ${e.trait}: corr=${e.correlation.toFixed(2)} (${dir}) · Winners avg: ${e.winnerAvg.toFixed(0)} · You: ${e.agentVal} (${vs})${ewc}`;
+  });
+  return ctx;
+}
+
+/* ══════════════════════════════════
+   computeTraitEffectiveness() — EWC correlation tracker
+   Computes Pearson correlation between genome traits and
+   credits earned, with cumulative EWC weighting.
+══════════════════════════════════ */
+function computeTraitEffectiveness(cycleNum, sortedDesigns) {
+  const traits = ['minimalism','novelty','ornamentation','marketFit','symmetry','platBias','coloredStone','diamond','mixedMetal','risk','marginSens','complexBudget','pricePoint','manufacturability','wearability','trendSens'];
+  const credits = sortedDesigns.map(d => d.credits);
+  const top3Agents = sortedDesigns.slice(0, 3).map(d => agentStates[d.agentIdx]).filter(Boolean);
+
+  traits.forEach(trait => {
+    const vals = sortedDesigns.map(d => {
+      const a = agentStates[d.agentIdx];
+      return a ? (a[trait] ?? 50) : 50;
+    });
+    const currentCorr = pearsonCorr(vals, credits);
+    const winnerAvg = top3Agents.length > 0
+      ? top3Agents.reduce((s, a) => s + (a[trait] ?? 50), 0) / top3Agents.length
+      : 50;
+
+    if (!traitEffectiveness[trait]) {
+      traitEffectiveness[trait] = {
+        correlation: currentCorr,
+        cumulativeCorrelation: currentCorr,
+        direction: currentCorr > 0.1 ? 'positive' : currentCorr < -0.1 ? 'negative' : 'neutral',
+        importanceWeight: Math.abs(currentCorr),
+        lastCycleValue: winnerAvg,
+        samples: 1
+      };
+    } else {
+      const prev = traitEffectiveness[trait];
+      const prevWeight = 0.6;
+      const newWeight = 0.4;
+      prev.cumulativeCorrelation = prevWeight * prev.cumulativeCorrelation + newWeight * currentCorr;
+      prev.correlation = currentCorr;
+      prev.importanceWeight = Math.abs(prev.cumulativeCorrelation) * 0.7 + Math.abs(currentCorr) * 0.3;
+      prev.direction = prev.cumulativeCorrelation > 0.1 ? 'positive' : prev.cumulativeCorrelation < -0.1 ? 'negative' : 'neutral';
+      prev.lastCycleValue = winnerAvg;
+      prev.samples++;
+    }
+  });
 }
 
 /* ══════════════════════════════════
@@ -991,6 +1162,44 @@ function priorReportCtx(agentIdx) {
     ctx += `Novelty Premium Trend: ${novTrend.join(' → ')}\n`;
     const satTrend = cycleReports.map(r => `C${r.cycle}: ${r.trendData?.saturation||'—'}`);
     ctx += `Saturation Trend: ${satTrend.join(' → ')}\n`;
+  }
+
+  // ── Claude-Flow Enrichments (zero API cost) ──
+
+  // Pattern Memory Bank: top 3 relevant historical designs
+  ctx += retrievePatterns(agentStates[agentIdx] || {id: agentIdx});
+
+  // Q-Learning Strategy Router: learned strategy×category rewards
+  ctx += qTableContext();
+
+  // Design Rationale History: agent's own reasoning track record
+  const agentRationales = rationaleStore.filter(r => r.agentIdx === agentIdx);
+  if (agentRationales.length > 0) {
+    // Show only last 2 cycles to limit tokens
+    const recent = agentRationales.slice(-2);
+    ctx += `\n\nSTRATEGIC REASONING HISTORY (your past decisions and outcomes):`;
+    recent.forEach(r => {
+      ctx += `\n  Cycle ${r.cycle}: Strategy=${r.predictedStrategy}, Cat=${r.predictedCategory}`;
+      ctx += ` → Rank #${r.actualRank || '?'}, ${(r.creditsEarned || 0).toLocaleString()}⬡`;
+      ctx += ` · Prediction accuracy: ${r.predictionAccuracy ? (r.predictionAccuracy * 100).toFixed(0) + '%' : '?'}`;
+      ctx += `\n    Reasoning: ${(r.strategicReasoning || '—').slice(0, 120)}`;
+    });
+  }
+
+  // Winning design rationales: why winners chose their strategies
+  const winnerRationales = rationaleStore.filter(r => r.actualRank === 1);
+  if (winnerRationales.length > 0) {
+    ctx += `\n\nWINNING DESIGN RATIONALES (learn from the best):`;
+    winnerRationales.slice(-2).forEach(r => {
+      ctx += `\n  Cycle ${r.cycle}: ${r.agentName} — "${r.designName}" — ${(r.strategicReasoning || '—').slice(0, 120)}`;
+    });
+  }
+
+  // Reputation-weighted voting info
+  if (agentStates[agentIdx]) {
+    const rep = agentStates[agentIdx].reputation || 50;
+    const mult = (0.7 + (rep / 100) * 0.6).toFixed(2);
+    ctx += `\n\nYOUR VOTE WEIGHT: Reputation ${rep} → Multiplier ${mult}x (range 0.70x-1.30x)`;
   }
 
   return ctx;
@@ -1308,6 +1517,12 @@ function startSimulation() {
   cycleReports = [];
   activeDesigns = [];
   genomeSnapshots = [];
+  // Reset Claude-Flow agent economy state
+  patternBank = [];
+  initQTable();
+  rationaleStore = [];
+  traitEffectiveness = {};
+  window._cycleRationales = [];
   // Snapshot initial genome state
   genomeSnapshots.push(agentStates.map(a => snapshotGenome(a)));
   document.getElementById('deploy-panel').style.display = 'none';
@@ -1933,6 +2148,17 @@ Output EXACTLY this JSON (no markdown, no backticks):
         designName = `${blueprint.materials || 'Gold'} ${blueprint.form || blueprint.cat}`;
       }
 
+      // Capture rationale for persistence (Claude-Flow Improvement 4)
+      if (!window._cycleRationales) window._cycleRationales = [];
+      window._cycleRationales.push({
+        cycle: cycleNum,
+        agentIdx: agent.id,
+        agentName: agent.name,
+        strategicReasoning: blueprint.reasoning || '',
+        predictedStrategy: blueprint.strategy,
+        predictedCategory: blueprint.cat
+      });
+
       // Log the synthesis blueprint
       addLog(`<b>${agent.name}</b> — Strategy: <b>${blueprint.strategy.toUpperCase()}</b> · ${blueprint.cat} · <i>"${designName}"</i> · Complexity ${blueprint.complexity}/10 · Est. margin ${blueprint.estMargin}%`, '', delay + i*300);
       addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${(blueprint.reasoning||'').slice(0,160)}</span>`, '', delay + i*300 + 100);
@@ -2065,6 +2291,8 @@ async function runLiveVoting(cycleNum) {
 The designs:
 ${designSummary}
 
+Your reputation is ${voter.reputation} → your vote weight multiplier is ${(0.7 + (voter.reputation / 100) * 0.6).toFixed(2)}x. Higher reputation = more influence on outcomes.
+
 Consider:
 - Your genome DNA: what aesthetic preferences, material biases, and market instincts does your genome tell you to value?
 - Your conversations this cycle: did any partner's ideas resonate with designs you see here?
@@ -2120,6 +2348,16 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
       voteReasoning = 'Voted based on genome aesthetic affinity (fallback).';
     }
 
+    // Capture vote rationale for persistence (Claude-Flow Improvement 4)
+    const topVoteIdx = votes ? votes.reduce((best, v, idx) => v > (votes[best] || 0) ? idx : best, 0) : -1;
+    if (window._cycleRationales) {
+      const myRationale = window._cycleRationales.find(r => r.cycle === cycleNum && r.agentIdx === vi);
+      if (myRationale) {
+        myRationale.voteReasoning = voteReasoning;
+        myRationale.topVoteIdx = topVoteIdx;
+      }
+    }
+
     return { vi, votes, voteReasoning, voterName: voter.name };
   }));
 
@@ -2135,8 +2373,14 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
     }
   }
 
-  // Tally
-  liveVoteMatrix.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+  // Tally with reputation-weighted voting (Claude-Flow Improvement 3)
+  liveVoteMatrix.forEach((vv,vi)=>{
+    const voter = agentStates[vi];
+    const repMultiplier = 0.7 + ((voter?.reputation || 50) / 100) * 0.6; // range 0.7x to 1.3x
+    vv.forEach((c,di)=>{
+      if(di<activeDesigns.length) activeDesigns[di].credits += Math.round(c * repMultiplier);
+    });
+  });
   setTimeout(()=>{
     activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
     agentStates.forEach((a,vi)=>{ const spent=liveVoteMatrix[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
@@ -2210,13 +2454,15 @@ ${myDesign?.strategicReasoning ? `Your strategic reasoning this cycle: ${myDesig
 Your cross-pollination conversations this cycle:
 ${myConvMem || 'None recorded.'}
 
+${traitEffectivenessContext(i) ? 'TRAIT EFFECTIVENESS DATA (from EWC analysis):\n' + traitEffectivenessContext(i) + '\n' : ''}
 Analyze these results deeply. Consider:
 - How did your strategic reasoning play out? Was your bet correct?
 - What did your conversation partners predict vs what actually happened?
-- Which genome traits served you well? Which held you back?
+- Which genome traits served you well? Which held you back? Check the TRAIT EFFECTIVENESS DATA if available.
 - What specific design attributes (category, materials, strategy) drove the winning design?
 - Were the winning designs more wearable? More producible? Better targeted to a specific customer?
 - Should you shift your price point, manufacturability approach, or target customer next cycle?
+- IMPORTANT: Traits marked with "PROVEN — shift cautiously" have strong cross-cycle correlation with success. DAMPEN changes to those traits.
 
 Output EXACTLY this JSON (no markdown):
 {"belief":"[one vivid sentence: what you learned, referencing specific data — names, scores, strategies, and commercial factors]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10],"pricePoint":[integer -10 to +10],"manufacturability":[integer -10 to +10],"wearability":[integer -10 to +10],"trendSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
@@ -2252,7 +2498,13 @@ Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strength
     if (evo?.shifts) {
       Object.entries(evo.shifts).forEach(([key, delta]) => {
         if (agent[key] !== undefined && typeof delta === 'number') {
-          const clamped = Math.max(-10, Math.min(10, delta));
+          let clamped = Math.max(-10, Math.min(10, delta));
+          // EWC dampening: proven traits resist large changes (Claude-Flow Improvement 5)
+          const te = traitEffectiveness[key];
+          if (te && te.importanceWeight > 0.4 && te.samples >= 2) {
+            const dampFactor = 1 - (te.importanceWeight * 0.5);
+            clamped = Math.round(clamped * dampFactor);
+          }
           const oldVal = agent[key];
           agent[key] = Math.max(0, Math.min(100, agent[key] + clamped));
           genomeShifts[key] = agent[key] - oldVal;
@@ -2390,13 +2642,14 @@ const PHASE_SCRIPTS = [
         }
       });
       vm.forEach((voterVotes, vi)=>{
-        voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += creds; });
+        const repMult = 0.7 + ((agentStates[vi]?.reputation || 50) / 100) * 0.6;
+        voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += Math.round(creds * repMult); });
       });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       }, 3500/speed);
-      addLog(`Voting complete. Credits tallied.`,'rs', 4200);
+      addLog(`Voting complete. Credits tallied (reputation-weighted).`,'rs', 4200);
       setProgress(80);
       return 5000;
     },
@@ -2531,7 +2784,7 @@ const PHASE_SCRIPTS = [
           addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500);
         }
       });
-      vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      vm.forEach((vv,vi)=>{ const repMult=0.7+((agentStates[vi]?.reputation||50)/100)*0.6; vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=Math.round(c*repMult); }); });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
@@ -2647,7 +2900,7 @@ const PHASE_SCRIPTS = [
         if(top2.length){ const msg=top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
         addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500); }
       });
-      vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      vm.forEach((vv,vi)=>{ const repMult=0.7+((agentStates[vi]?.reputation||50)/100)*0.6; vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=Math.round(c*repMult); }); });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
@@ -3251,6 +3504,87 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
   };
 
   cycleReports.push(report);
+
+  // ── Claude-Flow Post-Cycle Updates (zero API cost) ──
+
+  // 1. Pattern Memory Bank — store all designs with outcome data
+  designs.forEach(d => {
+    const agentForDesign = agentStates[d.agentIdx];
+    patternBank.push({
+      cycle: cycleNum,
+      name: d.name,
+      category: d.cat,
+      strategy: d.strategy,
+      materials: d.materials || '',
+      form: d.formConcept || '',
+      production: d.production || '',
+      targetCustomer: d.targetCustomer || '',
+      aesthetic: d.aesthetic,
+      novelty: d.novelty,
+      profit: d.profit,
+      wearability: d.wearability || 0,
+      makeable: d.makeable || 0,
+      credits: d.credits,
+      rank: d.rank,
+      reasoning: d.strategicReasoning || '',
+      emergingTrends: trendData?.emerging || [],
+      genomeTraits: agentForDesign ? {
+        novelty: agentForDesign.novelty, marketFit: agentForDesign.marketFit,
+        risk: agentForDesign.risk, platBias: agentForDesign.platBias,
+        manufacturability: agentForDesign.manufacturability ?? 60,
+        wearability: agentForDesign.wearability ?? 65
+      } : {},
+      confidence: d.rank <= 1 ? 1.0 : d.rank <= 3 ? 0.7 : 0.4
+    });
+  });
+  // Confidence decay/reinforcement for existing patterns
+  const topStrategies = new Set(designs.filter(d => d.rank <= 3).map(d => d.strategy + '|' + d.cat));
+  const bottomStrategies = new Set(designs.filter(d => d.rank > 3).map(d => d.strategy + '|' + d.cat));
+  patternBank.forEach(p => {
+    if (p.cycle < cycleNum) {
+      const key = p.strategy + '|' + p.category;
+      if (bottomStrategies.has(key)) p.confidence = Math.max(0.1, p.confidence * 0.8);
+      if (topStrategies.has(key)) p.confidence = Math.min(1.0, p.confidence * 1.1);
+    }
+  });
+
+  // 2. Q-Learning Router — update strategy×category rewards
+  const alpha = Math.max(0.4, 0.7 - (cycleNum - 1) * 0.15); // decaying learning rate
+  designs.forEach(d => {
+    const strat = d.strategy;
+    const cat = d.cat;
+    if (qTable[strat] && qTable[strat][cat]) {
+      const q = qTable[strat][cat];
+      q.avgCredits = q.avgCredits + alpha * (d.credits - q.avgCredits);
+      q.totalCredits += d.credits;
+      q.count++;
+      q.lastCycle = cycleNum;
+    }
+  });
+
+  // 3. Rationale Persistence — finalize with actual outcomes
+  const cycleRationales = window._cycleRationales || [];
+  cycleRationales.forEach(r => {
+    if (r.cycle === cycleNum) {
+      const myDesign = designs.find(d => d.agentIdx === r.agentIdx);
+      r.actualRank = myDesign?.rank || 7;
+      r.creditsEarned = myDesign?.credits || 0;
+      r.designName = myDesign?.name || '—';
+      // Prediction accuracy: did their strategy+category choice perform above average?
+      const avgCredits = totalCredits / designs.length;
+      r.predictionAccuracy = (myDesign?.credits || 0) >= avgCredits ? 1.0 : (myDesign?.credits || 0) / avgCredits;
+      // Did their top vote pick the winner?
+      if (r.topVoteIdx !== undefined) {
+        r.votedForWinner = r.topVoteIdx === sortedDesigns[0].idx;
+      }
+      rationaleStore.push(r);
+    }
+  });
+  window._cycleRationales = [];
+
+  // 4. EWC Trait Tracker — compute genome↔outcome correlations
+  computeTraitEffectiveness(cycleNum, sortedDesigns);
+
   updateReportsNav();
 }
 
