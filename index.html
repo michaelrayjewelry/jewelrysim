@@ -1793,14 +1793,18 @@ Strategy: [EXPLOIT or EXPLORE or MUTATE] · [Category: Ring/Pendant/Earrings/Bra
 
 /* ══════════════════════════════════
    LIVE AI DESIGN GENERATION (Phase 2)
-   Each agent produces a design via Claude based on
-   their genome, bio, cross-pollination dialogue, and prior reports.
+   Multi-step Claude pipeline — each agent decision is a
+   separate Claude call with full context:
+     Step 1: Strategic direction (strategy + category + reasoning)
+     Step 2: Creative naming (references conversations, genome, strategy)
+     Step 3: Self-assessment + image prompt (scores + visual description)
+     Step 4: Prompt refinement (art-director pass for image gen)
 ══════════════════════════════════ */
 async function runLiveGeneration(cycleNum) {
   setProgress(45);
   document.getElementById('designs-wrap').style.display='block';
-  agentStates.forEach(a=>setAgentStatus(a.id,'Designing…'));
-  addLog(`Live AI generation — each agent designing via Claude (Cycle ${cycleNum})…`, 'rs', 100);
+  agentStates.forEach(a=>setAgentStatus(a.id,'Deliberating…'));
+  addLog(`Live AI design pipeline — multi-step Claude deliberation (Cycle ${cycleNum})…`, 'rs', 100);
 
   const designs = [];
   const categories = ['Ring','Pendant','Earrings','Bracelet'];
@@ -1808,114 +1812,220 @@ async function runLiveGeneration(cycleNum) {
 
   for (let i = 0; i < agentStates.length; i++) {
     const agent = agentStates[i];
+    setAgentStatus(agent.id, 'Deliberating…');
     const convMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
+    const allConvMem = (agent.conversationMemory || []).map(m => `[Cycle ${m.cycle}] ${m.partner}: "${m.excerpt}"`).join('\n');
 
-    const designPrompt = `You are ${agent.name}, designing for Cycle ${cycleNum}.
+    // ── Step 1: Strategic Direction ──
+    // Claude decides strategy + category using full agent context
+    const stratPrompt = `You are ${agent.name}, beginning your design process for Cycle ${cycleNum}.
 
-Your cross-pollination conversations this cycle:
-${convMem || 'No conversations recorded.'}
+YOUR CROSS-POLLINATION DIALOGUES THIS CYCLE:
+${convMem || 'No conversations this cycle.'}
 
-Based on your genome, personality bio, conversations, and any prior intelligence reports, create ONE jewelry design.
+ALL PRIOR DIALOGUES:
+${allConvMem || 'No prior conversations.'}
 
-Output EXACTLY this JSON (no markdown, no backticks, just raw JSON):
-{"name":"[descriptive design name, 3-6 words describing materials and form]","cat":"[Ring or Pendant or Earrings or Bracelet]","strategy":"[exploit or explore or mutate]","aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"prompt":"[detailed image generation prompt: metal type, stone type, setting style, design form, photography style, background, lighting — 30-50 words]"}`;
+Based on everything you know — your genome DNA, your personality bio, every conversation you've had, your evolution history, and every intelligence report — make your strategic decision.
 
-    const resp = await llmCall(
-      'You are generating a jewelry design. Output ONLY valid JSON with the exact fields requested. No explanation, no markdown.',
-      designPrompt, agent
+Think about:
+- What worked and what failed in prior cycles (your rank, the winners, the trends)
+- What your conversation partners said that influenced your thinking
+- Where the market is headed vs where it's saturated
+- Your natural strengths from your genome vs where you need to adapt
+
+Output EXACTLY this JSON (no markdown, no backticks):
+{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[primary metal and stone/accent choices]","form":"[structural concept in 5-10 words]"}`;
+
+    const stratResp = await llmCall(
+      'You are making a strategic design decision. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
+      stratPrompt, agent
     );
 
-    let design = null;
-    if (resp) {
+    let stratData = null;
+    if (stratResp) {
       try {
-        const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
-        design = JSON.parse(cleaned);
-      } catch(e) { console.warn('Design JSON parse failed for', agent.name, resp); }
+        stratData = JSON.parse(stratResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+      } catch(e) { console.warn('Strategy parse failed for', agent.name, stratResp); }
     }
 
-    if (!design || !design.name || !design.prompt) {
-      // Fallback: use sim-mode design if available
-      const fallback = CYCLE_DESIGNS[cycleNum-1]?.[i];
-      design = fallback ? {...fallback} : {
-        name: `${agent.name}'s Cycle ${cycleNum} Design`,
-        cat: categories[i % 4],
+    // Fallback strategy
+    if (!stratData) {
+      stratData = {
         strategy: agent.risk > 65 ? 'explore' : agent.risk < 35 ? 'exploit' : 'mutate',
-        aesthetic: 50 + Math.floor(Math.random()*30),
-        novelty: 40 + Math.floor(Math.random()*40),
-        profit: 45 + Math.floor(Math.random()*35),
-        prompt: `fine jewelry ${categories[i%4].toLowerCase()}, ${agent.philosophy || 'elegant design'}, studio photography, neutral background, professional lighting`
+        cat: categories[i % 4],
+        reasoning: 'Proceeding based on genome defaults.',
+        materials: agent.platBias > 60 ? 'platinum' : 'gold',
+        form: 'refined jewelry piece'
       };
     }
+    if (!categories.includes(stratData.cat)) stratData.cat = categories[i % 4];
+    if (!['exploit','explore','mutate'].includes(stratData.strategy)) stratData.strategy = 'explore';
 
-    if (!categories.includes(design.cat)) design.cat = categories[0];
-    if (!['exploit','explore','mutate'].includes(design.strategy)) design.strategy = 'explore';
-    design.aesthetic = Math.max(20, Math.min(98, parseInt(design.aesthetic)||60));
-    design.novelty   = Math.max(20, Math.min(98, parseInt(design.novelty)||50));
-    design.profit    = Math.max(20, Math.min(98, parseInt(design.profit)||55));
+    addLog(`<b>${agent.name}</b> strategy: <b>${stratData.strategy.toUpperCase()}</b> · ${stratData.cat} — <i>${(stratData.reasoning||'').slice(0,140)}</i>`, '', 300 + i*800);
 
-    design.agentIdx = agent.id;
-    design.agentName = agent.name;
-    design.emoji = designEmojis[i + (cycleNum-1)*6] || '⬡';
-    design.credits = 0;
+    // ── Step 2: Creative Naming ──
+    // Claude generates a design name informed by the strategic decision + full history
+    setAgentStatus(agent.id, 'Naming…');
+    const namePrompt = `You are ${agent.name}, naming your Cycle ${cycleNum} jewelry design.
 
-    // Refine prompt through Claude — translate raw concept into optimized image-gen language
+YOUR STRATEGIC DECISION:
+- Strategy: ${stratData.strategy.toUpperCase()}
+- Category: ${stratData.cat}
+- Materials: ${stratData.materials}
+- Form concept: ${stratData.form}
+- Reasoning: ${stratData.reasoning}
+
+YOUR CROSS-POLLINATION DIALOGUES THIS CYCLE:
+${convMem || 'None.'}
+
+Create the official submission name for your design. The name should:
+- Be 3-6 words that evoke the physical piece (materials, form, feeling)
+- Reflect your strategic direction and personality
+- Feel like a real luxury jewelry collection name
+- Reference specific materials, forms, or design language from your conversations and genome
+- NOT be generic — it should be unmistakably YOUR design based on your agent identity
+
+Output ONLY the design name. No quotes, no explanation, nothing else.`;
+
+    const nameResp = await llmCall(
+      'You are naming a jewelry design. Output ONLY the design name (3-6 words). No quotes, no punctuation wrapping, no explanation.',
+      namePrompt, agent
+    );
+
+    let designName = null;
+    if (nameResp) {
+      designName = nameResp.trim().replace(/^["']+|["']+$/g, '').slice(0, 80);
+    }
+    if (!designName || designName.length < 3) {
+      designName = `${stratData.materials || 'Gold'} ${stratData.form || stratData.cat}`;
+    }
+
+    // ── Step 3: Self-Assessment + Image Prompt ──
+    // Claude scores the design and generates the visual prompt, knowing the name + strategy
+    setAgentStatus(agent.id, 'Designing…');
+    const assessPrompt = `You are ${agent.name}, finalizing your Cycle ${cycleNum} submission.
+
+YOUR DESIGN:
+- Name: "${designName}"
+- Category: ${stratData.cat}
+- Strategy: ${stratData.strategy.toUpperCase()}
+- Materials: ${stratData.materials}
+- Form: ${stratData.form}
+- Strategic reasoning: ${stratData.reasoning}
+
+YOUR CONVERSATIONS THIS CYCLE:
+${convMem || 'None.'}
+
+Now self-assess your design and create the image generation prompt.
+
+For scores, be honest — consider your genome strengths, market fit from reports, and how your design compares to prior cycle winners. Don't just give yourself high scores.
+
+Output EXACTLY this JSON (no markdown):
+{"aesthetic":[40-95 integer: visual beauty and craftsmanship level],"novelty":[30-95 integer: how original/unprecedented this is],"profit":[35-95 integer: commercial viability and margin potential],"prompt":"[detailed image prompt: specific metal type and finish, stone type and cut, setting style, structural form, silhouette details, surface texture, 30-50 words]"}`;
+
+    const assessResp = await llmCall(
+      'You are assessing your own jewelry design. Be calibrated and honest in your scores. Output ONLY valid JSON.',
+      assessPrompt, agent
+    );
+
+    let assessData = null;
+    if (assessResp) {
+      try {
+        assessData = JSON.parse(assessResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+      } catch(e) { console.warn('Assessment parse failed for', agent.name, assessResp); }
+    }
+
+    // Build the final design object
+    const design = {
+      name: designName,
+      cat: stratData.cat,
+      strategy: stratData.strategy,
+      aesthetic: Math.max(20, Math.min(98, parseInt(assessData?.aesthetic)||60)),
+      novelty:  Math.max(20, Math.min(98, parseInt(assessData?.novelty)||50)),
+      profit:   Math.max(20, Math.min(98, parseInt(assessData?.profit)||55)),
+      prompt:   assessData?.prompt || `fine jewelry ${stratData.cat.toLowerCase()}, ${stratData.materials}, ${stratData.form}, studio photography, neutral background, professional lighting`,
+      strategicReasoning: stratData.reasoning,
+      materials: stratData.materials,
+      formConcept: stratData.form,
+      agentIdx: agent.id,
+      agentName: agent.name,
+      emoji: designEmojis[i + (cycleNum-1)*6] || '⬡',
+      credits: 0
+    };
+
+    // ── Step 4: Prompt Refinement (art-director pass) ──
+    setAgentStatus(agent.id, 'Refining…');
     design.rawPrompt = design.prompt;
     design.prompt = await refineDesignPrompt(design);
 
     designs.push(design);
-    addLog(`<b>${agent.name}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()}`, 'ds', 300 + i*600);
-    addLog(`<span style="opacity:.6;font-size:.7rem">Refined prompt: ${design.prompt.slice(0,120)}…</span>`, '', 300 + i*600 + 200);
-    setTimeout(()=>renderDesignCard(design, i), (400 + i*600)/speed);
+    addLog(`<b>${agent.name}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()}`, 'ds', 300 + i*800 + 300);
+    addLog(`<span style="opacity:.6;font-size:.7rem">${design.prompt.slice(0,150)}</span>`, '', 300 + i*800 + 500);
+    setTimeout(()=>renderDesignCard(design, i), (400 + i*800)/speed);
   }
 
   activeDesigns = designs;
-  addLog(`All ${designs.length} designs submitted. Prompts refined via Claude. Pool locked.`, 'rs', 300 + agentStates.length*600 + 200);
+  addLog(`All ${designs.length} designs submitted via 4-step Claude pipeline. Pool locked.`, 'rs', 300 + agentStates.length*800 + 200);
   setProgress(60);
-  return 300 + agentStates.length*600 + 600;
+  return 300 + agentStates.length*800 + 600;
 }
 
 /* ══════════════════════════════════
    LIVE AI VOTING (Phase 3)
    Each agent reviews all designs and allocates 10,000⬡ via Claude.
+   Two-step: reasoning first, then allocation.
 ══════════════════════════════════ */
 async function runLiveVoting(cycleNum) {
   setProgress(65);
   agentStates.forEach(a=>setAgentStatus(a.id,'Evaluating…'));
-  addLog(`Live AI voting — each agent allocates 10,000⬡ via Claude…`, 'rs', 100);
+  addLog(`Live AI voting — each agent deliberates and allocates 10,000⬡ via Claude…`, 'rs', 100);
 
+  // Rich design summaries including strategic context
   const designSummary = activeDesigns.map((d,i) =>
-    `[${i}] "${d.name}" by ${d.agentName} — ${d.cat} · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}`
+    `[${i}] "${d.name}" by ${d.agentName} — ${d.cat} · ${d.strategy.toUpperCase()} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}${d.strategicReasoning ? ' · Reasoning: '+d.strategicReasoning.slice(0,80) : ''}`
   ).join('\n');
 
   const liveVoteMatrix = [];
 
   for (let vi = 0; vi < agentStates.length; vi++) {
     const voter = agentStates[vi];
+    setAgentStatus(voter.id, 'Evaluating…');
 
     const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).
 
 The designs:
 ${designSummary}
 
-Based on your genome (aesthetic preferences, risk tolerance, market focus), your bio, intelligence reports, and conversation memory — allocate your 10,000⬡. Weight designs you believe deserve to win higher.
+Consider:
+- Your genome DNA: what aesthetic preferences, material biases, and market instincts does your genome tell you to value?
+- Your conversations this cycle: did any partner's ideas resonate with designs you see here?
+- Intelligence reports: which strategies and categories have been winning? Is the market shifting?
+- Your personality: are you drawn to novelty or proven formulas? Do you value craft or commercial potential?
 
-Output EXACTLY a JSON array of ${activeDesigns.length} integers that sum to 10000. Put 0 for your own design.
-Example for 6 designs: [0,3500,2500,1000,2000,1000]`;
+Output EXACTLY this JSON (no markdown):
+{"reasoning":"[1-2 sentences: why you're voting the way you are, referencing your genome and data]","votes":[${activeDesigns.map((_,j)=>j===activeDesigns.findIndex(d=>d.agentIdx===vi)?'0':'integer').join(',')}]}
+
+The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 0 for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).`;
 
     const resp = await llmCall(
-      'Output ONLY a JSON array of integers that sum to 10000. No text, no explanation.',
+      'You are deliberating on how to allocate votes. Think about your genome, conversations, and reports. Output ONLY valid JSON with "reasoning" and "votes" fields.',
       votePrompt, voter
     );
 
     let votes = null;
+    let voteReasoning = '';
     if (resp) {
       try {
         const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
         const parsed = JSON.parse(cleaned);
-        if (Array.isArray(parsed) && parsed.length === activeDesigns.length) {
+        // Support both new format {reasoning, votes} and legacy bare array
+        const voteArr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.votes) ? parsed.votes : null);
+        voteReasoning = parsed.reasoning || '';
+        if (voteArr && voteArr.length === activeDesigns.length) {
           // Normalize to exactly 10000
-          const rawSum = parsed.reduce((a,b)=>a+Math.max(0,b),0);
-          votes = parsed.map(v => rawSum > 0 ? Math.round(Math.max(0,v) / rawSum * 10000) : 0);
+          const rawSum = voteArr.reduce((a,b)=>a+Math.max(0,b),0);
+          votes = voteArr.map(v => rawSum > 0 ? Math.round(Math.max(0,v) / rawSum * 10000) : 0);
           // Fix rounding
           const diff = 10000 - votes.reduce((a,b)=>a+b,0);
           if (diff !== 0) { const maxIdx = votes.indexOf(Math.max(...votes)); votes[maxIdx] += diff; }
@@ -1944,13 +2054,17 @@ Example for 6 designs: [0,3500,2500,1000,2000,1000]`;
       votes = votes.map(v => rawSum > 0 ? Math.round(v/rawSum*10000) : 0);
       const diff = 10000 - votes.reduce((a,b)=>a+b,0);
       if (diff !== 0) { const mi = votes.reduce((best,v,i)=>i!==selfIdx&&v>votes[best]?i:best,selfIdx===0?1:0); votes[mi]+=diff; }
+      voteReasoning = 'Voted based on genome aesthetic affinity (fallback).';
     }
 
     liveVoteMatrix.push(votes);
 
     const top2 = votes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
     const msg = top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
-    addLog(`<b>${voter.name}</b> → ${msg}`, 'vt', 300 + vi*400);
+    addLog(`<b>${voter.name}</b> → ${msg}`, 'vt', 300 + vi*500);
+    if (voteReasoning) {
+      addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${voteReasoning.slice(0,160)}</span>`, '', 300 + vi*500 + 150);
+    }
   }
 
   // Tally
@@ -2002,21 +2116,32 @@ async function runLiveEvolution(cycleNum) {
     const isWinner = rank === 0;
     const isLoser = rank === sorted.length - 1;
 
+    const myConvMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
+
     const evoPrompt = `Cycle ${cycleNum} results:
 ${resultsSummary}
 
 ${priorContext}
 
 You are ${agent.name} (rank #${rank+1}, design: "${myDesign?.name||'—'}").
-Analyze these results relative to your genome and prior performance.
+${myDesign?.strategicReasoning ? `Your strategic reasoning this cycle: ${myDesign.strategicReasoning}` : ''}
+
+Your cross-pollination conversations this cycle:
+${myConvMem || 'None recorded.'}
+
+Analyze these results deeply. Consider:
+- How did your strategic reasoning play out? Was your bet correct?
+- What did your conversation partners predict vs what actually happened?
+- Which genome traits served you well? Which held you back?
+- What specific design attributes (category, materials, strategy) drove the winning design?
 
 Output EXACTLY this JSON (no markdown):
-{"belief":"[one sentence: what you learned this cycle]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see]"}
+{"belief":"[one vivid sentence: what you learned, referencing specific data — names, scores, strategies]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
 
-Rules: ${isWinner ? 'You WON — reinforce your strengths, reduce risk slightly.' : isLoser ? 'You LOST — apply mutation pressure, increase novelty, shift away from your current strategy.' : 'Mid-pack — adapt toward what worked, away from what didnt.'}`;
+Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strengths, but dont get complacent.' : isLoser ? 'You came LAST — something fundamental needs to change. What specifically failed and why?' : `You placed #${rank+1} — close but not enough. What specific adjustment would push you to #1?`}`;
 
     const resp = await llmCall(
-      'Output ONLY valid JSON. No markdown, no explanation.',
+      'You are reflecting on your cycle performance. Think deeply about YOUR specific data — your genome, conversations, strategy, and results. Output ONLY valid JSON.',
       evoPrompt, agent
     );
 
