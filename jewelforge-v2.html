@@ -579,6 +579,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         <div class="sr"><label>Margin Sensitivity</label><input type="range" min="0" max="100" value="65" id="s-mrg" oninput="sv(this,'sv-mrg');updatePreview()"><span class="sv" id="sv-mrg">65</span></div>
         <div class="sr"><label>Complexity Budget</label><input type="range" min="0" max="100" value="55" id="s-cmp" oninput="sv(this,'sv-cmp');updatePreview()"><span class="sv" id="sv-cmp">55</span></div>
       </div>
+      <div class="bsec" style="margin-top:1px">
+        <h4>Commercial Genome</h4>
+        <div class="sr"><label>Price Point</label><input type="range" min="0" max="100" value="50" id="s-prc" oninput="sv(this,'sv-prc');updatePreview()"><span class="sv" id="sv-prc">50</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Accessible ($200-1K)</span><span>High Jewelry ($10K+)</span></div>
+        <div class="sr"><label>Manufacturability</label><input type="range" min="0" max="100" value="60" id="s-mfg" oninput="sv(this,'sv-mfg');updatePreview()"><span class="sv" id="sv-mfg">60</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Art Piece (hand-fab)</span><span>Production Ready (cast)</span></div>
+        <div class="sr"><label>Wearability</label><input type="range" min="0" max="100" value="65" id="s-wer" oninput="sv(this,'sv-wer');updatePreview()"><span class="sv" id="sv-wer">65</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Statement / Runway</span><span>Daily Wear</span></div>
+        <div class="sr"><label>Trend Sensitivity</label><input type="range" min="0" max="100" value="45" id="s-trd" oninput="sv(this,'sv-trd');updatePreview()"><span class="sv" id="sv-trd">45</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Timeless</span><span>Trend-Chasing</span></div>
+      </div>
     </div>
   </div>
 
@@ -853,6 +864,12 @@ function agentGenomeStr(agent) {
   const riskLabel = g.risk > 65 ? 'Explorer (High Novelty)' : g.risk < 35 ? 'Refiner (Exploit Lane)' : 'Balanced (Mutate)';
   const mktFocus = g.marketFocus || 'general';
 
+  // Derived commercial labels from genome values
+  const priceLabel = (g.pricePoint ?? 50) > 70 ? 'High Jewelry ($10K+)' : (g.pricePoint ?? 50) < 30 ? 'Accessible ($200-1K)' : 'Mid-Market ($1K-10K)';
+  const mfgLabel = (g.manufacturability ?? 60) > 70 ? 'Production-Ready (cast, reproducible)' : (g.manufacturability ?? 60) < 30 ? 'Art-Piece (hand-fabrication only)' : 'Semi-Production (some hand-finishing)';
+  const wearLabel = (g.wearability ?? 65) > 70 ? 'Daily Wear (comfort, durability)' : (g.wearability ?? 65) < 30 ? 'Statement/Runway (visual impact over comfort)' : 'Occasion Wear (special events)';
+  const trendLabel = (g.trendSens ?? 45) > 70 ? 'Trend-Forward (chases current movements)' : (g.trendSens ?? 45) < 30 ? 'Timeless (ignores trends, classic forms)' : 'Trend-Aware (adapts selectively)';
+
   let genome = `AGENT IDENTITY:
   Name: ${g.name}
   Archetype: ${g.arch}
@@ -877,6 +894,18 @@ RISK GENOME:
   Exploration↔Exploitation: ${g.risk}/100 (${riskLabel})
   Margin Sensitivity: ${g.marginSens ?? g.mrg ?? 65}/100
   Complexity Budget: ${g.complexBudget ?? g.cmp ?? 55}/100
+
+COMMERCIAL & MANUFACTURING GENOME:
+  Price Point: ${g.pricePoint ?? 50}/100 (${priceLabel})
+  Manufacturability: ${g.manufacturability ?? 60}/100 (${mfgLabel})
+  Wearability: ${g.wearability ?? 65}/100 (${wearLabel})
+  Trend Sensitivity: ${g.trendSens ?? 45}/100 (${trendLabel})
+
+MANUFACTURING CONSTRAINTS (derived from your genome):
+  ${(g.manufacturability ?? 60) > 60 ? '• Your designs MUST be castable — avoid hand-fabrication-only forms, undercuts that prevent mold release, and multi-axis curves that cannot be cast in lost-wax.' : '• You design for hand fabrication — you CAN use complex forms, wire wrapping, granulation, and techniques that cannot be mass-produced.'}
+  ${(g.wearability ?? 65) > 60 ? '• Prioritize comfort: smooth interior edges, appropriate weight for the category, secure clasps/settings, no sharp protrusions that snag clothing.' : '• Wearability is secondary — you optimize for visual drama and editorial impact over comfort.'}
+  ${(g.pricePoint ?? 50) > 65 ? '• Target premium market: use precious metals and high-grade stones. Justify price with craftsmanship complexity and material value.' : (g.pricePoint ?? 50) < 35 ? '• Target accessible market: use gold vermeil, lab-grown stones, or silver. Keep material costs low. Design for volume sales.' : '• Target mid-market: balance material value with broad appeal. 14K-18K gold, quality semi-precious or smaller diamonds.'}
+  ${(g.trendSens ?? 45) > 60 ? '• Actively reference current jewelry trends (what is selling NOW) when choosing forms, materials, and silhouettes.' : '• Design with longevity in mind — forms and materials that will still sell in 5 years.'}
 
 CURRENT STATE:
   Credits: ${g.credits}
@@ -947,7 +976,7 @@ function priorReportCtx(agentIdx) {
 
     ctx += `\nAll Designs (ranked):\n`;
     [...r.designs].sort((a,b)=>a.rank-b.rank).forEach(d => {
-      ctx += `  #${d.rank} "${d.name}" by ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.cat} — ${d.credits.toLocaleString()}⬡ — AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}\n`;
+      ctx += `  #${d.rank} "${d.name}" by ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.cat} — ${d.credits.toLocaleString()}⬡ — AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'}${d.production ? ' ['+d.production+']' : ''}${d.targetCustomer ? ' → '+d.targetCustomer : ''}\n`;
     });
 
     ctx += `\nStrategy Performance: ${Object.entries(r.stratPerf||{}).map(([k,v])=>`${k.toUpperCase()}: ${v.avgCreds.toLocaleString()}⬡ avg (${v.count} designs)`).join(' | ')}\n`;
@@ -1085,7 +1114,7 @@ const FALLBACK_PHILS = [
 
 async function autoGen() {
   // First, randomize the genome sliders
-  ['s-min','s-nov','s-orn','s-mkt','s-sym','s-plt','s-col','s-dia','s-mix','s-rsk','s-mrg','s-cmp'].forEach(id=>{
+  ['s-min','s-nov','s-orn','s-mkt','s-sym','s-plt','s-col','s-dia','s-mix','s-rsk','s-mrg','s-cmp','s-prc','s-mfg','s-wer','s-trd'].forEach(id=>{
     const el=document.getElementById(id); const v=Math.floor(Math.random()*70)+15; el.value=v;
     const sid='sv-'+id.replace('s-',''); const se=document.getElementById(sid); if(se) se.textContent=v;
   });
@@ -1113,6 +1142,10 @@ async function autoGen() {
     risk: document.getElementById('s-rsk').value,
     marginSens: document.getElementById('s-mrg').value,
     complexBudget: document.getElementById('s-cmp').value,
+    pricePoint: document.getElementById('s-prc').value,
+    manufacturability: document.getElementById('s-mfg').value,
+    wearability: document.getElementById('s-wer').value,
+    trendSens: document.getElementById('s-trd').value,
   };
   const tags = [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent).join(', ');
   const market = document.querySelector('#mkt-chips .chip.on')?.textContent || 'general';
@@ -1122,7 +1155,7 @@ async function autoGen() {
     const btn = document.querySelector('.auto-link');
     if (btn) btn.textContent = '⏳ Generating…';
     try {
-      const genome = `Minimalism:${sliders.minimalism} Novelty:${sliders.novelty} Ornamentation:${sliders.ornamentation} MarketFit:${sliders.marketFit} Symmetry:${sliders.symmetry} PlatinumBias:${sliders.platBias} ColoredStone:${sliders.coloredStone} Diamond:${sliders.diamond} MixedMetal:${sliders.mixedMetal} Risk:${sliders.risk} MarginSensitivity:${sliders.marginSens} ComplexityBudget:${sliders.complexBudget} StyleTags:[${tags}] Market:${market}`;
+      const genome = `Minimalism:${sliders.minimalism} Novelty:${sliders.novelty} Ornamentation:${sliders.ornamentation} MarketFit:${sliders.marketFit} Symmetry:${sliders.symmetry} PlatinumBias:${sliders.platBias} ColoredStone:${sliders.coloredStone} Diamond:${sliders.diamond} MixedMetal:${sliders.mixedMetal} Risk:${sliders.risk} MarginSensitivity:${sliders.marginSens} ComplexityBudget:${sliders.complexBudget} PricePoint:${sliders.pricePoint} Manufacturability:${sliders.manufacturability} Wearability:${sliders.wearability} TrendSensitivity:${sliders.trendSens} StyleTags:[${tags}] Market:${market}`;
 
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -1136,7 +1169,7 @@ async function autoGen() {
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 150,
           system: 'You generate unique jewelry designer identities for an AI simulation. Output EXACTLY 3 lines, nothing else:\nLine 1: A unique designer name (first + last, any ethnicity)\nLine 2: A 2-3 word archetype title\nLine 3: A design philosophy quote (one sentence, under 12 words)',
-          messages: [{ role: 'user', content: `Generate a designer identity that matches this genome:\n${genome}\n\nThe personality should clearly reflect these specific slider values. High minimalism = clean/structural. High ornamentation = ornate/detailed. High risk = experimental. Low risk = conservative. High platinum bias = cold metals. High colored stone = colorful. Etc.\n\nOutput 3 lines: Name, Archetype, Philosophy.` }]
+          messages: [{ role: 'user', content: `Generate a designer identity that matches this genome:\n${genome}\n\nThe personality should clearly reflect these specific slider values. High minimalism = clean/structural. High ornamentation = ornate/detailed. High risk = experimental. Low risk = conservative. High platinum bias = cold metals. High colored stone = colorful.\n\nCommercial traits matter: High PricePoint = high jewelry designer. Low PricePoint = accessible/commercial designer. High Manufacturability = designs for casting and production. Low Manufacturability = hand-fabrication artisan. High Wearability = everyday comfort focus. Low Wearability = statement/art pieces. High TrendSensitivity = trend-chaser. Low TrendSensitivity = timeless classicist.\n\nOutput 3 lines: Name, Archetype, Philosophy.` }]
         })
       });
       const data = await resp.json();
@@ -1187,6 +1220,10 @@ async function deployCurrentAgent() {
     mixedMetal: parseInt(document.getElementById('s-mix').value),
     marginSens: parseInt(document.getElementById('s-mrg').value),
     complexBudget: parseInt(document.getElementById('s-cmp').value),
+    pricePoint: parseInt(document.getElementById('s-prc').value),
+    manufacturability: parseInt(document.getElementById('s-mfg').value),
+    wearability: parseInt(document.getElementById('s-wer').value),
+    trendSens: parseInt(document.getElementById('s-trd').value),
     styleTags: [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent),
     marketFocus: document.querySelector('#mkt-chips .chip.on')?.textContent || 'general',
     philosophy: document.getElementById('b-phil').value || '',
@@ -1661,7 +1698,13 @@ async function generateAgentBio(agent) {
   if (simMode !== 'live' || !apiKeys.anthropic) { agent.bio = fallback; return; }
 
   const genome = agentGenomeStr(agent);
-  const prompt = `Below is the raw DNA genome of a jewelry design AI agent. Write a short personality bio (2-3 sentences, ~40 words) in third person that captures who this agent IS — their design instincts, aesthetic identity, risk posture, and market philosophy. Make it vivid and specific. Do NOT list numbers or repeat the genome format. Just the bio paragraph, nothing else.
+  const prompt = `Below is the raw DNA genome of a jewelry design AI agent. Write a short personality bio (3-4 sentences, ~60 words) in third person that captures who this agent IS. Include:
+- Their aesthetic identity and design instincts
+- How they approach manufacturing (do they design for casting or hand-fab?)
+- Their commercial positioning (price point, who buys their work)
+- Their wearability philosophy (daily wear comfort vs statement drama)
+
+Make it vivid and specific. Do NOT list numbers or repeat the genome format. Just the bio paragraph, nothing else.
 
 ${genome}`;
 
@@ -1676,8 +1719,8 @@ ${genome}`;
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 120,
-        system: 'You are a concise creative writer for a luxury jewelry AI simulation. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
+        max_tokens: 180,
+        system: 'You are a concise creative writer for a luxury jewelry AI simulation. Bios should convey both artistic vision AND commercial/manufacturing reality — these agents design products that must be physically produced and sold. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -1695,7 +1738,10 @@ function buildFallbackBio(agent) {
   const riskWord = agent.risk > 65 ? 'bold explorer' : agent.risk < 35 ? 'disciplined refiner' : 'adaptive strategist';
   const matPref = agent.platBias > 60 ? 'platinum-forward' : agent.mixedMetal > 60 ? 'mixed-metal experimentalist' : agent.diamond > 65 ? 'diamond-centric' : 'material-versatile';
   const market = agent.marginSens > 65 ? 'margin-conscious' : 'design-first';
-  return `${agent.name} is a ${style}, ${matPref} ${riskWord} with a ${market} market philosophy. Specializes in ${agent.marketFocus || 'general'} with ${(agent.styleTags||[]).slice(0,3).join(', ') || 'eclectic'} sensibilities.`;
+  const mfg = (agent.manufacturability ?? 60) > 60 ? 'designs for casting and production' : 'hand-fabrication artisan';
+  const price = (agent.pricePoint ?? 50) > 65 ? 'high jewelry' : (agent.pricePoint ?? 50) < 35 ? 'accessible luxury' : 'mid-market';
+  const wear = (agent.wearability ?? 65) > 60 ? 'comfort-first' : 'statement-driven';
+  return `${agent.name} is a ${style}, ${matPref} ${riskWord} with a ${market} market philosophy. ${price} positioning, ${mfg}. ${wear} approach to ${agent.marketFocus || 'general'} with ${(agent.styleTags||[]).slice(0,3).join(', ') || 'eclectic'} sensibilities.`;
 }
 
 /* ══════════════════════════════════
@@ -1843,8 +1889,14 @@ Think about:
 - Where the market is headed vs where it's saturated
 - Your natural strengths from your genome vs where you need to adapt
 
+CRITICAL — your design must be PRODUCIBLE and SELLABLE:
+- Refer to your MANUFACTURING CONSTRAINTS in your genome. If your manufacturability is high, your design MUST be castable (lost-wax compatible, no impossible undercuts, clean mold-release geometry). If low, you may use hand-fabrication techniques.
+- Consider your PRICE POINT genome. Your material choices must match — don't design a $200 piece in platinum with 3ct diamonds, and don't design a $50K piece in silver.
+- Think about WHO BUYS THIS. Your market focus and wearability scores define your customer. A bridal customer needs comfort and durability. A collector wants rarity and drama.
+- Consider production volume — high manufacturability means designing for 100+ units. Low means one-of-a-kind.
+
 Output EXACTLY this JSON (no markdown, no backticks):
-{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[primary metal and stone/accent choices]","form":"[structural concept in 5-10 words]","complexity":[1-10 integer],"estMargin":[40-90 integer],"name":"[3-6 word design name: evocative, specific to materials and form, feels like a luxury collection name — NOT generic]"}`;
+{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[specific metals and stones that match your price point — e.g. '14K yellow gold with lab-grown sapphire' not just 'gold']","form":"[structural concept in 5-10 words]","production":"[how this gets made: casting, hand-fab, 3D-printed, electroformed, etc.]","targetCustomer":"[who buys this and why, in 8-15 words]","complexity":[1-10 integer],"estMargin":[40-90 integer],"name":"[3-6 word design name: evocative, specific to materials and form, feels like a luxury collection name — NOT generic]"}`;
 
       const blueprintResp = await llmCall(
         'You are making a strategic design decision and naming your creation. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
@@ -1896,6 +1948,8 @@ YOUR DESIGN:
 - Strategy: ${blueprint.strategy.toUpperCase()}
 - Materials: ${blueprint.materials}
 - Form: ${blueprint.form}
+- Production method: ${blueprint.production || 'not specified'}
+- Target customer: ${blueprint.targetCustomer || 'not specified'}
 - Complexity: ${blueprint.complexity}/10
 - Est. Margin: ${blueprint.estMargin}%
 - Strategic reasoning: ${blueprint.reasoning}
@@ -1903,11 +1957,16 @@ YOUR DESIGN:
 YOUR CONVERSATIONS THIS CYCLE:
 ${convMem || 'None.'}
 
-Self-assess your design scores AND create a production-ready image generation prompt.
+Self-assess your design across ALL dimensions and create the image prompt.
 
-For scores — be honest. Consider your genome strengths, market fit from reports, and how your design compares to prior cycle winners.
+SCORING CRITERIA — be honest and calibrated:
+- Aesthetic (40-95): Visual beauty, craftsmanship quality, and design coherence
+- Novelty (30-95): How original/unprecedented — penalize yourself if this is derivative
+- Profit (35-95): Real commercial viability. Consider: Can this be manufactured at your price point? Does your target customer exist in volume? Are your material costs realistic for the margin? Would a jewelry retailer stock this?
+- Wearability (30-95): Comfort, durability, practical weight, secure settings, no snag points. Score LOW if this is unwearable art, HIGH if someone would wear it daily
+- Manufacturability (30-95): Can a bench jeweler or factory actually produce this? Score HIGH for clean castable geometry, standard setting types. Score LOW for impossible forms, materials that can't be combined, or techniques that don't exist
 
-For the image prompt — write it as a professional art director would for AI image generation (Flux/Stable Diffusion):
+For the image prompt — write it as a professional art director would for AI image generation:
 - Precise metal type and finish (e.g. "hand-hammered 18k rose gold with satin finish")
 - Gems/stones: cut, clarity, color, setting type (e.g. "tension-set princess-cut emerald")
 - Silhouette, structural details, surface texture
@@ -1915,7 +1974,7 @@ For the image prompt — write it as a professional art director would for AI im
 - One mood word (e.g. "ethereal", "architectural")
 
 Output EXACTLY this JSON (no markdown):
-{"aesthetic":[40-95 integer],"novelty":[30-95 integer],"profit":[35-95 integer],"prompt":"[production-ready image prompt, 45-65 words, technically specific]"}`;
+{"aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"wearability":[30-95],"makeable":[30-95],"prompt":"[production-ready image prompt, 45-65 words, technically specific]"}`;
 
       const assessResp = await llmCall(
         'You are assessing your own jewelry design and writing the final image prompt. Be calibrated in scores. Write a vivid, technically specific prompt. Output ONLY valid JSON.',
@@ -1937,11 +1996,15 @@ Output EXACTLY this JSON (no markdown):
         aesthetic: Math.max(20, Math.min(98, parseInt(assessData?.aesthetic)||60)),
         novelty:  Math.max(20, Math.min(98, parseInt(assessData?.novelty)||50)),
         profit:   Math.max(20, Math.min(98, parseInt(assessData?.profit)||55)),
+        wearability: Math.max(20, Math.min(98, parseInt(assessData?.wearability)||55)),
+        makeable: Math.max(20, Math.min(98, parseInt(assessData?.makeable)||60)),
         prompt:   assessData?.prompt || `fine jewelry ${blueprint.cat.toLowerCase()}, ${blueprint.materials}, ${blueprint.form}, macro product photography, neutral background, professional lighting`,
         rawPrompt: assessData?.prompt || '',
         strategicReasoning: blueprint.reasoning,
         materials: blueprint.materials,
         formConcept: blueprint.form,
+        production: blueprint.production || '',
+        targetCustomer: blueprint.targetCustomer || '',
         complexity: blueprint.complexity,
         estMargin: blueprint.estMargin,
         agentIdx: agent.id,
@@ -1991,7 +2054,7 @@ async function runLiveVoting(cycleNum) {
 
   // Rich design summaries including strategic context
   const designSummary = activeDesigns.map((d,i) =>
-    `[${i}] "${d.name}" by ${d.agentName} — ${d.cat} · ${d.strategy.toUpperCase()} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}${d.strategicReasoning ? ' · Reasoning: '+d.strategicReasoning.slice(0,80) : ''}`
+    `[${i}] "${d.name}" by ${d.agentName} — ${d.cat} · ${d.strategy.toUpperCase()} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'}${d.targetCustomer ? ' · Customer: '+d.targetCustomer : ''}${d.strategicReasoning ? ' · Reasoning: '+d.strategicReasoning.slice(0,60) : ''}`
   ).join('\n');
 
   // All 6 voters are independent — run them all concurrently
@@ -2104,7 +2167,7 @@ async function runLiveEvolution(cycleNum) {
   addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡`, 'rs', 300);
 
   const resultsSummary = sorted.map((d,rank) =>
-    `#${rank+1}: "${d.name}" by ${agentStates[d.agentIdx]?.name} — ${d.credits.toLocaleString()}⬡ · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} · ${d.cat}`
+    `#${rank+1}: "${d.name}" by ${agentStates[d.agentIdx]?.name} — ${d.credits.toLocaleString()}⬡ · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'} · ${d.cat}${d.production ? ' · '+d.production : ''}${d.targetCustomer ? ' · For: '+d.targetCustomer : ''}`
   ).join('\n');
 
   const priorContext = cycleReports.length > 0
@@ -2152,9 +2215,11 @@ Analyze these results deeply. Consider:
 - What did your conversation partners predict vs what actually happened?
 - Which genome traits served you well? Which held you back?
 - What specific design attributes (category, materials, strategy) drove the winning design?
+- Were the winning designs more wearable? More producible? Better targeted to a specific customer?
+- Should you shift your price point, manufacturability approach, or target customer next cycle?
 
 Output EXACTLY this JSON (no markdown):
-{"belief":"[one vivid sentence: what you learned, referencing specific data — names, scores, strategies]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
+{"belief":"[one vivid sentence: what you learned, referencing specific data — names, scores, strategies, and commercial factors]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10],"pricePoint":[integer -10 to +10],"manufacturability":[integer -10 to +10],"wearability":[integer -10 to +10],"trendSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
 
 Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strengths, but dont get complacent.' : isLoser ? 'You came LAST — something fundamental needs to change. What specifically failed and why?' : `You placed #${rank+1} — close but not enough. What specific adjustment would push you to #1?`}`;
 
@@ -2194,7 +2259,7 @@ Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strength
         }
       });
     } else {
-      const shifts = isWinner ? {novelty:+3,risk:-4} : isLoser ? {novelty:+8,risk:+6,marginSens:+4} : {novelty:+2,risk:+2};
+      const shifts = isWinner ? {novelty:+3,risk:-4,manufacturability:+2} : isLoser ? {novelty:+8,risk:+6,marginSens:+4,wearability:+3,manufacturability:+3} : {novelty:+2,risk:+2,wearability:+1};
       Object.entries(shifts).forEach(([k,d])=>{ if(agent[k]!==undefined){ const o=agent[k]; agent[k]=Math.max(0,Math.min(100,agent[k]+d)); genomeShifts[k]=agent[k]-o; }});
     }
 
@@ -2638,6 +2703,8 @@ function renderDesignCard(d, i) {
       <div class="dbar"><span class="dbar-l">AES</span><div class="dbar-t"><div class="dbar-f" id="dbf-aes-${i}" style="width:0%"></div></div></div>
       <div class="dbar"><span class="dbar-l">NOV</span><div class="dbar-t"><div class="dbar-f" id="dbf-nov-${i}" style="width:0%"></div></div></div>
       <div class="dbar"><span class="dbar-l">PRO</span><div class="dbar-t"><div class="dbar-f" id="dbf-pro-${i}" style="width:0%"></div></div></div>
+      <div class="dbar"><span class="dbar-l">WER</span><div class="dbar-t"><div class="dbar-f" id="dbf-wer-${i}" style="width:0%"></div></div></div>
+      <div class="dbar"><span class="dbar-l">MFG</span><div class="dbar-t"><div class="dbar-f" id="dbf-mfg-${i}" style="width:0%"></div></div></div>
       <div class="dcred" id="dc-cred-${i}">—</div>
     </div>`;
   grid.appendChild(card);
@@ -2651,9 +2718,13 @@ function renderDesignCard(d, i) {
     const a = document.getElementById('dbf-aes-'+i);
     const n = document.getElementById('dbf-nov-'+i);
     const p = document.getElementById('dbf-pro-'+i);
+    const w = document.getElementById('dbf-wer-'+i);
+    const m = document.getElementById('dbf-mfg-'+i);
     if (a) a.style.width = d.aesthetic+'%';
     if (n) n.style.width = d.novelty+'%';
     if (p) p.style.width = d.profit+'%';
+    if (w) w.style.width = (d.wearability||50)+'%';
+    if (m) m.style.width = (d.makeable||50)+'%';
   }, 80);
 
   // Attach image events via JS — avoids emoji/quote issues in HTML attributes
