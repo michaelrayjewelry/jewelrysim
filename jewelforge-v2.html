@@ -1712,6 +1712,324 @@ Strategy: [EXPLOIT or EXPLORE or MUTATE] · [Category: Ring/Pendant/Earrings/Bra
 }
 
 /* ══════════════════════════════════
+   LIVE AI DESIGN GENERATION (Phase 2)
+   Each agent produces a design via Claude based on
+   their genome, bio, cross-pollination dialogue, and prior reports.
+══════════════════════════════════ */
+async function runLiveGeneration(cycleNum) {
+  setProgress(45);
+  document.getElementById('designs-wrap').style.display='block';
+  agentStates.forEach(a=>setAgentStatus(a.id,'Designing…'));
+  addLog(`Live AI generation — each agent designing via Claude (Cycle ${cycleNum})…`, 'rs', 100);
+
+  const designs = [];
+  const categories = ['Ring','Pendant','Earrings','Bracelet'];
+  const designEmojis = ['⬡','🌑','✨','🔷','💍','🌹','💙','⚡','💎','🦴','🌸','🔥','🌿','💛','⭐','🔶'];
+
+  for (let i = 0; i < agentStates.length; i++) {
+    const agent = agentStates[i];
+    const convMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
+
+    const designPrompt = `You are ${agent.name}, designing for Cycle ${cycleNum}.
+
+Your cross-pollination conversations this cycle:
+${convMem || 'No conversations recorded.'}
+
+Based on your genome, personality bio, conversations, and any prior intelligence reports, create ONE jewelry design.
+
+Output EXACTLY this JSON (no markdown, no backticks, just raw JSON):
+{"name":"[descriptive design name, 3-6 words describing materials and form]","cat":"[Ring or Pendant or Earrings or Bracelet]","strategy":"[exploit or explore or mutate]","aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"prompt":"[detailed image generation prompt: metal type, stone type, setting style, design form, photography style, background, lighting — 30-50 words]"}`;
+
+    const resp = await llmCall(
+      'You are generating a jewelry design. Output ONLY valid JSON with the exact fields requested. No explanation, no markdown.',
+      designPrompt, agent
+    );
+
+    let design = null;
+    if (resp) {
+      try {
+        const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
+        design = JSON.parse(cleaned);
+      } catch(e) { console.warn('Design JSON parse failed for', agent.name, resp); }
+    }
+
+    if (!design || !design.name || !design.prompt) {
+      // Fallback: use sim-mode design if available
+      const fallback = CYCLE_DESIGNS[cycleNum-1]?.[i];
+      design = fallback ? {...fallback} : {
+        name: `${agent.name}'s Cycle ${cycleNum} Design`,
+        cat: categories[i % 4],
+        strategy: agent.risk > 65 ? 'explore' : agent.risk < 35 ? 'exploit' : 'mutate',
+        aesthetic: 50 + Math.floor(Math.random()*30),
+        novelty: 40 + Math.floor(Math.random()*40),
+        profit: 45 + Math.floor(Math.random()*35),
+        prompt: `fine jewelry ${categories[i%4].toLowerCase()}, ${agent.philosophy || 'elegant design'}, studio photography, neutral background, professional lighting`
+      };
+    }
+
+    if (!categories.includes(design.cat)) design.cat = categories[0];
+    if (!['exploit','explore','mutate'].includes(design.strategy)) design.strategy = 'explore';
+    design.aesthetic = Math.max(20, Math.min(98, parseInt(design.aesthetic)||60));
+    design.novelty   = Math.max(20, Math.min(98, parseInt(design.novelty)||50));
+    design.profit    = Math.max(20, Math.min(98, parseInt(design.profit)||55));
+
+    design.agentIdx = agent.id;
+    design.agentName = agent.name;
+    design.emoji = designEmojis[i + (cycleNum-1)*6] || '⬡';
+    design.credits = 0;
+
+    designs.push(design);
+    addLog(`<b>${agent.name}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()}`, 'ds', 300 + i*400);
+    setTimeout(()=>renderDesignCard(design, i), (400 + i*400)/speed);
+  }
+
+  activeDesigns = designs;
+  addLog(`All ${designs.length} designs submitted. Pool locked.`, 'rs', 300 + agentStates.length*400 + 200);
+  setProgress(60);
+  return 300 + agentStates.length*400 + 600;
+}
+
+/* ══════════════════════════════════
+   LIVE AI VOTING (Phase 3)
+   Each agent reviews all designs and allocates 10,000⬡ via Claude.
+══════════════════════════════════ */
+async function runLiveVoting(cycleNum) {
+  setProgress(65);
+  agentStates.forEach(a=>setAgentStatus(a.id,'Evaluating…'));
+  addLog(`Live AI voting — each agent allocates 10,000⬡ via Claude…`, 'rs', 100);
+
+  const designSummary = activeDesigns.map((d,i) =>
+    `[${i}] "${d.name}" by ${d.agentName} — ${d.cat} · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}`
+  ).join('\n');
+
+  const liveVoteMatrix = [];
+
+  for (let vi = 0; vi < agentStates.length; vi++) {
+    const voter = agentStates[vi];
+
+    const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).
+
+The designs:
+${designSummary}
+
+Based on your genome (aesthetic preferences, risk tolerance, market focus), your bio, intelligence reports, and conversation memory — allocate your 10,000⬡. Weight designs you believe deserve to win higher.
+
+Output EXACTLY a JSON array of ${activeDesigns.length} integers that sum to 10000. Put 0 for your own design.
+Example for 6 designs: [0,3500,2500,1000,2000,1000]`;
+
+    const resp = await llmCall(
+      'Output ONLY a JSON array of integers that sum to 10000. No text, no explanation.',
+      votePrompt, voter
+    );
+
+    let votes = null;
+    if (resp) {
+      try {
+        const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed) && parsed.length === activeDesigns.length) {
+          // Normalize to exactly 10000
+          const rawSum = parsed.reduce((a,b)=>a+Math.max(0,b),0);
+          votes = parsed.map(v => rawSum > 0 ? Math.round(Math.max(0,v) / rawSum * 10000) : 0);
+          // Fix rounding
+          const diff = 10000 - votes.reduce((a,b)=>a+b,0);
+          if (diff !== 0) { const maxIdx = votes.indexOf(Math.max(...votes)); votes[maxIdx] += diff; }
+          // Zero out self-vote
+          const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
+          if (selfIdx >= 0 && votes[selfIdx] > 0) {
+            const self = votes[selfIdx]; votes[selfIdx] = 0;
+            const others = votes.map((v,i)=>i===selfIdx?0:v);
+            const otherSum = others.reduce((a,b)=>a+b,0);
+            if (otherSum > 0) votes = votes.map((v,i)=>i===selfIdx?0:v+Math.round(self*v/otherSum));
+            const fix2 = 10000 - votes.reduce((a,b)=>a+b,0);
+            if (fix2 !== 0) { const mi = votes.reduce((best,v,i)=>i!==selfIdx&&v>votes[best]?i:best,selfIdx===0?1:0); votes[mi]+=fix2; }
+          }
+        }
+      } catch(e) { console.warn('Vote parse failed for', voter.name, resp); }
+    }
+
+    if (!votes) {
+      // Fallback: distribute based on aesthetic preference
+      const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
+      votes = activeDesigns.map((d,i) => {
+        if (i === selfIdx) return 0;
+        return d.aesthetic * 2 + d.novelty + d.profit;
+      });
+      const rawSum = votes.reduce((a,b)=>a+b,0);
+      votes = votes.map(v => rawSum > 0 ? Math.round(v/rawSum*10000) : 0);
+      const diff = 10000 - votes.reduce((a,b)=>a+b,0);
+      if (diff !== 0) { const mi = votes.reduce((best,v,i)=>i!==selfIdx&&v>votes[best]?i:best,selfIdx===0?1:0); votes[mi]+=diff; }
+    }
+
+    liveVoteMatrix.push(votes);
+
+    const top2 = votes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
+    const msg = top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
+    addLog(`<b>${voter.name}</b> → ${msg}`, 'vt', 300 + vi*400);
+  }
+
+  // Tally
+  liveVoteMatrix.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+  setTimeout(()=>{
+    activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
+    agentStates.forEach((a,vi)=>{ const spent=liveVoteMatrix[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
+  }, (300+agentStates.length*400+200)/speed);
+  // Store for report generation
+  window._liveVoteMatrix = liveVoteMatrix;
+  addLog(`Voting complete. Credits tallied via Claude.`, 'rs', 300+agentStates.length*400+400);
+  setProgress(80);
+  return 300+agentStates.length*400+800;
+}
+
+/* ══════════════════════════════════
+   LIVE AI EVOLUTION (Phase 4)
+   Claude analyzes results and determines genome shifts,
+   beliefs, and trend narratives for each agent.
+══════════════════════════════════ */
+async function runLiveEvolution(cycleNum) {
+  setProgress(85);
+  const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
+  const winner = sorted[0];
+  const loser = sorted[sorted.length-1];
+
+  // Winner card UI
+  setTimeout(()=>{
+    const wc = document.getElementById('dc-'+winner.idx);
+    if(wc){ wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>'); }
+  }, 300/speed);
+
+  addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡`, 'rs', 300);
+
+  // Ask Claude to analyze results and produce evolution data
+  const resultsSummary = sorted.map((d,rank) =>
+    `#${rank+1}: "${d.name}" by ${agentStates[d.agentIdx]?.name} — ${d.credits.toLocaleString()}⬡ · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} · ${d.cat}`
+  ).join('\n');
+
+  const priorContext = cycleReports.length > 0
+    ? `Prior winners: ${cycleReports.map(r=>`C${r.cycle}: "${r.winner.name}"`).join(', ')}`
+    : 'No prior cycles.';
+
+  // Generate evolution for each agent
+  for (let i = 0; i < agentStates.length; i++) {
+    const agent = agentStates[i];
+    const myDesign = sorted.find(d=>d.agentIdx===i);
+    const rank = myDesign ? sorted.indexOf(myDesign) : 5;
+    const isWinner = rank === 0;
+    const isLoser = rank === sorted.length - 1;
+
+    const evoPrompt = `Cycle ${cycleNum} results:
+${resultsSummary}
+
+${priorContext}
+
+You are ${agent.name} (rank #${rank+1}, design: "${myDesign?.name||'—'}").
+Analyze these results relative to your genome and prior performance.
+
+Output EXACTLY this JSON (no markdown):
+{"belief":"[one sentence: what you learned this cycle]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see]"}
+
+Rules: ${isWinner ? 'You WON — reinforce your strengths, reduce risk slightly.' : isLoser ? 'You LOST — apply mutation pressure, increase novelty, shift away from your current strategy.' : 'Mid-pack — adapt toward what worked, away from what didnt.'}`;
+
+    const resp = await llmCall(
+      'Output ONLY valid JSON. No markdown, no explanation.',
+      evoPrompt, agent
+    );
+
+    let evo = null;
+    if (resp) {
+      try {
+        const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
+        evo = JSON.parse(cleaned);
+      } catch(e) { console.warn('Evolution parse failed for', agent.name); }
+    }
+
+    // Apply shifts
+    const genomeShifts = {};
+    if (evo?.shifts) {
+      Object.entries(evo.shifts).forEach(([key, delta]) => {
+        if (agent[key] !== undefined && typeof delta === 'number') {
+          const clamped = Math.max(-10, Math.min(10, delta));
+          const oldVal = agent[key];
+          agent[key] = Math.max(0, Math.min(100, agent[key] + clamped));
+          genomeShifts[key] = agent[key] - oldVal;
+        }
+      });
+    } else {
+      // Fallback shifts
+      const shifts = isWinner ? {novelty:+3,risk:-4} : isLoser ? {novelty:+8,risk:+6,marginSens:+4} : {novelty:+2,risk:+2};
+      Object.entries(shifts).forEach(([k,d])=>{ if(agent[k]!==undefined){ const o=agent[k]; agent[k]=Math.max(0,Math.min(100,agent[k]+d)); genomeShifts[k]=agent[k]-o; }});
+    }
+
+    // Update belief
+    agent.dominantBelief = evo?.belief || (isWinner ? 'My approach worked — refine further.' : isLoser ? 'Need a fundamentally different direction.' : 'Adapt toward the winning aesthetic.');
+    agent.trustBuilt = Math.min(100, (agent.trustBuilt||0) + (isWinner?15:isLoser?-5:5));
+
+    // Update reputation
+    const repDelta = cycleNum===3 ? (isWinner?12:rank<=1?5:rank<=2?2:-4) : (isWinner?9:rank<=1?4:rank<=2?1:-3);
+    agent.reputation = Math.max(5, agent.reputation + repDelta);
+    setAgentStatus(agent.id, isWinner ? (cycleNum===3 ? '🏆 Epoch Winner' : 'Winner') : 'Cycle complete');
+
+    // Store evolution history
+    agent.evolutionHistory.push({
+      cycle: cycleNum,
+      summary: isWinner
+        ? `Won with "${myDesign?.name||'—'}" (${myDesign?.credits?.toLocaleString()||0}⬡). Genome reinforced.`
+        : isLoser
+        ? `Last place with "${myDesign?.name||'—'}". Mutation pressure applied.`
+        : `Ranked #${rank+1} with "${myDesign?.name||'—'}". Adaptive shifts applied.`,
+      genomeShifts,
+      rank: rank + 1,
+      designName: myDesign?.name || '—',
+    });
+
+    // Log the evolution
+    const shiftStr = Object.entries(genomeShifts).filter(([,v])=>v!==0).map(([k,v])=>`${k}:${v>0?'+':''}${v}`).join(' · ');
+    addLog(`<b>${agent.name}</b> (${isWinner?'Winner':isLoser?'Last':'#'+(rank+1)}): <i>${agent.dominantBelief}</i> ${shiftStr?'· '+shiftStr:''}`, '', 600+i*300);
+  }
+
+  // Trend analysis via Claude
+  const trendPrompt = `Cycle ${cycleNum} of 3 completed. Results:
+${resultsSummary}
+
+${priorContext}
+
+Generate a comprehensive trend analysis for the intelligence report. Output EXACTLY this JSON:
+{"emerging":["style1","style2","style3"],"declining":["style1","style2"],"saturation":"[which category/style is over-represented, e.g. 'Ring (50% of pool)']","treasury":"[recommended material+setting combination with highest combined aesthetic+profit]","velocityScore":[0-100 integer: how fast the top trend is moving],"fi":["[insight 1: specific data-driven observation about vote patterns and score correlations]","[insight 2: category saturation warning with specific percentages]","[insight 3: material/setting trend observation]","[insight 4: opportunity gap or micro-trend identification]","[insight 5: novelty premium or strategic recommendation]"]}`;
+
+  const trendResp = await llmCall(
+    'Output ONLY valid JSON. No markdown.',
+    trendPrompt, agentStates[0]
+  );
+
+  let trendInsight = null;
+  if (trendResp) {
+    try { trendInsight = JSON.parse(trendResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim()); } catch(e) {}
+  }
+
+  const trendDelay = 600 + agentStates.length*300 + 200;
+  if (trendInsight) {
+    const emergStr = Array.isArray(trendInsight.emerging) ? trendInsight.emerging.join(' · ') : (trendInsight.emerging||'');
+    addLog(`Emerging: <b>${emergStr}</b>`, 'rs', trendDelay);
+    if (trendInsight.saturation) addLog(`Saturation: ${trendInsight.saturation}`, '', trendDelay+200);
+    if (trendInsight.treasury) addLog(`Treasury: ${trendInsight.treasury}`, 'rs', trendDelay+400);
+  } else {
+    addLog(`Cycle ${cycleNum} evolution applied. Genome shifts recorded.`, 'rs', trendDelay);
+  }
+
+  addLog(`<b>Cycle ${cycleNum} Intelligence Report written to knowledge database.</b>`, 'rs', trendDelay+600);
+  if (cycleNum === 3) document.getElementById('nav-epoch-txt').textContent = '3 / 3';
+
+  // Take post-evolution snapshot
+  genomeSnapshots.push(agentStates.map(a => snapshotGenome(a)));
+  // Store trend for report
+  window._liveTrend = trendInsight;
+  generateAndStoreReport(cycleNum, sorted);
+
+  setProgress(100);
+  return trendDelay + 1000;
+}
+
+/* ══════════════════════════════════
    PHASE SCRIPTS (all 3 cycles)
 ══════════════════════════════════ */
 const PHASE_SCRIPTS = [
@@ -1757,7 +2075,8 @@ const PHASE_SCRIPTS = [
       return 3000;
     },
     // Phase 2: Generation
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(1);
       setProgress(45);
       document.getElementById('designs-wrap').style.display='block';
       activeDesigns = CYCLE_DESIGNS[0].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
@@ -1772,7 +2091,8 @@ const PHASE_SCRIPTS = [
       return 4000;
     },
     // Phase 3: Voting
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(1);
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
       addLog(`Voting phase: each agent allocates 10,000 ⬡ across the blind pool.`,'',100);
@@ -1785,13 +2105,11 @@ const PHASE_SCRIPTS = [
           addLog(`<b>${voter.name}</b> → ${msg}`,'vt', 400+vi*500);
         }
       });
-      // Tally credits
       vm.forEach((voterVotes, vi)=>{
         voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += creds; });
       });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
-        // deduct credits from agents
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       }, 3500/speed);
       addLog(`Voting complete. Credits tallied.`,'rs', 4200);
@@ -1799,7 +2117,8 @@ const PHASE_SCRIPTS = [
       return 5000;
     },
     // Phase 4: Evolution
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(1);
       setProgress(85);
       const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner = sorted[0];
@@ -1819,7 +2138,6 @@ const PHASE_SCRIPTS = [
       addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification.`,'',1700);
       addLog(`<b>Forward Intelligence generated.</b> Cycle 1 report written to shared knowledge database.`,'rs',2100);
       setProgress(100);
-      // Update reputations
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){ agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete'); }});
       evolveAgentGenomes(1, sorted);
       generateAndStoreReport(1, sorted);
@@ -1899,7 +2217,8 @@ const PHASE_SCRIPTS = [
       return 3600;
     },
     // Phase 2
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(2);
       setProgress(45);
       document.getElementById('designs-wrap').style.display='block';
       activeDesigns = CYCLE_DESIGNS[1].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
@@ -1914,7 +2233,8 @@ const PHASE_SCRIPTS = [
       return 4000;
     },
     // Phase 3
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(2);
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
       addLog(`Voting phase. Agents apply C1 learned preferences.`,'',100);
@@ -1937,7 +2257,8 @@ const PHASE_SCRIPTS = [
       return 5000;
     },
     // Phase 4
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(2);
       setProgress(85);
       const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner=sorted[0]; const loser=sorted[sorted.length-1];
@@ -2014,10 +2335,10 @@ const PHASE_SCRIPTS = [
       return 3300;
     },
     // Phase 2
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(3);
       setProgress(45);
       document.getElementById('designs-wrap').style.display='block';
-      // Remap designs: agentIdx 4 in C3 = Léa Fontaine (id 5), agentIdx 5 = Asha Noor (id 4)
       activeDesigns = CYCLE_DESIGNS[2].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
       addLog(`Generation phase. Highest design diversity in 3 cycles.`,'',100);
       agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
@@ -2025,15 +2346,16 @@ const PHASE_SCRIPTS = [
         addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · ${d.strategy.toUpperCase()}`,'ds',300+i*500);
         setTimeout(()=>renderDesignCard(d,i),(400+i*500)/speed);
       });
-      addLog(`Pool locked. Most diverse cycle pool yet — category and style spread highest across epoch.`,'rs',3500);
+      addLog(`Pool locked. Most diverse cycle pool yet.`,'rs',3500);
       setProgress(60);
       return 4000;
     },
     // Phase 3
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(3);
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting: agents apply 2-cycle learned preferences. Saturation penalty active on minimal cluster.`,'',100);
+      addLog(`Voting: agents apply 2-cycle learned preferences.`,'',100);
       const vm=VOTE_MATRICES[2];
       vm.forEach((voterVotes,vi)=>{
         const voter=agentStates[vi];
@@ -2046,21 +2368,20 @@ const PHASE_SCRIPTS = [
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       },3500/speed);
-      addLog(`Saturation penalty applied: minimal cluster vote-weight discounted 18%.`,'',4500);
       addLog(`Voting complete.`,'rs',5000);
       setProgress(80);
       return 5500;
     },
     // Phase 4
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(3);
       setProgress(85);
       const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner=sorted[0];
       addLog(`Ranking applied. Epoch-level evolution processing.`,'',200);
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Epoch breakout design. Treasury Elevation confirmed.`,'rs',500);
-      addLog(`<b>Epoch conclusion:</b> Minimal trend emerged (C1), peaked and exploited (C2), then saturated — organic/sculptural emerged as its replacement (C3).`,'rs',1000);
-      addLog(`Agents who detected the saturation early and pivoted (${agentStates[5].name}, ${agentStates[3].name}) gained the most reputation.`,'',1500);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Epoch breakout design.`,'rs',500);
+      addLog(`<b>Epoch conclusion:</b> 3-cycle trend lifecycle complete.`,'rs',1000);
       addLog(`Epoch complete. Full 3-cycle intelligence archive compiled.`,'rs',2000);
       setProgress(100);
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?12:rank===1?5:rank===2?2:-4)); setAgentStatus(agent.id,rank===0?'🏆 Epoch Winner':'Epoch complete');}});
@@ -2398,7 +2719,7 @@ function pct(v, tot) { return tot ? Math.round(v/tot*100) : 0; }
    REPORT GENERATION
 ══════════════════════════════════ */
 function generateAndStoreReport(cycleNum, sortedDesigns) {
-  const voteMatrix = VOTE_MATRICES[cycleNum-1];
+  const voteMatrix = (simMode === 'live' && window._liveVoteMatrix) ? window._liveVoteMatrix : VOTE_MATRICES[cycleNum-1];
   const designs = activeDesigns.map((d,i)=>({
     ...d,
     rank: sortedDesigns.findIndex(s=>s.idx===i)+1,
@@ -2482,51 +2803,66 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     if(topI===topJ && vi[topI]>0) { const shared=vi[topI]+vj[topJ]; if(shared>maxAlign){ maxAlign=shared; alignPair=[agentStates[i].name,agentStates[j].name]; } }
   }
 
-  // ── Hardcoded trend narratives (could be ML-generated) ──
-  const trendData = [
-    {
-      emerging:['minimal','negative-space','platinum-bezel'],
-      declining:['ornate-pavé','traditional-solitaire'],
-      saturation:'Ring (50% of pool)',
-      treasury:'Platinum + bezel setting',
-      velocityScore: 72, // how fast is the top trend moving
-      fi:[
-        `Minimal/negative-space outperformed ornate by ${(corrAes*2.4).toFixed(1)}× in vote conversion — aesthetic score was the #1 predictor (r=${corrAes})`,
-        `Ring category over-saturated at 50% of pool — agents should diversify into earrings and pendants next cycle`,
-        `Platinum + bezel setting scored highest combined aesthetic (${sortedDesigns[0].aesthetic}/100) and profit margin`,
-        `"${sortedDesigns[0].name}" micro-trend (floating geometric, minimal air) identified as emerging cluster — ${winnerShare}% vote capture`,
-        `High-novelty designs (>75) earned ${novSlope>0?'+'+novSlope:novSlope}⬡ per novelty point above average — novelty premium confirmed`,
-      ]
-    },
-    {
-      emerging:['architectural','open-structural','yellow-gold'],
-      declining:['classic-pavé-halo','heavy-pavé'],
-      saturation:'Ring (67% of pool)',
-      treasury:'Architectural shank + yellow gold accent',
-      velocityScore: 61,
-      fi:[
-        `Architectural minimal dominant for 2 consecutive cycles — exploitation phase, diminishing novelty premium (${novSlope>0?'+':''  }${novSlope}⬡/novelty pt)`,
-        `Ring saturation critical at 67% — treasury issuing category diversification incentives for Cycle 3`,
-        `Yellow gold gaining share vs. white gold/platinum in pendant and bracelet categories`,
-        `Organic/sculptural space entirely unexplored across 12 submitted designs — maximum opportunity gap`,
-        `Vote concentration at Gini ${gini} — ${gini>0.35?'high concentration: consensus forming around clear winners':'distributed: no runaway leader, competitive field'}`,
-      ]
-    },
-    {
-      emerging:['organic-sculptural','root-form','natural-geometry'],
-      declining:['flat-minimal','basic-negative-space'],
-      saturation:'Minimal cluster (62% of pool)',
-      treasury:'Organic 18k gold + diamond accent nodes',
-      velocityScore: 88,
-      fi:[
-        `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of all credits despite ${sortedDesigns[0].profit}/100 profit score — aesthetic novelty overrode margin`,
-        `Trend lifecycle confirmed over 3 cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
-        `Novelty score became dominant predictor this cycle (r=${corrNov}) — market rewarding freshness over safety`,
-        `Saturation penalty effective: minimal cluster received 18% fewer credits per novelty point than prior cycle`,
-        `Treasury recommendation: organic sculptural 18k gold for physical production — highest aesthetic + highest novelty + breakout vote share`,
-      ]
-    }
-  ][cycleNum-1];
+  // ── Trend narratives: Claude-generated in live mode, fallback in sim mode ──
+  let trendData;
+  if (simMode === 'live' && window._liveTrend) {
+    // Use Claude-generated trend analysis from runLiveEvolution
+    const lt = window._liveTrend;
+    trendData = {
+      emerging: lt.emerging || ['emerging-style'],
+      declining: lt.declining || ['declining-style'],
+      saturation: lt.saturation || 'Unknown',
+      treasury: lt.treasury || 'Unknown',
+      velocityScore: lt.velocityScore || 70,
+      fi: lt.fi || [`Cycle ${cycleNum} trend analysis generated by Claude based on live agent performance data.`]
+    };
+  } else {
+    // Sim-mode fallback
+    trendData = [
+      {
+        emerging:['minimal','negative-space','platinum-bezel'],
+        declining:['ornate-pavé','traditional-solitaire'],
+        saturation:'Ring (50% of pool)',
+        treasury:'Platinum + bezel setting',
+        velocityScore: 72,
+        fi:[
+          `Minimal/negative-space outperformed ornate by ${(corrAes*2.4).toFixed(1)}× in vote conversion — aesthetic score was the #1 predictor (r=${corrAes})`,
+          `Ring category over-saturated at 50% of pool — agents should diversify into earrings and pendants next cycle`,
+          `Platinum + bezel setting scored highest combined aesthetic (${sortedDesigns[0].aesthetic}/100) and profit margin`,
+          `"${sortedDesigns[0].name}" micro-trend identified as emerging cluster — ${winnerShare}% vote capture`,
+          `High-novelty designs (>75) earned ${novSlope>0?'+'+novSlope:novSlope}⬡ per novelty point above average — novelty premium confirmed`,
+        ]
+      },
+      {
+        emerging:['architectural','open-structural','yellow-gold'],
+        declining:['classic-pavé-halo','heavy-pavé'],
+        saturation:'Ring (67% of pool)',
+        treasury:'Architectural shank + yellow gold accent',
+        velocityScore: 61,
+        fi:[
+          `Architectural minimal dominant for 2 consecutive cycles — exploitation phase, diminishing novelty premium (${novSlope>0?'+':''}${novSlope}⬡/novelty pt)`,
+          `Ring saturation critical at 67% — treasury issuing category diversification incentives for Cycle 3`,
+          `Yellow gold gaining share vs. white gold/platinum in pendant and bracelet categories`,
+          `Organic/sculptural space entirely unexplored across 12 submitted designs — maximum opportunity gap`,
+          `Vote concentration at Gini ${gini} — ${gini>0.35?'high concentration: consensus forming around clear winners':'distributed: no runaway leader, competitive field'}`,
+        ]
+      },
+      {
+        emerging:['organic-sculptural','root-form','natural-geometry'],
+        declining:['flat-minimal','basic-negative-space'],
+        saturation:'Minimal cluster (62% of pool)',
+        treasury:'Organic 18k gold + diamond accent nodes',
+        velocityScore: 88,
+        fi:[
+          `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of all credits despite ${sortedDesigns[0].profit}/100 profit score — aesthetic novelty overrode margin`,
+          `Trend lifecycle confirmed over 3 cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
+          `Novelty score became dominant predictor this cycle (r=${corrNov}) — market rewarding freshness over safety`,
+          `Saturation penalty effective: minimal cluster received 18% fewer credits per novelty point than prior cycle`,
+          `Treasury recommendation: organic sculptural 18k gold for physical production — highest aesthetic + highest novelty + breakout vote share`,
+        ]
+      }
+    ][cycleNum-1];
+  }
 
   // ── Genome evolution data ──
   const beforeSnap = genomeSnapshots[cycleNum - 1] || [];
