@@ -476,18 +476,21 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="api-panel" id="api-panel">
     <h4>API Configuration</h4>
     <div class="api-field">
-      <label>OpenAI API Key</label>
-      <input type="password" id="api-openai" placeholder="sk-..." oninput="checkApiKeys()">
-      <div class="api-hint">Used for agent dialogue, synthesis, and design generation (GPT-4o)</div>
+      <label>Anthropic API Key &nbsp;<span style="color:var(--gold-d);font-size:.55rem;letter-spacing:.08em">— Language &amp; Intelligence</span></label>
+      <input type="password" id="api-anthropic" placeholder="sk-ant-..." oninput="checkApiKeys()">
+      <div class="api-hint">Powers all agent dialogue, cross-pollination, synthesis, and design reasoning via Claude</div>
     </div>
     <div class="api-field">
-      <label>Anthropic API Key <span style="color:var(--faint)">(optional)</span></label>
-      <input type="password" id="api-anthropic" placeholder="sk-ant-..." oninput="checkApiKeys()">
-      <div class="api-hint">If provided, agents will use Claude for cross-pollination dialogue</div>
+      <label>Higgsfield API Key &nbsp;<span style="color:var(--gold-d);font-size:.55rem;letter-spacing:.08em">— Image Generation</span></label>
+      <input type="password" id="api-higgsfield" placeholder="KEY_ID:KEY_SECRET" oninput="checkApiKeys()">
+      <div class="api-hint">Generates jewelry renders from agent design prompts via Higgsfield SOUL / Flux models</div>
     </div>
     <div class="api-status" id="api-status">
       <div class="dot off" id="api-dot"></div>
-      <span id="api-status-text">Enter at least one API key to enable Live AI Mode</span>
+      <span id="api-status-text">Enter API keys to enable Live AI Mode</span>
+    </div>
+    <div style="text-align:center;margin-top:1.2rem">
+      <button class="btn btn-primary btn-sm" id="api-submit-btn" onclick="submitApiKeys()" disabled>Submit API Keys</button>
     </div>
   </div>
 
@@ -724,7 +727,8 @@ const AGENT_EMOJIS = ['🎯','🌙','✨','🔩','💛','🌿'];
    MODE & API KEY MANAGEMENT
 ══════════════════════════════════ */
 let simMode = 'sim'; // 'sim' or 'live'
-let apiKeys = { openai: '', anthropic: '' };
+let apiKeys = { anthropic: '', higgsfield: '' };
+let apiKeysCommitted = false; // true once user clicks Submit
 
 // Genome snapshots per cycle for before→after deltas
 let genomeSnapshots = []; // array of arrays: genomeSnapshots[cycleIdx] = [{...agentGenome}]
@@ -738,30 +742,53 @@ function setMode(mode) {
 }
 
 function checkApiKeys() {
-  apiKeys.openai = (document.getElementById('api-openai')?.value || '').trim();
-  apiKeys.anthropic = (document.getElementById('api-anthropic')?.value || '').trim();
+  const antVal = (document.getElementById('api-anthropic')?.value || '').trim();
+  const hfVal = (document.getElementById('api-higgsfield')?.value || '').trim();
   const dot = document.getElementById('api-dot');
   const txt = document.getElementById('api-status-text');
-  const btn = document.getElementById('home-start-btn');
+  const startBtn = document.getElementById('home-start-btn');
+  const submitBtn = document.getElementById('api-submit-btn');
   if (simMode === 'sim') {
     if (dot) dot.className = 'dot off';
     if (txt) txt.textContent = 'Simulation mode — no API keys needed';
-    if (btn) btn.disabled = false;
+    if (startBtn) startBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = true;
     return;
   }
-  if (apiKeys.openai) {
+  // Enable submit button when at least Claude key is provided
+  const hasAnt = antVal.length > 0;
+  const hasHf = hfVal.length > 0;
+  if (submitBtn) submitBtn.disabled = !hasAnt;
+  if (apiKeysCommitted) {
     if (dot) dot.className = 'dot ok';
-    if (txt) txt.textContent = 'OpenAI key detected' + (apiKeys.anthropic ? ' + Anthropic key detected' : '') + ' — Live AI Mode ready';
-    if (btn) btn.disabled = false;
-  } else if (apiKeys.anthropic) {
-    if (dot) dot.className = 'dot ok';
-    if (txt) txt.textContent = 'Anthropic key detected — Live AI Mode ready';
-    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'API keys committed ✓' + (apiKeys.higgsfield ? ' — Claude + Higgsfield active' : ' — Claude active (images: free tier)');
+    if (startBtn) startBtn.disabled = false;
+  } else if (hasAnt) {
+    if (dot) dot.className = 'dot warn';
+    if (txt) txt.textContent = 'Claude key entered' + (hasHf ? ' + Higgsfield key entered' : '') + ' — press Submit to lock in';
+    if (startBtn) startBtn.disabled = true;
   } else {
     if (dot) dot.className = 'dot warn';
-    if (txt) txt.textContent = 'Enter at least one API key to enable Live AI Mode';
-    if (btn) btn.disabled = true;
+    if (txt) txt.textContent = 'Enter at least your Anthropic (Claude) API key';
+    if (startBtn) startBtn.disabled = true;
   }
+}
+
+function submitApiKeys() {
+  const antVal = (document.getElementById('api-anthropic')?.value || '').trim();
+  const hfVal = (document.getElementById('api-higgsfield')?.value || '').trim();
+  if (!antVal) return;
+  apiKeys.anthropic = antVal;
+  apiKeys.higgsfield = hfVal;
+  apiKeysCommitted = true;
+  // Lock the inputs
+  const antInput = document.getElementById('api-anthropic');
+  const hfInput = document.getElementById('api-higgsfield');
+  if (antInput) { antInput.disabled = true; antInput.style.opacity = '.6'; }
+  if (hfInput) { hfInput.disabled = true; hfInput.style.opacity = '.6'; }
+  const submitBtn = document.getElementById('api-submit-btn');
+  if (submitBtn) { submitBtn.textContent = 'Keys Committed ✓'; submitBtn.disabled = true; submitBtn.style.borderColor = 'var(--grn)'; submitBtn.style.color = 'var(--grn)'; }
+  checkApiKeys();
 }
 
 function startFromHome() {
@@ -1370,50 +1397,31 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
    LIVE AI MODE — LLM CALLS
 ══════════════════════════════════ */
 async function llmCall(systemPrompt, userPrompt, agent) {
-  if (simMode !== 'live') return null;
+  if (simMode !== 'live' || !apiKeys.anthropic) return null;
 
   const genomeCtx = agentGenomeStr(agent || agentStates[0]);
   const reportCtx = priorReportCtx(agent?.id || 0);
   const fullSystem = `You are ${agent?.name || 'an AI agent'}, a jewelry design AI in the JewelForge simulation.\n\n${genomeCtx}\n\n${reportCtx}\n\n${systemPrompt}`;
 
-  // Try OpenAI first, then Anthropic
-  if (apiKeys.openai) {
-    try {
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKeys.openai}` },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'system', content: fullSystem }, { role: 'user', content: userPrompt }],
-          max_tokens: 300, temperature: 0.8
-        })
-      });
-      const data = await resp.json();
-      return data.choices?.[0]?.message?.content || null;
-    } catch(e) { console.warn('OpenAI call failed:', e); }
-  }
-
-  if (apiKeys.anthropic) {
-    try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKeys.anthropic,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
-          system: fullSystem,
-          messages: [{ role: 'user', content: userPrompt }]
-        })
-      });
-      const data = await resp.json();
-      return data.content?.[0]?.text || null;
-    } catch(e) { console.warn('Anthropic call failed:', e); }
-  }
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKeys.anthropic,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: fullSystem,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+    const data = await resp.json();
+    return data.content?.[0]?.text || null;
+  } catch(e) { console.warn('Claude call failed:', e); }
 
   return null;
 }
@@ -1802,7 +1810,6 @@ function renderDesignCard(d, i) {
   const loader = document.getElementById(loaderId);
 
   const seed = (d.agentIdx * 997 + currentCycle * 113 + i * 31 + 7) | 0;
-  const imgUrl = makeImgUrl(d.prompt, seed);
 
   const showError = () => {
     if (loader) {
@@ -1825,16 +1832,20 @@ function renderDesignCard(d, i) {
   };
   img.onerror = showError;
 
-  // 35 second timeout — if still loading, show error state
-  const timeout = setTimeout(showError, 35000);
+  // 50 second timeout — if still loading, show error state
+  const timeout = setTimeout(showError, 50000);
   img.addEventListener('load',  () => clearTimeout(timeout), {once:true});
   img.addEventListener('error', () => clearTimeout(timeout), {once:true});
 
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Set src AFTER attaching events
-  img.src = imgUrl;
+  // Set src AFTER attaching events — use Higgsfield if available
+  if (apiKeys.higgsfield) {
+    resolveImgUrl(d.prompt, seed).then(url => { img.src = url; }).catch(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+  } else {
+    img.src = makeImgUrlFree(d.prompt, seed);
+  }
 }
 
 function cardImgProgress(pctId, loaderId) {
@@ -1853,11 +1864,55 @@ function cardImgProgress(pctId, loaderId) {
 /* ══════════════════════════════════
    IMAGE GENERATION
 ══════════════════════════════════ */
-function makeImgUrl(prompt, seed) {
-  // Keep prompt short — long URLs get rejected by pollinations
+// Free fallback via Pollinations
+function makeImgUrlFree(prompt, seed) {
   const base = prompt.slice(0, 200);
   const full = `fine jewelry, ${base}, studio lighting, photorealistic`;
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=400&height=400&nologo=true&seed=${seed}&model=flux&enhance=false`;
+}
+
+// Higgsfield SOUL text-to-image (async — returns image URL or null)
+async function higgsFieldGenerate(prompt) {
+  if (!apiKeys.higgsfield) return null;
+  const full = `fine jewelry, ${prompt.slice(0, 300)}, studio lighting, photorealistic`;
+  try {
+    const resp = await fetch('https://platform.higgsfield.ai/higgsfield-ai/soul/standard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Key ${apiKeys.higgsfield}`
+      },
+      body: JSON.stringify({ prompt: full, aspect_ratio: '1:1', resolution: '720p' })
+    });
+    const data = await resp.json();
+    if (data.status === 'completed' && data.images?.[0]?.url) return data.images[0].url;
+    if (data.request_id) {
+      // Poll for completion (max ~40s)
+      const statusUrl = data.status_url || `https://platform.higgsfield.ai/requests/${data.request_id}/status`;
+      for (let attempt = 0; attempt < 16; attempt++) {
+        await new Promise(r => setTimeout(r, 2500));
+        const poll = await fetch(statusUrl, { headers: { 'Authorization': `Key ${apiKeys.higgsfield}` } });
+        const st = await poll.json();
+        if (st.status === 'completed' && st.images?.[0]?.url) return st.images[0].url;
+        if (st.status === 'failed' || st.status === 'nsfw') break;
+      }
+    }
+  } catch(e) { console.warn('Higgsfield image gen failed:', e); }
+  return null;
+}
+
+// Unified: tries Higgsfield first, falls back to free tier
+function makeImgUrl(prompt, seed) {
+  return makeImgUrlFree(prompt, seed);
+}
+
+// Async version used by gallery builder when Higgsfield key is present
+async function resolveImgUrl(prompt, seed) {
+  if (apiKeys.higgsfield) {
+    const url = await higgsFieldGenerate(prompt);
+    if (url) return url;
+  }
+  return makeImgUrlFree(prompt, seed);
 }
 
 function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
@@ -1912,8 +1967,13 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
         checkAllImagesLoaded(containerId);
       };
       img.onerror = showFallback;
-      setTimeout(showFallback, 35000); // timeout fallback
-      img.src = makeImgUrl(d.prompt, seed);
+      setTimeout(showFallback, 50000); // timeout fallback
+      // Use Higgsfield if key present, else free tier
+      if (apiKeys.higgsfield) {
+        resolveImgUrl(d.prompt, seed).then(url => { if (img) img.src = url; }).catch(()=> { img.src = makeImgUrlFree(d.prompt, seed); });
+      } else {
+        img.src = makeImgUrlFree(d.prompt, seed);
+      }
     }
 
     animateProgress(containerId, i);
@@ -2624,7 +2684,11 @@ function viewReport(cycleNum) {
     const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
     imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
     imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
-    imgEl.src = makeImgUrl(d.prompt, seed);
+    if (apiKeys.higgsfield) {
+      resolveImgUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
+    } else {
+      imgEl.src = makeImgUrlFree(d.prompt, seed);
+    }
   });
 
   // Animate velocity bar after render
