@@ -381,6 +381,65 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 .fade{animation:fadeIn .4s ease both}
 .pulse{animation:pulse 1.5s infinite}
+
+/* ═══ HOME / API KEY SCREEN ═══ */
+.home-hero{text-align:center;padding:3rem 0 2rem}
+.home-hero .h1{margin-bottom:.6rem}
+.home-hero .sub{margin:0 auto 2rem;text-align:center}
+.mode-toggle{display:flex;gap:0;border:1px solid var(--bdr);margin:0 auto 2rem;max-width:380px}
+.mode-btn{flex:1;padding:.75rem 1rem;font-family:'Rajdhani',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;background:var(--s1);color:var(--faint);border:none;cursor:pointer;transition:all .25s}
+.mode-btn.active{background:rgba(201,168,76,.1);color:var(--gold);border-bottom:2px solid var(--gold)}
+.api-panel{background:var(--s1);border:1px solid var(--bdr);padding:1.8rem;max-width:520px;margin:0 auto 2rem;display:none}
+.api-panel.show{display:block}
+.api-panel h4{font-size:.6rem;letter-spacing:.32em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1.1rem;padding-bottom:.6rem;border-bottom:1px solid var(--bdr)}
+.api-field{margin-bottom:1.2rem}
+.api-field label{display:block;font-size:.7rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:.4rem}
+.api-field input{width:100%;background:var(--s2);border:1px solid var(--faint);color:var(--txt);padding:.6rem .85rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
+.api-field input:focus{border-color:var(--gold-d)}
+.api-field .api-hint{font-size:.65rem;color:var(--faint);margin-top:.3rem;line-height:1.5}
+.api-status{display:flex;align-items:center;gap:.5rem;font-size:.7rem;color:var(--dim);margin-top:.5rem}
+.api-status .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.api-status .dot.ok{background:var(--grn)}
+.api-status .dot.warn{background:var(--gold)}
+.api-status .dot.off{background:var(--faint)}
+.sim-mode-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;padding:.25rem .65rem;border:1px solid;margin-left:.8rem}
+.sim-mode-badge.live{border-color:var(--grn);color:var(--grn);background:rgba(76,175,125,.06)}
+.sim-mode-badge.sim{border-color:var(--faint);color:var(--faint)}
+
+/* ═══ GENOME EVOLUTION CARDS ═══ */
+.genome-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);margin-bottom:1rem}
+@media(max-width:700px){.genome-grid{grid-template-columns:repeat(2,1fr)}}
+.genome-card{background:var(--s2);padding:1rem}
+.genome-card-hdr{display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem}
+.genome-card-hdr .gc-emoji{font-size:1.1rem}
+.genome-card-hdr .gc-name{font-family:'Cormorant Garamond',serif;font-size:.92rem;color:var(--txt)}
+.genome-card-hdr .gc-badge{font-size:.5rem;letter-spacing:.1em;color:var(--gold);border:1px solid var(--gold-d);padding:.05rem .3rem;text-transform:uppercase;margin-left:auto}
+.genome-delta{display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem;font-size:.72rem;color:var(--dim)}
+.genome-delta .gd-label{width:68px;flex-shrink:0;font-size:.62rem;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
+.genome-delta .gd-bar{flex:1;height:3px;background:var(--faint);border-radius:2px;overflow:hidden;position:relative}
+.genome-delta .gd-fill{height:100%;border-radius:2px;transition:width .8s ease}
+.genome-delta .gd-arrow{font-size:.65rem;width:20px;text-align:center;flex-shrink:0}
+.genome-delta .gd-arrow.up{color:var(--grn)}
+.genome-delta .gd-arrow.down{color:var(--red)}
+.genome-delta .gd-arrow.flat{color:var(--faint)}
+.genome-tags{display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.5rem}
+.genome-tags .gt{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;padding:.1rem .35rem;border:1px solid var(--faint);color:var(--faint)}
+.genome-tags .gt.new{border-color:var(--grn);color:var(--grn)}
+.genome-tags .gt.lost{border-color:var(--red);color:var(--red);text-decoration:line-through}
+.gc-belief{font-size:.65rem;color:var(--dim);margin-top:.5rem;font-style:italic;line-height:1.5}
+.gc-belief b{color:var(--txt);font-style:normal}
+.gc-summary{font-size:.62rem;color:var(--faint);margin-top:.4rem;line-height:1.5;padding-top:.4rem;border-top:1px solid var(--xfaint)}
+.gc-result-badge{display:inline-block;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;padding:.08rem .3rem;margin-left:.3rem}
+.gc-result-badge.win{border:1px solid var(--gold);color:var(--gold)}
+.gc-result-badge.loss{border:1px solid var(--red);color:var(--red)}
+
+/* ═══ DIALOGUE BUBBLES ═══ */
+.dialogue-thread{background:var(--s2);border:1px solid var(--bdr);padding:1rem;margin:.6rem 0;border-radius:2px}
+.dialogue-thread .dt-hdr{font-size:.58rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem}
+.dialogue-msg{display:flex;gap:.5rem;margin-bottom:.5rem;animation:slideIn .3s ease both}
+.dialogue-msg .dm-avatar{width:22px;height:22px;border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
+.dialogue-msg .dm-body{flex:1;font-size:.76rem;color:var(--dim);line-height:1.55;background:var(--s1);padding:.4rem .6rem;border:1px solid var(--xfaint)}
+.dialogue-msg .dm-body b{color:var(--txt)}
 </style>
 </head>
 <body>
@@ -388,7 +447,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 <nav>
   <div class="nav-logo">JewelForge</div>
   <div class="nav-tabs">
-    <button class="nav-tab active" id="nt1" onclick="goTo(1)">① Build Agent</button>
+    <button class="nav-tab active" id="nt0" onclick="goTo(0)">Home</button>
+    <button class="nav-tab" id="nt1" onclick="goTo(1)">① Build Agent</button>
     <button class="nav-tab" id="nt2" onclick="goTo(2)">② Run Cycles</button>
     <button class="nav-tab" id="nt3" onclick="goTo(3)">③ Intelligence Reports</button>
   </div>
@@ -398,9 +458,51 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 <main>
 
 <!-- ══════════════════════════════════════
+     SCREEN 0: HOME / API KEYS
+══════════════════════════════════════ -->
+<div class="screen active" id="screen-0">
+  <div class="home-hero">
+    <div class="eyebrow">Intelligence Engine</div>
+    <h1 class="h1">Welcome to <em>JewelForge</em></h1>
+    <div class="rule" style="margin:1rem auto 1.8rem"></div>
+    <p class="sub">Configure your simulation mode below. In <b>Live AI Mode</b>, agents use real LLM calls — their full genome, conversation history, and prior intelligence reports are compiled into every prompt. In <b>Simulation Mode</b>, the engine runs pre-scripted narratives with deterministic outcomes.</p>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-sim" onclick="setMode('sim')">Simulation Mode</button>
+    <button class="mode-btn" id="mode-live" onclick="setMode('live')">Live AI Mode</button>
+  </div>
+
+  <div class="api-panel" id="api-panel">
+    <h4>API Configuration</h4>
+    <div class="api-field">
+      <label>Anthropic API Key &nbsp;<span style="color:var(--gold-d);font-size:.55rem;letter-spacing:.08em">— Language &amp; Intelligence</span></label>
+      <input type="password" id="api-anthropic" placeholder="sk-ant-..." oninput="checkApiKeys()">
+      <div class="api-hint">Powers all agent dialogue, cross-pollination, synthesis, and design reasoning via Claude</div>
+    </div>
+    <div class="api-field">
+      <label>Higgsfield API Key &nbsp;<span style="color:var(--gold-d);font-size:.55rem;letter-spacing:.08em">— Image Generation</span></label>
+      <input type="password" id="api-higgsfield" placeholder="KEY_ID:KEY_SECRET" oninput="checkApiKeys()">
+      <div class="api-hint">Generates jewelry renders from agent design prompts via Higgsfield SOUL / Flux models</div>
+    </div>
+    <div class="api-status" id="api-status">
+      <div class="dot off" id="api-dot"></div>
+      <span id="api-status-text">Enter API keys to enable Live AI Mode</span>
+    </div>
+    <div style="text-align:center;margin-top:1.2rem">
+      <button class="btn btn-primary btn-sm" id="api-submit-btn" onclick="submitApiKeys()" disabled>Submit API Keys</button>
+    </div>
+  </div>
+
+  <div style="text-align:center">
+    <button class="btn btn-primary" id="home-start-btn" onclick="startFromHome()">Begin Agent Configuration →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      SCREEN 1: BUILDER
 ══════════════════════════════════════ -->
-<div class="screen active" id="screen-1">
+<div class="screen" id="screen-1">
   <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
     <div class="eyebrow">Agent Configuration</div>
     <div class="eyebrow" id="agent-counter" style="color:var(--gold)">Agent 1 of 6 &nbsp;<span id="agent-emoji">🎯</span></div>
@@ -505,7 +607,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="sim-topbar">
     <div>
       <div class="eyebrow">Cycle Simulator</div>
-      <h2 class="h1">Cycle <em id="sim-cycle-num">01</em> &nbsp;<span style="font-family:'Rajdhani',sans-serif;font-size:1rem;color:var(--faint)">of 3</span></h2>
+      <h2 class="h1">Cycle <em id="sim-cycle-num">01</em> &nbsp;<span style="font-family:'Rajdhani',sans-serif;font-size:1rem;color:var(--faint)">of 3</span><span class="sim-mode-badge sim" id="mode-badge">SIM</span></h2>
     </div>
     <div style="text-align:right">
       <div style="font-size:.58rem;letter-spacing:.25em;color:var(--faint);text-transform:uppercase;margin-bottom:.4rem">Epoch Progress</div>
@@ -620,6 +722,203 @@ let activeDesigns = [];
 let configuredAgents = [];
 let currentAgentNum = 1;
 const AGENT_EMOJIS = ['🎯','🌙','✨','🔩','💛','🌿'];
+
+/* ══════════════════════════════════
+   MODE & API KEY MANAGEMENT
+══════════════════════════════════ */
+let simMode = 'sim'; // 'sim' or 'live'
+let apiKeys = { anthropic: '', higgsfield: '' };
+let apiKeysCommitted = false; // true once user clicks Submit
+
+// Genome snapshots per cycle for before→after deltas
+let genomeSnapshots = []; // array of arrays: genomeSnapshots[cycleIdx] = [{...agentGenome}]
+
+function setMode(mode) {
+  simMode = mode;
+  document.getElementById('mode-sim').classList.toggle('active', mode==='sim');
+  document.getElementById('mode-live').classList.toggle('active', mode==='live');
+  document.getElementById('api-panel').classList.toggle('show', mode==='live');
+  checkApiKeys();
+}
+
+function checkApiKeys() {
+  const antVal = (document.getElementById('api-anthropic')?.value || '').trim();
+  const hfVal = (document.getElementById('api-higgsfield')?.value || '').trim();
+  const dot = document.getElementById('api-dot');
+  const txt = document.getElementById('api-status-text');
+  const startBtn = document.getElementById('home-start-btn');
+  const submitBtn = document.getElementById('api-submit-btn');
+  if (simMode === 'sim') {
+    if (dot) dot.className = 'dot off';
+    if (txt) txt.textContent = 'Simulation mode — no API keys needed';
+    if (startBtn) startBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = true;
+    return;
+  }
+  // Enable submit button when at least Claude key is provided
+  const hasAnt = antVal.length > 0;
+  const hasHf = hfVal.length > 0;
+  if (submitBtn) submitBtn.disabled = !hasAnt;
+  if (apiKeysCommitted) {
+    if (dot) dot.className = 'dot ok';
+    if (txt) txt.textContent = 'API keys committed ✓' + (apiKeys.higgsfield ? ' — Claude + Higgsfield active' : ' — Claude active (images: free tier)');
+    if (startBtn) startBtn.disabled = false;
+  } else if (hasAnt) {
+    if (dot) dot.className = 'dot warn';
+    if (txt) txt.textContent = 'Claude key entered' + (hasHf ? ' + Higgsfield key entered' : '') + ' — press Submit to lock in';
+    if (startBtn) startBtn.disabled = true;
+  } else {
+    if (dot) dot.className = 'dot warn';
+    if (txt) txt.textContent = 'Enter at least your Anthropic (Claude) API key';
+    if (startBtn) startBtn.disabled = true;
+  }
+}
+
+function submitApiKeys() {
+  const antVal = (document.getElementById('api-anthropic')?.value || '').trim();
+  const hfVal = (document.getElementById('api-higgsfield')?.value || '').trim();
+  if (!antVal) return;
+  apiKeys.anthropic = antVal;
+  apiKeys.higgsfield = hfVal;
+  apiKeysCommitted = true;
+  // Lock the inputs
+  const antInput = document.getElementById('api-anthropic');
+  const hfInput = document.getElementById('api-higgsfield');
+  if (antInput) { antInput.disabled = true; antInput.style.opacity = '.6'; }
+  if (hfInput) { hfInput.disabled = true; hfInput.style.opacity = '.6'; }
+  const submitBtn = document.getElementById('api-submit-btn');
+  if (submitBtn) { submitBtn.textContent = 'Keys Committed ✓'; submitBtn.disabled = true; submitBtn.style.borderColor = 'var(--grn)'; submitBtn.style.color = 'var(--grn)'; }
+  checkApiKeys();
+}
+
+function startFromHome() {
+  goTo(1);
+}
+
+/* ══════════════════════════════════
+   agentGenomeStr() — Compile full agent DNA into prompt string
+   Injects identity, style genome, material genome, risk genome,
+   evolution history, and current beliefs into every LLM prompt.
+══════════════════════════════════ */
+function agentGenomeStr(agent) {
+  const g = agent;
+  const tags = (g.styleTags || []).join(', ') || 'none';
+  const riskLabel = g.risk > 65 ? 'Explorer (High Novelty)' : g.risk < 35 ? 'Refiner (Exploit Lane)' : 'Balanced (Mutate)';
+  const mktFocus = g.marketFocus || 'general';
+
+  let genome = `AGENT IDENTITY:
+  Name: ${g.name}
+  Archetype: ${g.arch}
+  Philosophy: "${g.philosophy}"
+  Style Tags: [${tags}]
+  Market Focus: ${mktFocus}
+
+STYLE GENOME:
+  Minimalism: ${g.minimalism ?? g.min ?? 50}/100
+  Novelty Drive: ${g.novelty}/100
+  Ornamentation: ${g.ornamentation ?? g.orn ?? 50}/100
+  Market Fit Priority: ${g.marketFit}/100
+  Symmetry Preference: ${g.symmetry ?? g.sym ?? 60}/100
+
+MATERIAL GENOME:
+  Platinum Bias: ${g.platBias}/100
+  Colored Stone Use: ${g.coloredStone ?? g.col ?? 40}/100
+  Diamond Preference: ${g.diamond ?? g.dia ?? 60}/100
+  Mixed/Accent Metals: ${g.mixedMetal ?? g.mix ?? 30}/100
+
+RISK GENOME:
+  Exploration↔Exploitation: ${g.risk}/100 (${riskLabel})
+  Margin Sensitivity: ${g.marginSens ?? g.mrg ?? 65}/100
+  Complexity Budget: ${g.complexBudget ?? g.cmp ?? 55}/100
+
+CURRENT STATE:
+  Credits: ${g.credits}
+  Reputation: ${g.reputation}
+  Status: ${g.status}`;
+
+  // Append evolution history if available
+  if (g.evolutionHistory && g.evolutionHistory.length > 0) {
+    genome += `\n\nEVOLUTION HISTORY:`;
+    g.evolutionHistory.forEach(evo => {
+      genome += `\n  Cycle ${evo.cycle}: ${evo.summary}`;
+      if (evo.genomeShifts) {
+        Object.entries(evo.genomeShifts).forEach(([k, v]) => {
+          if (v !== 0) genome += `\n    ${k}: ${v > 0 ? '+' : ''}${v}`;
+        });
+      }
+    });
+  }
+
+  // Append conversation memory
+  if (g.conversationMemory && g.conversationMemory.length > 0) {
+    genome += `\n\nCONVERSATION MEMORY (prior cycles):`;
+    g.conversationMemory.forEach(mem => {
+      genome += `\n  [Cycle ${mem.cycle}] ${mem.partner}: "${mem.excerpt}"`;
+    });
+  }
+
+  return genome;
+}
+
+/* ══════════════════════════════════
+   priorReportCtx() — Compile all prior intelligence reports
+   into context string for LLM prompts. Includes winners,
+   trend data, forward intelligence, and agent performance.
+══════════════════════════════════ */
+function priorReportCtx(agentIdx) {
+  if (cycleReports.length === 0) return 'No prior intelligence reports available. This is the first cycle — begin cold.';
+
+  let ctx = `INTELLIGENCE REPORT DATABASE (${cycleReports.length} cycle${cycleReports.length>1?'s':''} completed):\n`;
+
+  cycleReports.forEach(r => {
+    ctx += `\n═══ CYCLE ${r.cycle} REPORT ═══\n`;
+    ctx += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()}⬡, ${r.winnerShare}% vote share)\n`;
+    ctx += `Total Credits Circulated: ${r.totalCredits.toLocaleString()}⬡\n`;
+    ctx += `Avg Scores: Aesthetic ${r.avgAesthetic}/100, Novelty ${r.avgNovelty}/100, Profit ${r.avgProfit}/100\n`;
+    ctx += `Top Vote Predictor: ${r.topCorr} (r=${r['corr'+r.topCorr.slice(0,3).replace(/^(.)/, m=>m.toUpperCase())]||'?'})\n`;
+    ctx += `Gini Concentration: ${r.gini}\n`;
+    ctx += `Novelty Premium: ${r.novSlope > 0 ? '+' : ''}${r.novSlope}⬡ per novelty point above average\n`;
+
+    ctx += `\nTrend Consensus:\n`;
+    ctx += `  Emerging: ${(r.trendData?.emerging||[]).join(', ')}\n`;
+    ctx += `  Declining: ${(r.trendData?.declining||[]).join(', ')}\n`;
+    ctx += `  Saturation: ${r.trendData?.saturation||'—'}\n`;
+    ctx += `  Treasury Signal: ${r.trendData?.treasury||'—'}\n`;
+    ctx += `  Velocity: ${r.trendData?.velocityScore||'—'}/100\n`;
+
+    ctx += `\nForward Intelligence:\n`;
+    (r.trendData?.fi||[]).forEach(f => { ctx += `  • ${f}\n`; });
+
+    // Agent-specific performance
+    const myPerf = (r.agentPerf||[]).find(a => a.id === agentIdx);
+    if (myPerf) {
+      ctx += `\nYOUR PERFORMANCE (Cycle ${r.cycle}):\n`;
+      ctx += `  Design: "${myPerf.designName}" · Strategy: ${myPerf.strategy} · Rank: #${myPerf.rank}\n`;
+      ctx += `  Earned: ${myPerf.earned.toLocaleString()}⬡ · Spent: ${myPerf.spent.toLocaleString()}⬡ · ROI: ${myPerf.roi}×\n`;
+      ctx += `  Reputation: ${myPerf.reputation} (${myPerf.repDelta >= 0 ? '+' : ''}${myPerf.repDelta})\n`;
+    }
+
+    ctx += `\nAll Designs (ranked):\n`;
+    [...r.designs].sort((a,b)=>a.rank-b.rank).forEach(d => {
+      ctx += `  #${d.rank} "${d.name}" by ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.cat} — ${d.credits.toLocaleString()}⬡ — AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}\n`;
+    });
+
+    ctx += `\nStrategy Performance: ${Object.entries(r.stratPerf||{}).map(([k,v])=>`${k.toUpperCase()}: ${v.avgCreds.toLocaleString()}⬡ avg (${v.count} designs)`).join(' | ')}\n`;
+  });
+
+  // Multi-cycle trend analysis
+  if (cycleReports.length >= 2) {
+    ctx += `\n═══ MULTI-CYCLE TREND ANALYSIS ═══\n`;
+    const winners = cycleReports.map(r => `C${r.cycle}: "${r.winner.name}" (${(r.trendData?.emerging||[])[0]||'—'})`);
+    ctx += `Winners: ${winners.join(' → ')}\n`;
+    const novTrend = cycleReports.map(r => `C${r.cycle}: ${r.novSlope > 0 ? '+' : ''}${r.novSlope}⬡/pt`);
+    ctx += `Novelty Premium Trend: ${novTrend.join(' → ')}\n`;
+    const satTrend = cycleReports.map(r => `C${r.cycle}: ${r.trendData?.saturation||'—'}`);
+    ctx += `Saturation Trend: ${satTrend.join(' → ')}\n`;
+  }
+
+  return ctx;
+}
 
 // 3 cycles of pre-defined designs with narrative coherence:
 // C1 winner: Ryo Tanaka "Orbit Drop" — minimal wins
@@ -768,14 +1067,27 @@ function deployCurrentAgent() {
     arch: document.getElementById('b-arch').value || 'Designer',
     risk: parseInt(document.getElementById('s-rsk').value),
     novelty: parseInt(document.getElementById('s-nov').value),
+    minimalism: parseInt(document.getElementById('s-min').value),
+    ornamentation: parseInt(document.getElementById('s-orn').value),
     marketFit: parseInt(document.getElementById('s-mkt').value),
+    symmetry: parseInt(document.getElementById('s-sym').value),
     platBias: parseInt(document.getElementById('s-plt').value),
+    coloredStone: parseInt(document.getElementById('s-col').value),
+    diamond: parseInt(document.getElementById('s-dia').value),
+    mixedMetal: parseInt(document.getElementById('s-mix').value),
+    marginSens: parseInt(document.getElementById('s-mrg').value),
+    complexBudget: parseInt(document.getElementById('s-cmp').value),
     styleTags: [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent),
+    marketFocus: document.querySelector('#mkt-chips .chip.on')?.textContent || 'general',
     philosophy: document.getElementById('b-phil').value || '',
     isUser: currentAgentNum === 1,
     credits: 10000,
     reputation: currentAgentNum === 1 ? 50 : Math.floor(Math.random()*30)+45,
     status: 'Idle',
+    evolutionHistory: [],
+    conversationMemory: [],
+    dominantBelief: '',
+    trustBuilt: 0,
   };
   configuredAgents.push(agent);
   renderRoster();
@@ -832,15 +1144,45 @@ function renderRoster() {
 }
 
 function startSimulation() {
-  agentStates = configuredAgents.map(a => ({...a}));
+  agentStates = configuredAgents.map(a => ({...a, evolutionHistory: [], conversationMemory: [], dominantBelief: '', trustBuilt: 0}));
   CYCLE_DESIGNS.forEach(cycle => cycle.forEach(d => { if(d.agentIdx===0) d._agentName = agentStates[0].name; }));
   currentCycle = 1;
   cycleReports = [];
   activeDesigns = [];
+  genomeSnapshots = [];
+  // Snapshot initial genome state
+  genomeSnapshots.push(agentStates.map(a => snapshotGenome(a)));
   document.getElementById('deploy-panel').style.display = 'none';
   document.getElementById('sim-main').style.display = 'block';
+  // Update mode badge
+  const badge = document.getElementById('mode-badge');
+  if (badge) {
+    badge.textContent = simMode === 'live' ? 'LIVE AI' : 'SIM';
+    badge.className = simMode === 'live' ? 'sim-mode-badge live' : 'sim-mode-badge sim';
+  }
   resetSim();
   goTo(2);
+}
+
+function snapshotGenome(agent) {
+  return {
+    id: agent.id, name: agent.name, emoji: agent.emoji,
+    minimalism: agent.minimalism ?? 50,
+    novelty: agent.novelty ?? 50,
+    ornamentation: agent.ornamentation ?? 50,
+    marketFit: agent.marketFit ?? 50,
+    symmetry: agent.symmetry ?? 60,
+    platBias: agent.platBias ?? 50,
+    coloredStone: agent.coloredStone ?? 40,
+    diamond: agent.diamond ?? 60,
+    mixedMetal: agent.mixedMetal ?? 30,
+    risk: agent.risk ?? 50,
+    marginSens: agent.marginSens ?? 65,
+    complexBudget: agent.complexBudget ?? 55,
+    styleTags: [...(agent.styleTags || [])],
+    reputation: agent.reputation,
+    credits: agent.credits,
+  };
 }
 
 function resetSim() {
@@ -950,6 +1292,141 @@ function nextPhase() {
 }
 
 /* ══════════════════════════════════
+   GENOME EVOLUTION ENGINE
+══════════════════════════════════ */
+function evolveAgentGenomes(cycleNum, sortedDesigns) {
+  const winner = sortedDesigns[0];
+  const loser = sortedDesigns[sortedDesigns.length - 1];
+
+  // Deterministic genome shifts based on cycle outcome
+  const EVOLUTION_RULES = {
+    1: {  // C1: minimal wins — shift toward minimal
+      winner: { minimalism: +8, novelty: +5, risk: -5 },
+      loser:  { novelty: +10, risk: +8, marginSens: +6 },
+      others: { minimalism: +4, ornamentation: -3, novelty: +2 },
+      beliefs: {
+        0: 'Negative-space architecture is the market signal',
+        1: 'Floating geometry captures attention — I proved it',
+        2: 'Ornate still has a place, but I need to read the room',
+        3: 'Industrial alone doesn\'t win — need to hybridize',
+        4: 'Bridal margin is safe, but minimal won on aesthetics',
+        5: 'My sculptural approach needs better margin math',
+      }
+    },
+    2: {  // C2: architectural minimal peaks — exploitation
+      winner: { minimalism: +6, symmetry: -4, risk: -8 },
+      loser:  { novelty: +12, marginSens: +8, ornamentation: +5 },
+      others: { risk: +5, novelty: +4, minimalism: -3 },
+      beliefs: {
+        0: 'Cathedral architecture is peak — push it one more cycle',
+        1: 'Second place on refinement — I need a bolder pivot',
+        2: 'Yellow gold shift paid off. Organic is the untapped gap',
+        3: 'Industrial-minimal hybrid scored better — keep mutating',
+        4: 'Market arch almost won — margins rule long-term',
+        5: 'Two cycles of minimal domination — the contrarian play is organic',
+      }
+    },
+    3: {  // C3: organic breakout — minimal saturates
+      winner: { novelty: +10, ornamentation: +6, risk: +5, minimalism: -8 },
+      loser:  { minimalism: -5, novelty: +8, marketFit: +5 },
+      others: { novelty: +5, ornamentation: +3, minimalism: -4 },
+      beliefs: {
+        0: 'I over-exploited minimal. The trend exhausted under my feet',
+        1: 'Pivot to pendant saved me from minimal saturation',
+        2: 'Bloom Fragment found the romantic-organic sweet spot',
+        3: 'Organic shard was the right direction — mixed metal is the future',
+        4: 'Margin stability works long-term but never wins the epoch',
+        5: 'Root Form proved that nature\'s geometry beats digital precision',
+      }
+    }
+  };
+
+  const rules = EVOLUTION_RULES[cycleNum];
+  if (!rules) return;
+
+  agentStates.forEach((agent, idx) => {
+    const isWinner = idx === winner.agentIdx;
+    const isLoser = idx === loser.agentIdx;
+    const shifts = isWinner ? rules.winner : isLoser ? rules.loser : rules.others;
+    const genomeShifts = {};
+
+    Object.entries(shifts).forEach(([key, delta]) => {
+      if (agent[key] !== undefined) {
+        const oldVal = agent[key];
+        agent[key] = Math.max(0, Math.min(100, agent[key] + delta));
+        genomeShifts[key] = agent[key] - oldVal;
+      }
+    });
+
+    // Update beliefs and trust
+    agent.dominantBelief = rules.beliefs[idx] || 'Adapting to market signals';
+    agent.trustBuilt = Math.min(100, (agent.trustBuilt || 0) + (isWinner ? 15 : isLoser ? -5 : 5));
+
+    // Store evolution history
+    const myDesign = sortedDesigns.find(d => d.agentIdx === idx);
+    agent.evolutionHistory.push({
+      cycle: cycleNum,
+      summary: isWinner
+        ? `Won with "${myDesign?.name||'—'}" (${myDesign?.credits?.toLocaleString()||0}⬡). Genome reinforced.`
+        : isLoser
+        ? `Last place with "${myDesign?.name||'—'}". Mutation pressure applied.`
+        : `Ranked #${myDesign?.rank||'?'} with "${myDesign?.name||'—'}". Adaptive shifts applied.`,
+      genomeShifts,
+      rank: myDesign?.rank || 0,
+      designName: myDesign?.name || '—',
+    });
+
+    // Store conversation memory from this cycle's cross-pollination
+    if (cycleNum === 1) {
+      agent.conversationMemory.push(
+        { cycle: 1, partner: agentStates[(idx + 1) % 6].name, excerpt: 'First cycle cold start — exploring identity' }
+      );
+    } else {
+      const partnerIdx = (idx + 1) % 6;
+      agent.conversationMemory.push(
+        { cycle: cycleNum, partner: agentStates[partnerIdx].name, excerpt: `Referenced C${cycleNum-1} winner and trend data in design dialogue` }
+      );
+    }
+  });
+
+  // Take post-evolution snapshot
+  genomeSnapshots.push(agentStates.map(a => snapshotGenome(a)));
+}
+
+/* ══════════════════════════════════
+   LIVE AI MODE — LLM CALLS
+══════════════════════════════════ */
+async function llmCall(systemPrompt, userPrompt, agent) {
+  if (simMode !== 'live' || !apiKeys.anthropic) return null;
+
+  const genomeCtx = agentGenomeStr(agent || agentStates[0]);
+  const reportCtx = priorReportCtx(agent?.id || 0);
+  const fullSystem = `You are ${agent?.name || 'an AI agent'}, a jewelry design AI in the JewelForge simulation.\n\n${genomeCtx}\n\n${reportCtx}\n\n${systemPrompt}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKeys.anthropic,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: fullSystem,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+    const data = await resp.json();
+    return data.content?.[0]?.text || null;
+  } catch(e) { console.warn('Claude call failed:', e); }
+
+  return null;
+}
+
+/* ══════════════════════════════════
    PHASE SCRIPTS (all 3 cycles)
 ══════════════════════════════════ */
 const PHASE_SCRIPTS = [
@@ -1050,6 +1527,7 @@ const PHASE_SCRIPTS = [
       setProgress(100);
       // Update reputations
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){ agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete'); }});
+      evolveAgentGenomes(1, sorted);
       generateAndStoreReport(1, sorted);
       return 2800;
     },
@@ -1173,6 +1651,7 @@ const PHASE_SCRIPTS = [
       addLog(`<b>Cycle 2 Intelligence Report written.</b> Compiling alongside Cycle 1 data as 2-cycle trend baseline.`,'rs',2600);
       setProgress(100);
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete');}});
+      evolveAgentGenomes(2, sorted);
       generateAndStoreReport(2, sorted);
       return 3000;
     },
@@ -1274,6 +1753,7 @@ const PHASE_SCRIPTS = [
       addLog(`Epoch complete. Full 3-cycle intelligence archive compiled.`,'rs',2000);
       setProgress(100);
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?12:rank===1?5:rank===2?2:-4)); setAgentStatus(agent.id,rank===0?'🏆 Epoch Winner':'Epoch complete');}});
+      evolveAgentGenomes(3, sorted);
       generateAndStoreReport(3, sorted);
       document.getElementById('nav-epoch-txt').textContent = '3 / 3';
       return 2800;
@@ -1330,7 +1810,6 @@ function renderDesignCard(d, i) {
   const loader = document.getElementById(loaderId);
 
   const seed = (d.agentIdx * 997 + currentCycle * 113 + i * 31 + 7) | 0;
-  const imgUrl = makeImgUrl(d.prompt, seed);
 
   const showError = () => {
     if (loader) {
@@ -1353,16 +1832,20 @@ function renderDesignCard(d, i) {
   };
   img.onerror = showError;
 
-  // 35 second timeout — if still loading, show error state
-  const timeout = setTimeout(showError, 35000);
+  // 50 second timeout — if still loading, show error state
+  const timeout = setTimeout(showError, 50000);
   img.addEventListener('load',  () => clearTimeout(timeout), {once:true});
   img.addEventListener('error', () => clearTimeout(timeout), {once:true});
 
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Set src AFTER attaching events
-  img.src = imgUrl;
+  // Set src AFTER attaching events — use Higgsfield if available
+  if (apiKeys.higgsfield) {
+    resolveImgUrl(d.prompt, seed).then(url => { img.src = url; }).catch(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+  } else {
+    img.src = makeImgUrlFree(d.prompt, seed);
+  }
 }
 
 function cardImgProgress(pctId, loaderId) {
@@ -1381,11 +1864,55 @@ function cardImgProgress(pctId, loaderId) {
 /* ══════════════════════════════════
    IMAGE GENERATION
 ══════════════════════════════════ */
-function makeImgUrl(prompt, seed) {
-  // Keep prompt short — long URLs get rejected by pollinations
+// Free fallback via Pollinations
+function makeImgUrlFree(prompt, seed) {
   const base = prompt.slice(0, 200);
   const full = `fine jewelry, ${base}, studio lighting, photorealistic`;
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=400&height=400&nologo=true&seed=${seed}&model=flux&enhance=false`;
+}
+
+// Higgsfield SOUL text-to-image (async — returns image URL or null)
+async function higgsFieldGenerate(prompt) {
+  if (!apiKeys.higgsfield) return null;
+  const full = `fine jewelry, ${prompt.slice(0, 300)}, studio lighting, photorealistic`;
+  try {
+    const resp = await fetch('https://platform.higgsfield.ai/higgsfield-ai/soul/standard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Key ${apiKeys.higgsfield}`
+      },
+      body: JSON.stringify({ prompt: full, aspect_ratio: '1:1', resolution: '720p' })
+    });
+    const data = await resp.json();
+    if (data.status === 'completed' && data.images?.[0]?.url) return data.images[0].url;
+    if (data.request_id) {
+      // Poll for completion (max ~40s)
+      const statusUrl = data.status_url || `https://platform.higgsfield.ai/requests/${data.request_id}/status`;
+      for (let attempt = 0; attempt < 16; attempt++) {
+        await new Promise(r => setTimeout(r, 2500));
+        const poll = await fetch(statusUrl, { headers: { 'Authorization': `Key ${apiKeys.higgsfield}` } });
+        const st = await poll.json();
+        if (st.status === 'completed' && st.images?.[0]?.url) return st.images[0].url;
+        if (st.status === 'failed' || st.status === 'nsfw') break;
+      }
+    }
+  } catch(e) { console.warn('Higgsfield image gen failed:', e); }
+  return null;
+}
+
+// Unified: tries Higgsfield first, falls back to free tier
+function makeImgUrl(prompt, seed) {
+  return makeImgUrlFree(prompt, seed);
+}
+
+// Async version used by gallery builder when Higgsfield key is present
+async function resolveImgUrl(prompt, seed) {
+  if (apiKeys.higgsfield) {
+    const url = await higgsFieldGenerate(prompt);
+    if (url) return url;
+  }
+  return makeImgUrlFree(prompt, seed);
 }
 
 function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
@@ -1440,8 +1967,13 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
         checkAllImagesLoaded(containerId);
       };
       img.onerror = showFallback;
-      setTimeout(showFallback, 35000); // timeout fallback
-      img.src = makeImgUrl(d.prompt, seed);
+      setTimeout(showFallback, 50000); // timeout fallback
+      // Use Higgsfield if key present, else free tier
+      if (apiKeys.higgsfield) {
+        resolveImgUrl(d.prompt, seed).then(url => { if (img) img.src = url; }).catch(()=> { img.src = makeImgUrlFree(d.prompt, seed); });
+      } else {
+        img.src = makeImgUrlFree(d.prompt, seed);
+      }
     }
 
     animateProgress(containerId, i);
@@ -1690,6 +2222,29 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     }
   ][cycleNum-1];
 
+  // ── Genome evolution data ──
+  const beforeSnap = genomeSnapshots[cycleNum - 1] || [];
+  const afterSnap = genomeSnapshots[cycleNum] || [];
+  const genomeEvolution = agentStates.map((agent, idx) => {
+    const before = beforeSnap[idx] || {};
+    const after = afterSnap[idx] || snapshotGenome(agent);
+    const dims = ['minimalism','novelty','ornamentation','marketFit','symmetry','platBias','coloredStone','diamond','mixedMetal','risk','marginSens','complexBudget'];
+    const shifts = {};
+    dims.forEach(d => { shifts[d] = (after[d] || 0) - (before[d] || 0); });
+    const myDesign = sortedDesigns.find(d => d.agentIdx === idx);
+    return {
+      id: agent.id, name: agent.name, emoji: agent.emoji,
+      before, after, shifts,
+      styleTags: after.styleTags || [],
+      prevStyleTags: before.styleTags || [],
+      dominantBelief: agent.dominantBelief || '',
+      trustBuilt: agent.trustBuilt || 0,
+      rank: myDesign?.rank || 0,
+      designName: myDesign?.name || '—',
+      cycleSummary: (agent.evolutionHistory || []).find(e => e.cycle === cycleNum)?.summary || '',
+    };
+  });
+
   // Build full report object
   const report = {
     cycle: cycleNum,
@@ -1704,6 +2259,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     designs, sortedDesigns,
     agentPerf, voteMatrix,
     agentSnapshot: agentStates.map(a=>({...a})),
+    genomeEvolution,
   };
 
   cycleReports.push(report);
@@ -1725,6 +2281,66 @@ function updateReportsNav() {
   `).join('');
   if(cycleReports.length===3) document.getElementById('dl-all-btn').style.display='';
   document.getElementById('reports-sub').textContent = `${cycleReports.length} of 3 cycle reports generated. Each report feeds forward into agent decision-making for the next cycle.`;
+}
+
+function buildGenomeEvolutionHtml(r) {
+  const evo = r.genomeEvolution || [];
+  if (!evo.length) return '<div style="color:var(--faint);font-size:.78rem">No genome evolution data available.</div>';
+
+  const dimLabels = {
+    minimalism:'Minimalism', novelty:'Novelty', ornamentation:'Ornament',
+    marketFit:'Market Fit', risk:'Risk', marginSens:'Margin Sens',
+    symmetry:'Symmetry', platBias:'Platinum', coloredStone:'Color Stone',
+    diamond:'Diamond', mixedMetal:'Mix Metal', complexBudget:'Complexity'
+  };
+  // Show top 4 most-changed dimensions per agent
+  const topDims = (shifts) => {
+    return Object.entries(shifts)
+      .filter(([,v]) => v !== 0)
+      .sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]))
+      .slice(0, 4);
+  };
+
+  return `<div class="genome-grid">${evo.map(ag => {
+    const dims = topDims(ag.shifts);
+    const arrowCls = (v) => v > 0 ? 'up' : v < 0 ? 'down' : 'flat';
+    const arrowSym = (v) => v > 0 ? '↑' : v < 0 ? '↓' : '—';
+
+    // Style tag diff
+    const newTags = (ag.styleTags||[]).filter(t => !(ag.prevStyleTags||[]).includes(t));
+    const lostTags = (ag.prevStyleTags||[]).filter(t => !(ag.styleTags||[]).includes(t));
+    const keptTags = (ag.styleTags||[]).filter(t => (ag.prevStyleTags||[]).includes(t));
+
+    const rankBadge = ag.rank === 1
+      ? '<span class="gc-result-badge win">WINNER</span>'
+      : ag.rank >= 6
+      ? '<span class="gc-result-badge loss">LAST</span>'
+      : '';
+
+    return `<div class="genome-card">
+      <div class="genome-card-hdr">
+        <span class="gc-emoji">${ag.emoji}</span>
+        <span class="gc-name">${ag.name}</span>
+        ${rankBadge}
+      </div>
+      ${dims.map(([key, delta]) => {
+        const afterVal = ag.after?.[key] ?? 50;
+        const col = delta > 0 ? 'var(--grn)' : delta < 0 ? 'var(--red)' : 'var(--faint)';
+        return `<div class="genome-delta">
+          <span class="gd-label">${dimLabels[key]||key}</span>
+          <div class="gd-bar"><div class="gd-fill" style="width:${afterVal}%;background:${col}"></div></div>
+          <span class="gd-arrow ${arrowCls(delta)}">${arrowSym(delta)}${Math.abs(delta)}</span>
+        </div>`;
+      }).join('')}
+      ${keptTags.length || newTags.length || lostTags.length ? `<div class="genome-tags">
+        ${keptTags.map(t => `<span class="gt">${t}</span>`).join('')}
+        ${newTags.map(t => `<span class="gt new">+${t}</span>`).join('')}
+        ${lostTags.map(t => `<span class="gt lost">${t}</span>`).join('')}
+      </div>` : ''}
+      ${ag.dominantBelief ? `<div class="gc-belief"><b>Belief:</b> "${ag.dominantBelief}"</div>` : ''}
+      ${ag.cycleSummary ? `<div class="gc-summary">${ag.cycleSummary}${ag.trustBuilt ? ` · Trust: ${ag.trustBuilt}` : ''}</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function viewReport(cycleNum) {
@@ -2025,6 +2641,11 @@ function viewReport(cycleNum) {
       </div>
 
       <div class="rsec">
+        <div class="rsec-hdr">Agent Genome Evolution — Before → After Cycle ${r.cycle}</div>
+        ${buildGenomeEvolutionHtml(r)}
+      </div>
+
+      <div class="rsec">
         <div class="rsec-hdr">Vote Flow Matrix</div>
         ${voteFlowHtml}
       </div>
@@ -2063,7 +2684,11 @@ function viewReport(cycleNum) {
     const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
     imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
     imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
-    imgEl.src = makeImgUrl(d.prompt, seed);
+    if (apiKeys.higgsfield) {
+      resolveImgUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
+    } else {
+      imgEl.src = makeImgUrlFree(d.prompt, seed);
+    }
   });
 
   // Animate velocity bar after render
@@ -2104,9 +2729,9 @@ function exportAllReports() {
 function goTo(n) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+n).classList.add('active');
-  ['nt1','nt2','nt3'].forEach((id,i)=>{
+  ['nt0','nt1','nt2','nt3'].forEach((id,i)=>{
     const el=document.getElementById(id); el.className='nav-tab';
-    if(i+1<n) el.classList.add('done'); else if(i+1===n) el.classList.add('active');
+    if(i<n) el.classList.add('done'); else if(i===n) el.classList.add('active');
   });
 }
 
