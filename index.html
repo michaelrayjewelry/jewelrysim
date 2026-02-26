@@ -3363,6 +3363,11 @@ function renderDesignCard(d, i) {
   img.onload = () => {
     img.classList.add('loaded');
     if (loader) loader.classList.add('hidden');
+    // Store the resolved image URL for reuse in gallery/reports
+    const cacheKey = currentCycle + '-' + d.agentIdx;
+    d.imageUrl = img.src;
+    if (activeDesigns[i]) activeDesigns[i].imageUrl = img.src;
+    _designImageCache[cacheKey] = img.src;
   };
   img.onerror = retryOnce;
 
@@ -3418,6 +3423,9 @@ function cardImgProgress(pctId, loaderId) {
 const IMG_QUEUE_INTERVAL = 3000; // ms between image requests
 const _imgQueue = [];
 let _imgQueueRunning = false;
+// Global image cache: stores resolved URLs keyed by "cycle-agentIdx"
+// so gallery and report views can reuse without re-generating
+const _designImageCache = {};
 
 function _drainImgQueue() {
   if (_imgQueue.length === 0) { _imgQueueRunning = false; return; }
@@ -3515,53 +3523,61 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
     </div>`).join('');
 
   // Attach events and set src via DOM after render
+  // Reuse already-generated image URLs from design cards — no new API calls
   top3.forEach((d, i) => {
     const gemEl = document.getElementById(`gem-${containerId}-${i}`);
     if (gemEl) gemEl.textContent = d.emoji;
 
     const img    = document.getElementById(`img-${containerId}-${i}`);
     const loader = document.getElementById(`loader-${containerId}-${i}`);
-    const seed   = (d.agentIdx * 1000 + currentCycle * 100 + i * 17 + 42) | 0;
 
-    const showFallback = () => {
-      if (loader) {
-        loader.classList.remove('hidden');
-        loader.innerHTML = `<div style="font-size:2.5rem;text-align:center">${d.emoji}</div><div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem">Image unavailable</div>`;
-      }
-      checkAllImagesLoaded(containerId);
-    };
+    if (!img) return;
 
-    if (img) {
-      let retried = false;
-      const retryOnce = () => {
-        if (retried) { showFallback(); return; }
-        retried = true;
-        const pEl = document.getElementById(`pct-${containerId}-${i}`);
-        if (pEl) pEl.textContent = 'Retrying…';
-        const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
-        queueImageLoad(() => { img.src = makeImgUrlFree(shortPrompt, seed + 1); });
-      };
-
+    // If the image was already generated during the design card phase, reuse it
+    const cachedUrl = d.imageUrl || _designImageCache[currentCycle + '-' + d.agentIdx];
+    if (cachedUrl) {
       img.onload = () => {
         img.classList.add('loaded');
         if (loader) loader.classList.add('hidden');
         checkAllImagesLoaded(containerId);
       };
-      img.onerror = retryOnce;
-      const imgTimeout = setTimeout(() => { if (!img.classList.contains('loaded')) retryOnce(); }, 30000);
-      img.addEventListener('load', () => clearTimeout(imgTimeout), {once:true});
-
-      // Queue image load — 3 second spacing via centralized queue
-      if (apiKeys.higgsfield) {
-        queueImageLoad(() => {
-          resolveImgUrl(d.prompt, seed).then(url => { if (img) img.src = url; }).catch(()=> { img.src = makeImgUrlFree(d.prompt, seed); });
-        });
-      } else {
-        queueImageLoad(() => { img.src = makeImgUrlFree(d.prompt, seed); });
-      }
+      img.onerror = () => {
+        // Cached URL failed (unlikely) — show fallback
+        if (loader) {
+          loader.classList.remove('hidden');
+          loader.innerHTML = `<div style="font-size:2.5rem;text-align:center">${d.emoji}</div><div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem">Image unavailable</div>`;
+        }
+        checkAllImagesLoaded(containerId);
+      };
+      img.src = cachedUrl;
+    } else {
+      // No cached URL — fallback to generating (shouldn't happen in normal flow)
+      const seed = (d.agentIdx * 1000 + currentCycle * 100 + i * 17 + 42) | 0;
+      const showFallback = () => {
+        if (loader) {
+          loader.classList.remove('hidden');
+          loader.innerHTML = `<div style="font-size:2.5rem;text-align:center">${d.emoji}</div><div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem">Image unavailable</div>`;
+        }
+        checkAllImagesLoaded(containerId);
+      };
+      let retried = false;
+      img.onload = () => {
+        img.classList.add('loaded');
+        if (loader) loader.classList.add('hidden');
+        d.imageUrl = img.src;
+        _designImageCache[currentCycle + '-' + d.agentIdx] = img.src;
+        checkAllImagesLoaded(containerId);
+      };
+      img.onerror = () => {
+        if (!retried) {
+          retried = true;
+          const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+          queueImageLoad(() => { img.src = makeImgUrlFree(shortPrompt, seed + 1); });
+        } else { showFallback(); }
+      };
+      queueImageLoad(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+      animateProgress(containerId, i);
     }
-
-    animateProgress(containerId, i);
   });
 }
 
@@ -4369,29 +4385,37 @@ function viewReport(cycleNum) {
 
   document.getElementById('report-view-area').innerHTML = html;
 
-  // Attach image events via DOM after render — queued to avoid rate limits
+  // Attach image events via DOM after render — reuse cached image URLs
   r.sortedDesigns.slice(0,3).forEach((d, i) => {
     const phEl  = document.getElementById(`rph-${r.cycle}-${i}`);
     const imgEl = document.getElementById(`rimg-${r.cycle}-${i}`);
     if (!imgEl) return;
     if (phEl) phEl.textContent = d.emoji;
-    const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
-    let retried = false;
-    imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
-    imgEl.onerror = () => {
-      if (!retried) {
-        retried = true;
-        const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
-        queueImageLoad(() => { imgEl.src = makeImgUrlFree(shortPrompt, seed + 1); });
-      } else {
-        if (imgEl) imgEl.style.display = 'none';
-      }
-    };
-    if (apiKeys.higgsfield) {
-      queueImageLoad(() => {
-        resolveImgUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
-      });
+
+    // Reuse already-generated image URL — check design object and global cache
+    const cachedUrl = d.imageUrl || _designImageCache[r.cycle + '-' + d.agentIdx];
+    if (cachedUrl) {
+      imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
+      imgEl.onerror = () => { if (imgEl) imgEl.style.display = 'none'; };
+      imgEl.src = cachedUrl;
     } else {
+      // Fallback: generate if no cached URL (e.g. sim mode pre-scripted designs)
+      const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
+      let retried = false;
+      imgEl.onload = () => {
+        imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden');
+        d.imageUrl = imgEl.src;
+        _designImageCache[r.cycle + '-' + d.agentIdx] = imgEl.src;
+      };
+      imgEl.onerror = () => {
+        if (!retried) {
+          retried = true;
+          const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+          queueImageLoad(() => { imgEl.src = makeImgUrlFree(shortPrompt, seed + 1); });
+        } else {
+          if (imgEl) imgEl.style.display = 'none';
+        }
+      };
       queueImageLoad(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
     }
   });
