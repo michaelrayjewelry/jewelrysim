@@ -1517,8 +1517,21 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
 /* ══════════════════════════════════
    LIVE AI MODE — LLM CALLS
 ══════════════════════════════════ */
+// ── Global Claude API rate pacer ──
+// Ensures consistent minimum spacing between all API calls
+let _lastClaudeCallTime = 0;
+const CLAUDE_CALL_INTERVAL = 1000; // ms minimum between requests
+
 async function llmCall(systemPrompt, userPrompt, agent) {
   if (simMode !== 'live' || !apiKeys.anthropic) return null;
+
+  // Enforce consistent pacing — wait if calling too soon after last request
+  const now = Date.now();
+  const elapsed = now - _lastClaudeCallTime;
+  if (elapsed < CLAUDE_CALL_INTERVAL) {
+    await new Promise(r => setTimeout(r, CLAUDE_CALL_INTERVAL - elapsed));
+  }
+  _lastClaudeCallTime = Date.now();
 
   const ag = agent || agentStates[0];
   const genomeCtx = agentGenomeStr(ag);
@@ -1547,9 +1560,10 @@ async function llmCall(systemPrompt, userPrompt, agent) {
       });
       if (resp.status === 429 || resp.status === 529) {
         // Rate limited or overloaded — back off and retry
-        const wait = (attempt + 1) * 2000 + Math.random() * 1000;
+        const wait = (attempt + 1) * 2500 + Math.random() * 1000;
         console.warn(`Claude ${resp.status} for ${ag.name} — retrying in ${Math.round(wait)}ms (attempt ${attempt+1}/3)`);
         await new Promise(r => setTimeout(r, wait));
+        _lastClaudeCallTime = Date.now(); // reset pacer after backoff
         continue;
       }
       if (!resp.ok) {
@@ -1561,13 +1575,57 @@ async function llmCall(systemPrompt, userPrompt, agent) {
     } catch(e) {
       console.warn(`Claude call failed for ${ag.name}:`, e);
       if (attempt < 2) {
-        await new Promise(r => setTimeout(r, (attempt + 1) * 1500));
+        await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+        _lastClaudeCallTime = Date.now();
         continue;
       }
     }
   }
   console.warn(`Claude call exhausted retries for ${ag.name}`);
   return null;
+}
+
+/* ══════════════════════════════════
+   DESIGN PROMPT REFINEMENT (Claude)
+   Takes each agent's raw design prompt and translates
+   it into optimized natural image-generation language
+   through a dedicated Claude analysis pass.
+══════════════════════════════════ */
+async function refineDesignPrompt(design) {
+  if (simMode !== 'live' || !apiKeys.anthropic) return design.prompt;
+
+  const agent = agentStates.find(a => a.id === design.agentIdx) || agentStates[0];
+
+  const refinePrompt = `Analyze this jewelry design concept and rewrite it as a professional image generation prompt optimized for AI image models (Flux/Stable Diffusion).
+
+Design: "${design.name}"
+Category: ${design.cat}
+Strategy: ${design.strategy}
+Scores: Aesthetic ${design.aesthetic}/100, Novelty ${design.novelty}/100, Profit ${design.profit}/100
+Agent's raw prompt: "${design.prompt}"
+
+Write a refined prompt (45-65 words) using natural photographic and jewelry-specific language:
+- Precise metal: type, finish, color (e.g. "hand-hammered 18k rose gold with satin finish", "oxidized sterling silver")
+- Gems/stones: cut, clarity, color, setting type (e.g. "tension-set princess-cut emerald", "pavé diamond halo")
+- Form: silhouette, proportions, structural details, design motifs
+- Texture: surface treatment, engraving, filigree, granulation
+- Photography: "macro product photography", specific lighting (e.g. "butterfly lighting with soft rim light"), background surface (e.g. "on dark slate", "floating on gradient grey")
+- Mood: one evocative word (e.g. "ethereal", "bold", "architectural")
+
+Output ONLY the refined prompt. No quotes, no labels, no preamble.`;
+
+  const resp = await llmCall(
+    'You are a luxury jewelry photography art director and prompt engineer. Your sole task: translate design concepts into vivid, technically specific image generation prompts. Output ONLY the prompt text, nothing else.',
+    refinePrompt,
+    agent
+  );
+
+  if (resp) {
+    const refined = resp.trim().replace(/^["']|["']$/g, '');
+    console.log(`✦ Prompt refined [${design.agentName}]: "${design.prompt}" → "${refined}"`);
+    return refined;
+  }
+  return design.prompt;
 }
 
 /* ══════════════════════════════════
@@ -1645,7 +1703,6 @@ async function runLiveCrossPollination(cycleNum, afterBiosDelay) {
   delay += 400;
 
   for (let pairIdx = 0; pairIdx < CROSS_PAIRS.length; pairIdx++) {
-    if (pairIdx > 0) await new Promise(r => setTimeout(r, 600));
     const [iA, iB] = CROSS_PAIRS[pairIdx];
     const agentA = agentStates[iA];
     const agentB = agentStates[iB];
@@ -1709,7 +1766,6 @@ async function runLiveSynthesis(cycleNum) {
   const strategies = ['EXPLOIT', 'EXPLORE', 'MUTATE'];
 
   for (let i = 0; i < agentStates.length; i++) {
-    if (i > 0) await new Promise(r => setTimeout(r, 600));
     const agent = agentStates[i];
     const synthPrompt = `Based on your genome, personality bio, conversation memory from cross-pollination, and any prior intelligence reports — produce your design blueprint for Cycle ${cycleNum}.
 Output EXACTLY this format (one line):
@@ -1751,7 +1807,6 @@ async function runLiveGeneration(cycleNum) {
   const designEmojis = ['⬡','🌑','✨','🔷','💍','🌹','💙','⚡','💎','🦴','🌸','🔥','🌿','💛','⭐','🔶'];
 
   for (let i = 0; i < agentStates.length; i++) {
-    if (i > 0) await new Promise(r => setTimeout(r, 800));
     const agent = agentStates[i];
     const convMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
 
@@ -1803,15 +1858,20 @@ Output EXACTLY this JSON (no markdown, no backticks, just raw JSON):
     design.emoji = designEmojis[i + (cycleNum-1)*6] || '⬡';
     design.credits = 0;
 
+    // Refine prompt through Claude — translate raw concept into optimized image-gen language
+    design.rawPrompt = design.prompt;
+    design.prompt = await refineDesignPrompt(design);
+
     designs.push(design);
-    addLog(`<b>${agent.name}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()}`, 'ds', 300 + i*400);
-    setTimeout(()=>renderDesignCard(design, i), (400 + i*400)/speed);
+    addLog(`<b>${agent.name}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()}`, 'ds', 300 + i*600);
+    addLog(`<span style="opacity:.6;font-size:.7rem">Refined prompt: ${design.prompt.slice(0,120)}…</span>`, '', 300 + i*600 + 200);
+    setTimeout(()=>renderDesignCard(design, i), (400 + i*600)/speed);
   }
 
   activeDesigns = designs;
-  addLog(`All ${designs.length} designs submitted. Pool locked.`, 'rs', 300 + agentStates.length*400 + 200);
+  addLog(`All ${designs.length} designs submitted. Prompts refined via Claude. Pool locked.`, 'rs', 300 + agentStates.length*600 + 200);
   setProgress(60);
-  return 300 + agentStates.length*400 + 600;
+  return 300 + agentStates.length*600 + 600;
 }
 
 /* ══════════════════════════════════
@@ -1830,7 +1890,6 @@ async function runLiveVoting(cycleNum) {
   const liveVoteMatrix = [];
 
   for (let vi = 0; vi < agentStates.length; vi++) {
-    if (vi > 0) await new Promise(r => setTimeout(r, 800));
     const voter = agentStates[vi];
 
     const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).
@@ -1935,9 +1994,8 @@ async function runLiveEvolution(cycleNum) {
     ? `Prior winners: ${cycleReports.map(r=>`C${r.cycle}: "${r.winner.name}"`).join(', ')}`
     : 'No prior cycles.';
 
-  // Generate evolution for each agent (with inter-call delay to avoid rate limits)
+  // Generate evolution for each agent (pacing handled by global rate limiter in llmCall)
   for (let i = 0; i < agentStates.length; i++) {
-    if (i > 0) await new Promise(r => setTimeout(r, 800));
     const agent = agentStates[i];
     const myDesign = sorted.find(d=>d.agentIdx===i);
     const rank = myDesign ? sorted.indexOf(myDesign) : 5;
@@ -3316,14 +3374,15 @@ function viewReport(cycleNum) {
       </div>`;
   }
 
-  // ── Section 11: Image Generation Prompts ──
+  // ── Section 11: Image Generation Prompts (Raw + Claude-Refined) ──
   const promptHtml = `
     <table class="rtable">
-      <thead><tr><th style="width:160px">Design</th><th>Image Generation Prompt</th></tr></thead>
+      <thead><tr><th style="width:140px">Design</th><th>Claude-Refined Prompt</th><th style="width:30%">Raw Agent Prompt</th></tr></thead>
       <tbody>${[...r.designs].sort((a,b)=>a.rank-b.rank).map(d=>`
         <tr class="${d.rank<=3?'highlight-row':''}">
           <td><b>${d.rank===1?'🏆 ':''}#${d.rank} ${d.name}</b><br><span style="color:var(--faint);font-size:.65rem">${d.agentName||'Agent'}</span></td>
           <td><div class="prompt-box">${d.prompt}</div></td>
+          <td><div class="prompt-box" style="opacity:.6;font-size:.65rem">${d.rawPrompt||d.prompt}</div></td>
         </tr>`).join('')}
       </tbody>
     </table>`;
@@ -3393,7 +3452,7 @@ function viewReport(cycleNum) {
       </div>
 
       <div class="rsec">
-        <div class="rsec-hdr">Final Image Generation Prompts</div>
+        <div class="rsec-hdr">Image Generation Prompts (Claude-Refined)</div>
         ${promptHtml}
       </div>
     </div>`;
