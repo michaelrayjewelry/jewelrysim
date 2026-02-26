@@ -1057,7 +1057,7 @@ function autoGen() {
 /* ══════════════════════════════════
    SIM INITIALIZATION
 ══════════════════════════════════ */
-function deployCurrentAgent() {
+async function deployCurrentAgent() {
   if(!document.getElementById('b-name').value) autoGen();
   const idx = currentAgentNum - 1;
   const agent = {
@@ -1084,11 +1084,22 @@ function deployCurrentAgent() {
     credits: 10000,
     reputation: currentAgentNum === 1 ? 50 : Math.floor(Math.random()*30)+45,
     status: 'Idle',
+    bio: '',
     evolutionHistory: [],
     conversationMemory: [],
     dominantBelief: '',
     trustBuilt: 0,
   };
+
+  // Generate bio from genome via Claude (or fallback)
+  const btn = document.getElementById('deploy-btn');
+  if (simMode === 'live' && apiKeys.anthropic) {
+    btn.disabled = true;
+    btn.textContent = `⏳ Analyzing ${agent.name}'s DNA…`;
+  }
+  await generateAgentBio(agent);
+  if (btn) btn.disabled = false;
+
   configuredAgents.push(agent);
   renderRoster();
 
@@ -1399,9 +1410,11 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
 async function llmCall(systemPrompt, userPrompt, agent) {
   if (simMode !== 'live' || !apiKeys.anthropic) return null;
 
-  const genomeCtx = agentGenomeStr(agent || agentStates[0]);
-  const reportCtx = priorReportCtx(agent?.id || 0);
-  const fullSystem = `You are ${agent?.name || 'an AI agent'}, a jewelry design AI in the JewelForge simulation.\n\n${genomeCtx}\n\n${reportCtx}\n\n${systemPrompt}`;
+  const ag = agent || agentStates[0];
+  const genomeCtx = agentGenomeStr(ag);
+  const reportCtx = priorReportCtx(ag.id || 0);
+  const bioCtx = ag.bio ? `\nPERSONALITY BIO:\n${ag.bio}\n` : '';
+  const fullSystem = `You are ${ag.name || 'an AI agent'}, a jewelry design AI in the JewelForge simulation.\n\n${bioCtx}\n${genomeCtx}\n\n${reportCtx}\n\n${systemPrompt}`;
 
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1427,6 +1440,67 @@ async function llmCall(systemPrompt, userPrompt, agent) {
 }
 
 /* ══════════════════════════════════
+   AGENT BIO GENERATION (Claude)
+   Called at deploy time — converts raw genome DNA
+   into a short natural-language personality profile.
+══════════════════════════════════ */
+async function generateAgentBio(agent) {
+  // Always produce a sim-mode fallback bio from the genome
+  const fallback = buildFallbackBio(agent);
+  if (simMode !== 'live' || !apiKeys.anthropic) { agent.bio = fallback; return; }
+
+  const genome = agentGenomeStr(agent);
+  const prompt = `Below is the raw DNA genome of a jewelry design AI agent. Write a short personality bio (2-3 sentences, ~40 words) in third person that captures who this agent IS — their design instincts, aesthetic identity, risk posture, and market philosophy. Make it vivid and specific. Do NOT list numbers or repeat the genome format. Just the bio paragraph, nothing else.
+
+${genome}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKeys.anthropic,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 120,
+        system: 'You are a concise creative writer for a luxury jewelry AI simulation. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    const bio = data.content?.[0]?.text?.trim();
+    agent.bio = bio || fallback;
+  } catch(e) {
+    console.warn('Bio generation failed for', agent.name, e);
+    agent.bio = fallback;
+  }
+}
+
+function buildFallbackBio(agent) {
+  const style = agent.minimalism > 60 ? 'minimalist' : agent.ornamentation > 60 ? 'ornate' : 'balanced';
+  const riskWord = agent.risk > 65 ? 'bold explorer' : agent.risk < 35 ? 'disciplined refiner' : 'adaptive strategist';
+  const matPref = agent.platBias > 60 ? 'platinum-forward' : agent.mixedMetal > 60 ? 'mixed-metal experimentalist' : agent.diamond > 65 ? 'diamond-centric' : 'material-versatile';
+  const market = agent.marginSens > 65 ? 'margin-conscious' : 'design-first';
+  return `${agent.name} is a ${style}, ${matPref} ${riskWord} with a ${market} market philosophy. Specializes in ${agent.marketFocus || 'general'} with ${(agent.styleTags||[]).slice(0,3).join(', ') || 'eclectic'} sensibilities.`;
+}
+
+/* ══════════════════════════════════
+   logAgentBios — display each agent's AI-generated bio
+   at the start of every cross-pollination round
+══════════════════════════════════ */
+function logAgentBios(baseDelay) {
+  addLog(`<b>[AGENT DOSSIERS — Personality Profiles]</b>`, 'rp', baseDelay);
+  agentStates.forEach((a, i) => {
+    const bio = a.bio || buildFallbackBio(a);
+    addLog(`${a.emoji} <b>${a.name}</b> — <i>${bio}</i>`, 'rp', baseDelay + 200 + i * 250);
+  });
+  return baseDelay + 200 + agentStates.length * 250 + 200; // return delay after all bios
+}
+
+/* ══════════════════════════════════
    PHASE SCRIPTS (all 3 cycles)
 ══════════════════════════════════ */
 const PHASE_SCRIPTS = [
@@ -1436,16 +1510,17 @@ const PHASE_SCRIPTS = [
     ()=>{
       setProgress(5);
       addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`,'',100);
-      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', 400);
-      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', 900);
-      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', 1300);
-      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', 1700);
-      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', 2100);
-      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', 2500);
-      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (2800+i*100)/speed); });
-      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', 3300);
+      const d = logAgentBios(250);
+      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', d);
+      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', d+500);
+      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', d+900);
+      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', d+1300);
+      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', d+1700);
+      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', d+2100);
+      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (d+2400+i*100)/speed); });
+      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', d+2900);
       setProgress(20);
-      return 3600;
+      return d+3200;
     },
     // Phase 1: Synthesis
     ()=>{
@@ -1561,15 +1636,16 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi[2]}`, 'rp', 1350);
       addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
 
-      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', 2000);
-      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', 2500);
-      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', 2900);
-      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', 3300);
-      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', 3700);
-      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', 4500);
+      const d2 = logAgentBios(1700);
+      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', d2);
+      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', d2+500);
+      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', d2+900);
+      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', d2+1300);
+      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', d2+1700);
+      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', d2+2100);
+      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', d2+2500);
       setProgress(20);
-      return 4800;
+      return d2+2800;
     },
     // Phase 1
     ()=>{
@@ -1676,15 +1752,17 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi2[0]}`, 'rp', 1050);
       addLog(`◆ ${fi2[1] || fi1last}`, 'rp', 1200);
       addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
-      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', 1900);
-      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', 2400);
-      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', 2900);
-      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Forge Shard, mixed metal with irregular natural form."`, 'cv', 3300);
-      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Bloom Fragment pendant, champagne pearl cluster, organic form."`, 'cv', 3700);
-      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', 4500);
+
+      const d3 = logAgentBios(1500);
+      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', d3);
+      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', d3+500);
+      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', d3+1000);
+      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Forge Shard, mixed metal with irregular natural form."`, 'cv', d3+1400);
+      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Bloom Fragment pendant, champagne pearl cluster, organic form."`, 'cv', d3+1800);
+      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', d3+2200);
+      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', d3+2600);
       setProgress(20);
-      return 4800;
+      return d3+2900;
     },
     // Phase 1
     ()=>{
