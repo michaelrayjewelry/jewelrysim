@@ -1517,21 +1517,40 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
 /* ══════════════════════════════════
    LIVE AI MODE — LLM CALLS
 ══════════════════════════════════ */
-// ── Global Claude API rate pacer ──
-// Ensures consistent minimum spacing between all API calls
+// ── Global Claude API concurrency + rate limiter ──
+// Allows up to MAX_CONCURRENT in-flight requests while enforcing
+// minimum spacing between request starts. This enables batching
+// independent agent calls (e.g. parallel pairs in cross-pollination,
+// parallel agent synthesis) without hammering the API.
 let _lastClaudeCallTime = 0;
-const CLAUDE_CALL_INTERVAL = 1000; // ms minimum between requests
+const CLAUDE_CALL_INTERVAL = 600;  // ms minimum between request starts
+const MAX_CONCURRENT = 3;          // max simultaneous in-flight requests
+let _inFlightCount = 0;
+const _llmQueue = [];              // FIFO queue for pending calls
+
+function _drainLlmQueue() {
+  while (_llmQueue.length > 0 && _inFlightCount < MAX_CONCURRENT) {
+    const next = _llmQueue.shift();
+    next();
+  }
+}
 
 async function llmCall(systemPrompt, userPrompt, agent) {
   if (simMode !== 'live' || !apiKeys.anthropic) return null;
 
-  // Enforce consistent pacing — wait if calling too soon after last request
+  // Wait for concurrency slot
+  if (_inFlightCount >= MAX_CONCURRENT) {
+    await new Promise(resolve => _llmQueue.push(resolve));
+  }
+
+  // Enforce minimum spacing between request starts
   const now = Date.now();
   const elapsed = now - _lastClaudeCallTime;
   if (elapsed < CLAUDE_CALL_INTERVAL) {
     await new Promise(r => setTimeout(r, CLAUDE_CALL_INTERVAL - elapsed));
   }
   _lastClaudeCallTime = Date.now();
+  _inFlightCount++;
 
   const ag = agent || agentStates[0];
   const genomeCtx = agentGenomeStr(ag);
@@ -1568,9 +1587,11 @@ async function llmCall(systemPrompt, userPrompt, agent) {
       }
       if (!resp.ok) {
         console.warn(`Claude HTTP ${resp.status} for ${ag.name}`);
+        _inFlightCount--; _drainLlmQueue();
         return null;
       }
       const data = await resp.json();
+      _inFlightCount--; _drainLlmQueue();
       return data.content?.[0]?.text || null;
     } catch(e) {
       console.warn(`Claude call failed for ${ag.name}:`, e);
@@ -1582,6 +1603,7 @@ async function llmCall(systemPrompt, userPrompt, agent) {
     }
   }
   console.warn(`Claude call exhausted retries for ${ag.name}`);
+  _inFlightCount--; _drainLlmQueue();
   return null;
 }
 
@@ -1694,53 +1716,66 @@ function logAgentBios(baseDelay) {
    Each agent talks to 3 other agents via Claude.
    Conversations are logged and stored in conversationMemory.
 ══════════════════════════════════ */
-const CROSS_PAIRS = [[0,1],[2,4],[3,5],[0,3],[1,2],[4,5]]; // 6 pairs = each agent talks to 3 others
+// Pairs arranged into two batches of non-overlapping agent indices.
+// Batch 1: [0,1],[2,4],[3,5] — all disjoint, can run in parallel.
+// Batch 2: [0,3],[1,2],[4,5] — all disjoint, can run in parallel.
+// Within each pair: A opens, B responds (serial). Across pairs: parallel.
+// This cuts cross-pollination from 12 serial calls to 4 serial rounds of ~3 concurrent.
+const CROSS_PAIR_BATCHES = [
+  [[0,1],[2,4],[3,5]],  // Batch 1: disjoint pairs
+  [[0,3],[1,2],[4,5]]   // Batch 2: disjoint pairs
+];
 
 async function runLiveCrossPollination(cycleNum, afterBiosDelay) {
   let delay = afterBiosDelay;
   agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), delay/speed); });
-  addLog(`Live AI cross-pollination — each agent consults 3 partners via Claude…`, 'rs', delay);
+  addLog(`Live AI cross-pollination — parallel pair batches via Claude…`, 'rs', delay);
   delay += 400;
 
-  for (let pairIdx = 0; pairIdx < CROSS_PAIRS.length; pairIdx++) {
-    const [iA, iB] = CROSS_PAIRS[pairIdx];
-    const agentA = agentStates[iA];
-    const agentB = agentStates[iB];
+  for (const batch of CROSS_PAIR_BATCHES) {
+    // Run all pairs in this batch concurrently — each pair is A→B serial
+    const batchResults = await Promise.all(batch.map(async ([iA, iB]) => {
+      const agentA = agentStates[iA];
+      const agentB = agentStates[iB];
 
-    // Agent A opens
-    const openPrompt = cycleNum === 1
-      ? `This is cycle 1 — no prior data. Introduce your design direction for this cycle in 1-2 sentences. Reference your personality, style genome, and market instincts. Be specific about materials, forms, and strategy.`
-      : `Cycle ${cycleNum}. Review the intelligence reports from prior cycles. In 1-2 sentences, share your design direction — what you're keeping, what you're changing, and why. Reference specific data from prior cycle reports.`;
+      // Agent A opens
+      const openPrompt = cycleNum === 1
+        ? `This is cycle 1 — no prior data. Introduce your design direction for this cycle in 1-2 sentences. Reference your personality, style genome, and market instincts. Be specific about materials, forms, and strategy.`
+        : `Cycle ${cycleNum}. Review the intelligence reports from prior cycles. In 1-2 sentences, share your design direction — what you're keeping, what you're changing, and why. Reference specific data from prior cycle reports.`;
 
-    const msgA = await llmCall(
-      `You are in a cross-pollination dialogue with ${agentB.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
-      openPrompt,
-      agentA
-    );
+      const msgA = await llmCall(
+        `You are in a cross-pollination dialogue with ${agentB.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+        openPrompt,
+        agentA
+      );
+      const lineA = msgA || getFallbackLine(agentA, cycleNum, 'open');
 
-    const lineA = msgA || getFallbackLine(agentA, cycleNum, 'open');
-    addLog(`<b>${agentA.name}</b> → <b>${agentB.name}</b>: "${lineA}"`, 'cv', delay);
-    delay += 600;
+      // Agent B responds (depends on A's message)
+      const replyPrompt = `Your partner ${agentA.name} said: "${lineA}". Respond in 1-2 sentences. React to their direction — agree, challenge, or build on it. Reference your own design instincts and genome.`;
 
-    // Agent B responds
-    const replyPrompt = `Your partner ${agentA.name} said: "${lineA}". Respond in 1-2 sentences. React to their direction — agree, challenge, or build on it. Reference your own design instincts and genome.`;
+      const msgB = await llmCall(
+        `You are in a cross-pollination dialogue with ${agentA.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+        replyPrompt,
+        agentB
+      );
+      const lineB = msgB || getFallbackLine(agentB, cycleNum, 'reply');
 
-    const msgB = await llmCall(
-      `You are in a cross-pollination dialogue with ${agentA.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
-      replyPrompt,
-      agentB
-    );
+      // Store conversation memory for both agents
+      agentA.conversationMemory.push({ cycle: cycleNum, partner: agentB.name, excerpt: lineB.slice(0, 120) });
+      agentB.conversationMemory.push({ cycle: cycleNum, partner: agentA.name, excerpt: lineA.slice(0, 120) });
 
-    const lineB = msgB || getFallbackLine(agentB, cycleNum, 'reply');
-    addLog(`<b>${agentB.name}</b>: "${lineB}"`, 'cv', delay);
-    delay += 600;
+      return { agentA, agentB, lineA, lineB };
+    }));
 
-    // Store conversation memory for both agents
-    agentA.conversationMemory.push({ cycle: cycleNum, partner: agentB.name, excerpt: lineB.slice(0, 120) });
-    agentB.conversationMemory.push({ cycle: cycleNum, partner: agentA.name, excerpt: lineA.slice(0, 120) });
+    // Log results from this batch (in order)
+    for (const { agentA, agentB, lineA, lineB } of batchResults) {
+      addLog(`<b>${agentA.name}</b> → <b>${agentB.name}</b>: "${lineA}"`, 'cv', delay);
+      addLog(`<b>${agentB.name}</b>: "${lineB}"`, 'cv', delay + 300);
+      delay += 700;
+    }
   }
 
-  addLog(`All 6 agents complete ${CROSS_PAIRS.length} cross-pollination exchanges. Memory updated.`, 'rs', delay);
+  addLog(`All 6 agents complete ${CROSS_PAIR_BATCHES.flat().length} cross-pollination exchanges. Memory updated.`, 'rs', delay);
   delay += 300;
   setProgress(20);
   return delay;
@@ -1754,71 +1789,45 @@ function getFallbackLine(agent, cycle, role) {
 }
 
 /* ══════════════════════════════════
-   LIVE AI SYNTHESIS
-   Each agent generates their design blueprint via Claude.
+   LIVE AI SYNTHESIS → GENERATION (Combined Pipeline)
+   Synthesis was a separate phase that produced blueprints
+   which generation then re-derived from scratch. Now merged
+   into a single 3-step pipeline per agent:
+     Step 1 (was Synthesis): Strategic blueprint + naming via Claude
+     Step 2: Self-assessment + image prompt
+     Step 3: Prompt refinement folded into Step 2 output
+
+   Agents are processed in parallel batches of 3 for throughput.
 ══════════════════════════════════ */
 async function runLiveSynthesis(cycleNum) {
+  // Synthesis is now the first half of the combined pipeline.
+  // We show the synthesis UI phase, then flow straight into generation.
   let delay = 200;
   agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
-  addLog(`Synthesis phase: agents compile cross-pollination dialogues + genome into design blueprint via Claude.`,'',delay);
+  addLog(`Synthesis + Design phase: agents deliberate strategy, name, and assess via Claude (Cycle ${cycleNum})…`, 'rs', delay);
   delay += 400;
 
-  const strategies = ['EXPLOIT', 'EXPLORE', 'MUTATE'];
-
-  for (let i = 0; i < agentStates.length; i++) {
-    const agent = agentStates[i];
-    const synthPrompt = `Based on your genome, personality bio, conversation memory from cross-pollination, and any prior intelligence reports — produce your design blueprint for Cycle ${cycleNum}.
-Output EXACTLY this format (one line):
-Strategy: [EXPLOIT or EXPLORE or MUTATE] · [Category: Ring/Pendant/Earrings/Bracelet] · [Brief design description, 8-12 words] · Complexity: [1-10]/10 · Est. margin: [40-90]%`;
-
-    const synthResp = await llmCall(
-      `You are generating a design blueprint. Output ONLY the single-line blueprint in the exact format requested. No preamble, no explanation.`,
-      synthPrompt,
-      agent
-    );
-
-    if (synthResp) {
-      addLog(`<b>${agent.name}</b> — ${synthResp.slice(0, 200)}`, '', delay);
-    } else {
-      const strat = strategies[agent.risk > 65 ? 1 : agent.risk < 35 ? 0 : 2];
-      addLog(`<b>${agent.name}</b> — Strategy: <b>${strat}</b> · Blueprint compiled from genome + dialogue memory.`, '', delay);
-    }
-    delay += 500;
-  }
-
-  addLog(`All blueprints hashed. Validation gates passed.`, 'rs', delay);
-  setProgress(40);
-  return delay + 400;
-}
-
-/* ══════════════════════════════════
-   LIVE AI DESIGN GENERATION (Phase 2)
-   Multi-step Claude pipeline — each agent decision is a
-   separate Claude call with full context:
-     Step 1: Strategic direction (strategy + category + reasoning)
-     Step 2: Creative naming (references conversations, genome, strategy)
-     Step 3: Self-assessment + image prompt (scores + visual description)
-     Step 4: Prompt refinement (art-director pass for image gen)
-══════════════════════════════════ */
-async function runLiveGeneration(cycleNum) {
-  setProgress(45);
+  setProgress(30);
   document.getElementById('designs-wrap').style.display='block';
-  agentStates.forEach(a=>setAgentStatus(a.id,'Deliberating…'));
-  addLog(`Live AI design pipeline — multi-step Claude deliberation (Cycle ${cycleNum})…`, 'rs', 100);
 
   const designs = [];
   const categories = ['Ring','Pendant','Earrings','Bracelet'];
   const designEmojis = ['⬡','🌑','✨','🔷','💍','🌹','💙','⚡','💎','🦴','🌸','🔥','🌿','💛','⭐','🔶'];
 
-  for (let i = 0; i < agentStates.length; i++) {
-    const agent = agentStates[i];
-    setAgentStatus(agent.id, 'Deliberating…');
-    const convMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
-    const allConvMem = (agent.conversationMemory || []).map(m => `[Cycle ${m.cycle}] ${m.partner}: "${m.excerpt}"`).join('\n');
+  // ── Process agents in parallel batches of 3 ──
+  const BATCH_SIZE = 3;
+  for (let batch = 0; batch < agentStates.length; batch += BATCH_SIZE) {
+    const batchAgents = agentStates.slice(batch, batch + BATCH_SIZE);
 
-    // ── Step 1: Strategic Direction ──
-    // Claude decides strategy + category using full agent context
-    const stratPrompt = `You are ${agent.name}, beginning your design process for Cycle ${cycleNum}.
+    const batchPromises = batchAgents.map(async (agent, batchIdx) => {
+      const i = batch + batchIdx;
+      const convMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
+      const allConvMem = (agent.conversationMemory || []).map(m => `[Cycle ${m.cycle}] ${m.partner}: "${m.excerpt}"`).join('\n');
+
+      // ── Step 1: Strategic Blueprint + Naming (merged from old Synthesis + Generation Steps 1-2) ──
+      setAgentStatus(agent.id, 'Synthesizing…');
+
+      const blueprintPrompt = `You are ${agent.name}, beginning your design process for Cycle ${cycleNum}.
 
 YOUR CROSS-POLLINATION DIALOGUES THIS CYCLE:
 ${convMem || 'No conversations this cycle.'}
@@ -1826,7 +1835,7 @@ ${convMem || 'No conversations this cycle.'}
 ALL PRIOR DIALOGUES:
 ${allConvMem || 'No prior conversations.'}
 
-Based on everything you know — your genome DNA, your personality bio, every conversation you've had, your evolution history, and every intelligence report — make your strategic decision.
+Based on everything you know — your genome DNA, your personality bio, every conversation you've had, your evolution history, and every intelligence report — make your strategic decision AND name your design.
 
 Think about:
 - What worked and what failed in prior cycles (your rank, the winners, the trends)
@@ -1835,140 +1844,139 @@ Think about:
 - Your natural strengths from your genome vs where you need to adapt
 
 Output EXACTLY this JSON (no markdown, no backticks):
-{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[primary metal and stone/accent choices]","form":"[structural concept in 5-10 words]"}`;
+{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[primary metal and stone/accent choices]","form":"[structural concept in 5-10 words]","complexity":[1-10 integer],"estMargin":[40-90 integer],"name":"[3-6 word design name: evocative, specific to materials and form, feels like a luxury collection name — NOT generic]"}`;
 
-    const stratResp = await llmCall(
-      'You are making a strategic design decision. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
-      stratPrompt, agent
-    );
+      const blueprintResp = await llmCall(
+        'You are making a strategic design decision and naming your creation. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
+        blueprintPrompt, agent
+      );
 
-    let stratData = null;
-    if (stratResp) {
-      try {
-        stratData = JSON.parse(stratResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
-      } catch(e) { console.warn('Strategy parse failed for', agent.name, stratResp); }
-    }
+      let blueprint = null;
+      if (blueprintResp) {
+        try {
+          blueprint = JSON.parse(blueprintResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+        } catch(e) { console.warn('Blueprint parse failed for', agent.name, blueprintResp); }
+      }
 
-    // Fallback strategy
-    if (!stratData) {
-      stratData = {
-        strategy: agent.risk > 65 ? 'explore' : agent.risk < 35 ? 'exploit' : 'mutate',
-        cat: categories[i % 4],
-        reasoning: 'Proceeding based on genome defaults.',
-        materials: agent.platBias > 60 ? 'platinum' : 'gold',
-        form: 'refined jewelry piece'
-      };
-    }
-    if (!categories.includes(stratData.cat)) stratData.cat = categories[i % 4];
-    if (!['exploit','explore','mutate'].includes(stratData.strategy)) stratData.strategy = 'explore';
+      // Fallback
+      if (!blueprint) {
+        blueprint = {
+          strategy: agent.risk > 65 ? 'explore' : agent.risk < 35 ? 'exploit' : 'mutate',
+          cat: categories[i % 4],
+          reasoning: 'Proceeding based on genome defaults.',
+          materials: agent.platBias > 60 ? 'platinum' : 'gold',
+          form: 'refined jewelry piece',
+          complexity: 5,
+          estMargin: 65,
+          name: `${agent.name}'s Cycle ${cycleNum} Design`
+        };
+      }
+      if (!categories.includes(blueprint.cat)) blueprint.cat = categories[i % 4];
+      if (!['exploit','explore','mutate'].includes(blueprint.strategy)) blueprint.strategy = 'explore';
+      blueprint.complexity = Math.max(1, Math.min(10, parseInt(blueprint.complexity)||5));
+      blueprint.estMargin = Math.max(40, Math.min(90, parseInt(blueprint.estMargin)||65));
 
-    addLog(`<b>${agent.name}</b> strategy: <b>${stratData.strategy.toUpperCase()}</b> · ${stratData.cat} — <i>${(stratData.reasoning||'').slice(0,140)}</i>`, '', 300 + i*800);
+      let designName = (blueprint.name || '').trim().replace(/^["']+|["']+$/g, '').slice(0, 80);
+      if (!designName || designName.length < 3) {
+        designName = `${blueprint.materials || 'Gold'} ${blueprint.form || blueprint.cat}`;
+      }
 
-    // ── Step 2: Creative Naming ──
-    // Claude generates a design name informed by the strategic decision + full history
-    setAgentStatus(agent.id, 'Naming…');
-    const namePrompt = `You are ${agent.name}, naming your Cycle ${cycleNum} jewelry design.
+      // Log the synthesis blueprint
+      addLog(`<b>${agent.name}</b> — Strategy: <b>${blueprint.strategy.toUpperCase()}</b> · ${blueprint.cat} · <i>"${designName}"</i> · Complexity ${blueprint.complexity}/10 · Est. margin ${blueprint.estMargin}%`, '', delay + i*300);
+      addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${(blueprint.reasoning||'').slice(0,160)}</span>`, '', delay + i*300 + 100);
 
-YOUR STRATEGIC DECISION:
-- Strategy: ${stratData.strategy.toUpperCase()}
-- Category: ${stratData.cat}
-- Materials: ${stratData.materials}
-- Form concept: ${stratData.form}
-- Reasoning: ${stratData.reasoning}
+      // ── Step 2: Self-Assessment + Image Prompt (with refined prompt built-in) ──
+      setAgentStatus(agent.id, 'Designing…');
 
-YOUR CROSS-POLLINATION DIALOGUES THIS CYCLE:
-${convMem || 'None.'}
-
-Create the official submission name for your design. The name should:
-- Be 3-6 words that evoke the physical piece (materials, form, feeling)
-- Reflect your strategic direction and personality
-- Feel like a real luxury jewelry collection name
-- Reference specific materials, forms, or design language from your conversations and genome
-- NOT be generic — it should be unmistakably YOUR design based on your agent identity
-
-Output ONLY the design name. No quotes, no explanation, nothing else.`;
-
-    const nameResp = await llmCall(
-      'You are naming a jewelry design. Output ONLY the design name (3-6 words). No quotes, no punctuation wrapping, no explanation.',
-      namePrompt, agent
-    );
-
-    let designName = null;
-    if (nameResp) {
-      designName = nameResp.trim().replace(/^["']+|["']+$/g, '').slice(0, 80);
-    }
-    if (!designName || designName.length < 3) {
-      designName = `${stratData.materials || 'Gold'} ${stratData.form || stratData.cat}`;
-    }
-
-    // ── Step 3: Self-Assessment + Image Prompt ──
-    // Claude scores the design and generates the visual prompt, knowing the name + strategy
-    setAgentStatus(agent.id, 'Designing…');
-    const assessPrompt = `You are ${agent.name}, finalizing your Cycle ${cycleNum} submission.
+      const assessPrompt = `You are ${agent.name}, finalizing your Cycle ${cycleNum} submission.
 
 YOUR DESIGN:
 - Name: "${designName}"
-- Category: ${stratData.cat}
-- Strategy: ${stratData.strategy.toUpperCase()}
-- Materials: ${stratData.materials}
-- Form: ${stratData.form}
-- Strategic reasoning: ${stratData.reasoning}
+- Category: ${blueprint.cat}
+- Strategy: ${blueprint.strategy.toUpperCase()}
+- Materials: ${blueprint.materials}
+- Form: ${blueprint.form}
+- Complexity: ${blueprint.complexity}/10
+- Est. Margin: ${blueprint.estMargin}%
+- Strategic reasoning: ${blueprint.reasoning}
 
 YOUR CONVERSATIONS THIS CYCLE:
 ${convMem || 'None.'}
 
-Now self-assess your design and create the image generation prompt.
+Self-assess your design scores AND create a production-ready image generation prompt.
 
-For scores, be honest — consider your genome strengths, market fit from reports, and how your design compares to prior cycle winners. Don't just give yourself high scores.
+For scores — be honest. Consider your genome strengths, market fit from reports, and how your design compares to prior cycle winners.
+
+For the image prompt — write it as a professional art director would for AI image generation (Flux/Stable Diffusion):
+- Precise metal type and finish (e.g. "hand-hammered 18k rose gold with satin finish")
+- Gems/stones: cut, clarity, color, setting type (e.g. "tension-set princess-cut emerald")
+- Silhouette, structural details, surface texture
+- Photography direction: "macro product photography", specific lighting, background surface
+- One mood word (e.g. "ethereal", "architectural")
 
 Output EXACTLY this JSON (no markdown):
-{"aesthetic":[40-95 integer: visual beauty and craftsmanship level],"novelty":[30-95 integer: how original/unprecedented this is],"profit":[35-95 integer: commercial viability and margin potential],"prompt":"[detailed image prompt: specific metal type and finish, stone type and cut, setting style, structural form, silhouette details, surface texture, 30-50 words]"}`;
+{"aesthetic":[40-95 integer],"novelty":[30-95 integer],"profit":[35-95 integer],"prompt":"[production-ready image prompt, 45-65 words, technically specific]"}`;
 
-    const assessResp = await llmCall(
-      'You are assessing your own jewelry design. Be calibrated and honest in your scores. Output ONLY valid JSON.',
-      assessPrompt, agent
-    );
+      const assessResp = await llmCall(
+        'You are assessing your own jewelry design and writing the final image prompt. Be calibrated in scores. Write a vivid, technically specific prompt. Output ONLY valid JSON.',
+        assessPrompt, agent
+      );
 
-    let assessData = null;
-    if (assessResp) {
-      try {
-        assessData = JSON.parse(assessResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
-      } catch(e) { console.warn('Assessment parse failed for', agent.name, assessResp); }
+      let assessData = null;
+      if (assessResp) {
+        try {
+          assessData = JSON.parse(assessResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+        } catch(e) { console.warn('Assessment parse failed for', agent.name, assessResp); }
+      }
+
+      // Build the final design object
+      const design = {
+        name: designName,
+        cat: blueprint.cat,
+        strategy: blueprint.strategy,
+        aesthetic: Math.max(20, Math.min(98, parseInt(assessData?.aesthetic)||60)),
+        novelty:  Math.max(20, Math.min(98, parseInt(assessData?.novelty)||50)),
+        profit:   Math.max(20, Math.min(98, parseInt(assessData?.profit)||55)),
+        prompt:   assessData?.prompt || `fine jewelry ${blueprint.cat.toLowerCase()}, ${blueprint.materials}, ${blueprint.form}, macro product photography, neutral background, professional lighting`,
+        rawPrompt: assessData?.prompt || '',
+        strategicReasoning: blueprint.reasoning,
+        materials: blueprint.materials,
+        formConcept: blueprint.form,
+        complexity: blueprint.complexity,
+        estMargin: blueprint.estMargin,
+        agentIdx: agent.id,
+        agentName: agent.name,
+        emoji: designEmojis[i + (cycleNum-1)*6] || '⬡',
+        credits: 0
+      };
+
+      return { design, index: i };
+    });
+
+    // Await the batch
+    const batchResults = await Promise.all(batchPromises);
+    for (const { design, index } of batchResults) {
+      designs.push(design);
+      addLog(`<b>${design.agentName}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()} · AES:${design.aesthetic} NOV:${design.novelty} PRO:${design.profit}`, 'ds', delay + agentStates.length*300 + 400 + index*400);
+      addLog(`<span style="opacity:.6;font-size:.7rem">${design.prompt.slice(0,150)}</span>`, '', delay + agentStates.length*300 + 550 + index*400);
+      setTimeout(()=>renderDesignCard(design, index), (delay + agentStates.length*300 + 400 + index*400)/speed);
     }
-
-    // Build the final design object
-    const design = {
-      name: designName,
-      cat: stratData.cat,
-      strategy: stratData.strategy,
-      aesthetic: Math.max(20, Math.min(98, parseInt(assessData?.aesthetic)||60)),
-      novelty:  Math.max(20, Math.min(98, parseInt(assessData?.novelty)||50)),
-      profit:   Math.max(20, Math.min(98, parseInt(assessData?.profit)||55)),
-      prompt:   assessData?.prompt || `fine jewelry ${stratData.cat.toLowerCase()}, ${stratData.materials}, ${stratData.form}, studio photography, neutral background, professional lighting`,
-      strategicReasoning: stratData.reasoning,
-      materials: stratData.materials,
-      formConcept: stratData.form,
-      agentIdx: agent.id,
-      agentName: agent.name,
-      emoji: designEmojis[i + (cycleNum-1)*6] || '⬡',
-      credits: 0
-    };
-
-    // ── Step 4: Prompt Refinement (art-director pass) ──
-    setAgentStatus(agent.id, 'Refining…');
-    design.rawPrompt = design.prompt;
-    design.prompt = await refineDesignPrompt(design);
-
-    designs.push(design);
-    addLog(`<b>${agent.name}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()}`, 'ds', 300 + i*800 + 300);
-    addLog(`<span style="opacity:.6;font-size:.7rem">${design.prompt.slice(0,150)}</span>`, '', 300 + i*800 + 500);
-    setTimeout(()=>renderDesignCard(design, i), (400 + i*800)/speed);
   }
 
   activeDesigns = designs;
-  addLog(`All ${designs.length} designs submitted via 4-step Claude pipeline. Pool locked.`, 'rs', 300 + agentStates.length*800 + 200);
+  const totalDelay = delay + agentStates.length*300 + 400 + agentStates.length*400 + 200;
+  addLog(`All ${designs.length} designs submitted via 2-step Claude pipeline (${designs.length * 2} API calls). Pool locked.`, 'rs', totalDelay);
   setProgress(60);
-  return 300 + agentStates.length*800 + 600;
+  return totalDelay + 400;
+}
+
+// runLiveGeneration is now integrated into runLiveSynthesis above.
+// The combined pipeline handles synthesis + generation in a single phase
+// with parallel batching, eliminating 18 redundant API calls per cycle.
+function runLiveGeneration(cycleNum) {
+  // No-op: designs already created by runLiveSynthesis.
+  // Kept as stub for any sim-mode phase scripts that call it.
+  return 0;
 }
 
 /* ══════════════════════════════════
@@ -1979,19 +1987,16 @@ Output EXACTLY this JSON (no markdown):
 async function runLiveVoting(cycleNum) {
   setProgress(65);
   agentStates.forEach(a=>setAgentStatus(a.id,'Evaluating…'));
-  addLog(`Live AI voting — each agent deliberates and allocates 10,000⬡ via Claude…`, 'rs', 100);
+  addLog(`Live AI voting — all agents deliberate in parallel via Claude…`, 'rs', 100);
 
   // Rich design summaries including strategic context
   const designSummary = activeDesigns.map((d,i) =>
     `[${i}] "${d.name}" by ${d.agentName} — ${d.cat} · ${d.strategy.toUpperCase()} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}${d.strategicReasoning ? ' · Reasoning: '+d.strategicReasoning.slice(0,80) : ''}`
   ).join('\n');
 
-  const liveVoteMatrix = [];
-
-  for (let vi = 0; vi < agentStates.length; vi++) {
-    const voter = agentStates[vi];
-    setAgentStatus(voter.id, 'Evaluating…');
-
+  // All 6 voters are independent — run them all concurrently
+  // The concurrency limiter in llmCall handles throttling to MAX_CONCURRENT
+  const voteResults = await Promise.all(agentStates.map(async (voter, vi) => {
     const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).
 
 The designs:
@@ -2019,17 +2024,13 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
       try {
         const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
         const parsed = JSON.parse(cleaned);
-        // Support both new format {reasoning, votes} and legacy bare array
         const voteArr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.votes) ? parsed.votes : null);
         voteReasoning = parsed.reasoning || '';
         if (voteArr && voteArr.length === activeDesigns.length) {
-          // Normalize to exactly 10000
           const rawSum = voteArr.reduce((a,b)=>a+Math.max(0,b),0);
           votes = voteArr.map(v => rawSum > 0 ? Math.round(Math.max(0,v) / rawSum * 10000) : 0);
-          // Fix rounding
           const diff = 10000 - votes.reduce((a,b)=>a+b,0);
           if (diff !== 0) { const maxIdx = votes.indexOf(Math.max(...votes)); votes[maxIdx] += diff; }
-          // Zero out self-vote
           const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
           if (selfIdx >= 0 && votes[selfIdx] > 0) {
             const self = votes[selfIdx]; votes[selfIdx] = 0;
@@ -2044,7 +2045,6 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
     }
 
     if (!votes) {
-      // Fallback: distribute based on aesthetic preference
       const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
       votes = activeDesigns.map((d,i) => {
         if (i === selfIdx) return 0;
@@ -2057,13 +2057,18 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
       voteReasoning = 'Voted based on genome aesthetic affinity (fallback).';
     }
 
-    liveVoteMatrix.push(votes);
+    return { vi, votes, voteReasoning, voterName: voter.name };
+  }));
 
+  // Collect results in order and log
+  const liveVoteMatrix = new Array(agentStates.length);
+  for (const { vi, votes, voteReasoning, voterName } of voteResults) {
+    liveVoteMatrix[vi] = votes;
     const top2 = votes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
     const msg = top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
-    addLog(`<b>${voter.name}</b> → ${msg}`, 'vt', 300 + vi*500);
+    addLog(`<b>${voterName}</b> → ${msg}`, 'vt', 300 + vi*300);
     if (voteReasoning) {
-      addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${voteReasoning.slice(0,160)}</span>`, '', 300 + vi*500 + 150);
+      addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${voteReasoning.slice(0,160)}</span>`, '', 300 + vi*300 + 100);
     }
   }
 
@@ -2072,12 +2077,11 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
   setTimeout(()=>{
     activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
     agentStates.forEach((a,vi)=>{ const spent=liveVoteMatrix[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
-  }, (300+agentStates.length*400+200)/speed);
-  // Store for report generation
+  }, (300+agentStates.length*300+200)/speed);
   window._liveVoteMatrix = liveVoteMatrix;
-  addLog(`Voting complete. Credits tallied via Claude.`, 'rs', 300+agentStates.length*400+400);
+  addLog(`Voting complete. All 6 agents voted in parallel. Credits tallied.`, 'rs', 300+agentStates.length*300+300);
   setProgress(80);
-  return 300+agentStates.length*400+800;
+  return 300+agentStates.length*300+600;
 }
 
 /* ══════════════════════════════════
@@ -2099,7 +2103,6 @@ async function runLiveEvolution(cycleNum) {
 
   addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡`, 'rs', 300);
 
-  // Ask Claude to analyze results and produce evolution data
   const resultsSummary = sorted.map((d,rank) =>
     `#${rank+1}: "${d.name}" by ${agentStates[d.agentIdx]?.name} — ${d.credits.toLocaleString()}⬡ · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} · ${d.cat}`
   ).join('\n');
@@ -2108,9 +2111,24 @@ async function runLiveEvolution(cycleNum) {
     ? `Prior winners: ${cycleReports.map(r=>`C${r.cycle}: "${r.winner.name}"`).join(', ')}`
     : 'No prior cycles.';
 
-  // Generate evolution for each agent (pacing handled by global rate limiter in llmCall)
-  for (let i = 0; i < agentStates.length; i++) {
-    const agent = agentStates[i];
+  // ── Launch all 6 evolution calls + 1 trend call in parallel ──
+  // All are independent — no agent's evolution depends on another's.
+  const trendPrompt = `Cycle ${cycleNum} of 3 completed. Results:
+${resultsSummary}
+
+${priorContext}
+
+Generate a comprehensive trend analysis for the intelligence report. Output EXACTLY this JSON:
+{"emerging":["style1","style2","style3"],"declining":["style1","style2"],"saturation":"[which category/style is over-represented, e.g. 'Ring (50% of pool)']","treasury":"[recommended material+setting combination with highest combined aesthetic+profit]","velocityScore":[0-100 integer: how fast the top trend is moving],"fi":["[insight 1: specific data-driven observation about vote patterns and score correlations]","[insight 2: category saturation warning with specific percentages]","[insight 3: material/setting trend observation]","[insight 4: opportunity gap or micro-trend identification]","[insight 5: novelty premium or strategic recommendation]"]}`;
+
+  // Fire trend analysis concurrently with agent evolution
+  const trendPromise = llmCall(
+    'Output ONLY valid JSON. No markdown.',
+    trendPrompt, agentStates[0]
+  );
+
+  // Fire all 6 agent evolution calls concurrently
+  const evoPromises = agentStates.map(async (agent, i) => {
     const myDesign = sorted.find(d=>d.agentIdx===i);
     const rank = myDesign ? sorted.indexOf(myDesign) : 5;
     const isWinner = rank === 0;
@@ -2145,15 +2163,26 @@ Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strength
       evoPrompt, agent
     );
 
+    return { i, resp, myDesign, rank, isWinner, isLoser };
+  });
+
+  // Await all evolution + trend results
+  const [evoResults, trendResp] = await Promise.all([
+    Promise.all(evoPromises),
+    trendPromise
+  ]);
+
+  // Apply evolution results (must be sequential — mutates agent state)
+  for (const { i, resp, myDesign, rank, isWinner, isLoser } of evoResults) {
+    const agent = agentStates[i];
+
     let evo = null;
     if (resp) {
       try {
-        const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
-        evo = JSON.parse(cleaned);
+        evo = JSON.parse(resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
       } catch(e) { console.warn('Evolution parse failed for', agent.name); }
     }
 
-    // Apply shifts
     const genomeShifts = {};
     if (evo?.shifts) {
       Object.entries(evo.shifts).forEach(([key, delta]) => {
@@ -2165,21 +2194,17 @@ Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strength
         }
       });
     } else {
-      // Fallback shifts
       const shifts = isWinner ? {novelty:+3,risk:-4} : isLoser ? {novelty:+8,risk:+6,marginSens:+4} : {novelty:+2,risk:+2};
       Object.entries(shifts).forEach(([k,d])=>{ if(agent[k]!==undefined){ const o=agent[k]; agent[k]=Math.max(0,Math.min(100,agent[k]+d)); genomeShifts[k]=agent[k]-o; }});
     }
 
-    // Update belief
     agent.dominantBelief = evo?.belief || (isWinner ? 'My approach worked — refine further.' : isLoser ? 'Need a fundamentally different direction.' : 'Adapt toward the winning aesthetic.');
     agent.trustBuilt = Math.min(100, (agent.trustBuilt||0) + (isWinner?15:isLoser?-5:5));
 
-    // Update reputation
     const repDelta = cycleNum===3 ? (isWinner?12:rank<=1?5:rank<=2?2:-4) : (isWinner?9:rank<=1?4:rank<=2?1:-3);
     agent.reputation = Math.max(5, agent.reputation + repDelta);
     setAgentStatus(agent.id, isWinner ? (cycleNum===3 ? '🏆 Epoch Winner' : 'Winner') : 'Cycle complete');
 
-    // Store evolution history
     agent.evolutionHistory.push({
       cycle: cycleNum,
       summary: isWinner
@@ -2192,31 +2217,17 @@ Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strength
       designName: myDesign?.name || '—',
     });
 
-    // Log the evolution
     const shiftStr = Object.entries(genomeShifts).filter(([,v])=>v!==0).map(([k,v])=>`${k}:${v>0?'+':''}${v}`).join(' · ');
-    addLog(`<b>${agent.name}</b> (${isWinner?'Winner':isLoser?'Last':'#'+(rank+1)}): <i>${agent.dominantBelief}</i> ${shiftStr?'· '+shiftStr:''}`, '', 600+i*300);
+    addLog(`<b>${agent.name}</b> (${isWinner?'Winner':isLoser?'Last':'#'+(rank+1)}): <i>${agent.dominantBelief}</i> ${shiftStr?'· '+shiftStr:''}`, '', 600+i*200);
   }
 
-  // Trend analysis via Claude
-  const trendPrompt = `Cycle ${cycleNum} of 3 completed. Results:
-${resultsSummary}
-
-${priorContext}
-
-Generate a comprehensive trend analysis for the intelligence report. Output EXACTLY this JSON:
-{"emerging":["style1","style2","style3"],"declining":["style1","style2"],"saturation":"[which category/style is over-represented, e.g. 'Ring (50% of pool)']","treasury":"[recommended material+setting combination with highest combined aesthetic+profit]","velocityScore":[0-100 integer: how fast the top trend is moving],"fi":["[insight 1: specific data-driven observation about vote patterns and score correlations]","[insight 2: category saturation warning with specific percentages]","[insight 3: material/setting trend observation]","[insight 4: opportunity gap or micro-trend identification]","[insight 5: novelty premium or strategic recommendation]"]}`;
-
-  const trendResp = await llmCall(
-    'Output ONLY valid JSON. No markdown.',
-    trendPrompt, agentStates[0]
-  );
-
+  // Process trend result
   let trendInsight = null;
   if (trendResp) {
     try { trendInsight = JSON.parse(trendResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim()); } catch(e) {}
   }
 
-  const trendDelay = 600 + agentStates.length*300 + 200;
+  const trendDelay = 600 + agentStates.length*200 + 200;
   if (trendInsight) {
     const emergStr = Array.isArray(trendInsight.emerging) ? trendInsight.emerging.join(' · ') : (trendInsight.emerging||'');
     addLog(`Emerging: <b>${emergStr}</b>`, 'rs', trendDelay);
@@ -2229,9 +2240,7 @@ Generate a comprehensive trend analysis for the intelligence report. Output EXAC
   addLog(`<b>Cycle ${cycleNum} Intelligence Report written to knowledge database.</b>`, 'rs', trendDelay+600);
   if (cycleNum === 3) document.getElementById('nav-epoch-txt').textContent = '3 / 3';
 
-  // Take post-evolution snapshot
   genomeSnapshots.push(agentStates.map(a => snapshotGenome(a)));
-  // Store trend for report
   window._liveTrend = trendInsight;
   generateAndStoreReport(cycleNum, sorted);
 
