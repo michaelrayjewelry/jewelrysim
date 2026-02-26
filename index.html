@@ -171,6 +171,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 @keyframes deployPulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 .deploy-slot.just-deployed .ds-emoji{animation:deployPulse .5s ease}
 
+/* ═══ ROSTER PANEL ═══ */
+.roster-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1.2rem}
+.roster-card{display:flex;align-items:center;gap:.5rem;background:var(--s1);border:1px solid var(--gold-d);padding:.4rem .8rem;animation:slideIn .3s ease both}
+.rc-emoji{font-size:1.1rem}
+.rc-info{min-width:0}
+.rc-name{font-family:'Cormorant Garamond',serif;font-size:.85rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-arch{font-size:.55rem;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+
 /* cycle-complete banner */
 .cycle-complete{display:none;border:1px solid var(--gold-d);background:rgba(201,168,76,.04);padding:1.5rem;margin-top:1.5rem;animation:slideIn .5s ease}
 .cycle-complete.show{display:block}
@@ -393,10 +401,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
      SCREEN 1: BUILDER
 ══════════════════════════════════════ -->
 <div class="screen active" id="screen-1">
-  <div class="eyebrow">Agent Configuration</div>
-  <h1 class="h1">Design your <em>autonomous agent.</em></h1>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+    <div class="eyebrow">Agent Configuration</div>
+    <div class="eyebrow" id="agent-counter" style="color:var(--gold)">Agent 1 of 6 &nbsp;<span id="agent-emoji">🎯</span></div>
+  </div>
+  <h1 class="h1" id="builder-title">Design your <em>autonomous agent.</em></h1>
   <div class="rule"></div>
-  <p class="sub">Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles — and evolve based on what it learns.</p>
+  <p class="sub" id="builder-sub">Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles — and evolve based on what it learns.</p>
+
+  <div id="roster-wrap" style="display:none">
+    <div class="label">Deployed Agents</div>
+    <div id="agent-roster" class="roster-row"></div>
+  </div>
 
   <div class="builder-grid">
     <div>
@@ -474,7 +490,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   </div>
 
   <div style="display:flex;gap:.8rem;margin-top:1.5rem;flex-wrap:wrap">
-    <button class="btn btn-primary" onclick="initSim()">Deploy Agent → Enter Arena</button>
+    <button class="btn btn-primary" id="deploy-btn" onclick="deployCurrentAgent()">Deploy Agent 1 → Configure Next</button>
     <button class="btn btn-ghost" onclick="autoGen()">✦ Auto-Generate</button>
   </div>
 </div>
@@ -598,20 +614,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 let speed = 1;
 let currentPhase = -1;
 let currentCycle = 1;
-let deployedCount = 0;
 let cycleReports = [];
 let agentStates = [];
 let activeDesigns = [];
-
-// Pre-defined agents (slot 0 = user's agent, built in builder)
-const BASE_AGENTS = [
-  null, // slot 0 = user agent, built dynamically
-  { id:1, name:'Ryo Tanaka',    emoji:'🌙', arch:'Minimalist Architect',      risk:28, novelty:72, marketFit:60, platBias:85, styleTags:['minimal','negative-space','geometric','architectural'], philosophy:'Precision over sentiment. Every element must earn its place.' },
-  { id:2, name:'Soleil Du',     emoji:'✨', arch:'High Jewelry Romantic',      risk:32, novelty:50, marketFit:78, platBias:55, styleTags:['floral','haute-joaillerie','ornate','organic'], philosophy:'Every piece should produce a feeling before an appraisal.' },
-  { id:3, name:'Kael Strand',   emoji:'🔩', arch:'Industrial Innovator',       risk:85, novelty:92, marketFit:38, platBias:35, styleTags:['industrial','geometric','brutalist','asymmetric'], philosophy:'Push the material until it argues back.' },
-  { id:4, name:'Asha Noor',     emoji:'💛', arch:'Market Strategist',          risk:42, novelty:58, marketFit:95, platBias:52, styleTags:['editorial','minimal','market-fit','elevated-everyday'], philosophy:'Beauty without demand is just decoration.' },
-  { id:5, name:'Léa Fontaine',  emoji:'🌿', arch:'Nature Mystic',             risk:65, novelty:78, marketFit:55, platBias:40, styleTags:['organic','sculptural','floral','avant-garde'], philosophy:'Nature\'s geometry is more perfect than any CAD model.' },
-];
+let configuredAgents = [];
+let currentAgentNum = 1;
+const AGENT_EMOJIS = ['🎯','🌙','✨','🔩','💛','🌿'];
 
 // 3 cycles of pre-defined designs with narrative coherence:
 // C1 winner: Ryo Tanaka "Orbit Drop" — minimal wins
@@ -750,94 +758,89 @@ function autoGen() {
 /* ══════════════════════════════════
    SIM INITIALIZATION
 ══════════════════════════════════ */
-function initSim() {
+function deployCurrentAgent() {
   if(!document.getElementById('b-name').value) autoGen();
-  const userAgent = {
-    id:0, name:document.getElementById('b-name').value||'Your Agent',
-    emoji:'🎯', arch:document.getElementById('b-arch').value||'Designer',
-    risk:parseInt(document.getElementById('s-rsk').value),
-    novelty:parseInt(document.getElementById('s-nov').value),
-    marketFit:parseInt(document.getElementById('s-mkt').value),
-    platBias:parseInt(document.getElementById('s-plt').value),
-    styleTags:[...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent),
-    philosophy:document.getElementById('b-phil').value||'',
-    isUser:true, credits:10000, reputation:50, status:'Standby',
+  const idx = currentAgentNum - 1;
+  const agent = {
+    id: idx,
+    name: document.getElementById('b-name').value || 'Agent ' + currentAgentNum,
+    emoji: AGENT_EMOJIS[idx],
+    arch: document.getElementById('b-arch').value || 'Designer',
+    risk: parseInt(document.getElementById('s-rsk').value),
+    novelty: parseInt(document.getElementById('s-nov').value),
+    marketFit: parseInt(document.getElementById('s-mkt').value),
+    platBias: parseInt(document.getElementById('s-plt').value),
+    styleTags: [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent),
+    philosophy: document.getElementById('b-phil').value || '',
+    isUser: currentAgentNum === 1,
+    credits: 10000,
+    reputation: currentAgentNum === 1 ? 50 : Math.floor(Math.random()*30)+45,
+    status: 'Idle',
   };
-  agentStates = BASE_AGENTS.map((a,i) => i===0 ? {...userAgent} : {...a, credits:10000, reputation:Math.floor(Math.random()*30)+45, status:'Standby', isUser:false});
-  CYCLE_DESIGNS.forEach(cycle => cycle.forEach(d => { if(d.agentIdx===0) d._agentName = userAgent.name; }));
-  currentCycle = 1;
-  cycleReports = [];
-  activeDesigns = [];
-  deployedCount = 0;
-  showDeployPanel();
-  goTo(2);
-}
+  configuredAgents.push(agent);
+  renderRoster();
 
-function showDeployPanel() {
-  const panel = document.getElementById('deploy-panel');
-  const main = document.getElementById('sim-main');
-  panel.style.display = 'block';
-  main.style.display = 'none';
-  deployedCount = 1;
-  panel.innerHTML = `
-    <div class="eyebrow">Agent Deployment</div>
-    <h1 class="h1">Deploy your <em>competition.</em></h1>
-    <div class="rule"></div>
-    <p class="sub">Each agent must be individually activated before the epoch begins. Review their profiles and deploy them into the arena one by one.</p>
-    <div class="deploy-grid">
-      ${agentStates.map((a, i) => i === 0
-        ? `<div class="deploy-slot deployed">
-            <div class="ds-emoji">${a.emoji}</div>
-            <div class="ds-name">${a.name}</div>
-            <div class="ds-arch">${a.arch}</div>
-            <div class="ds-status">\u2713 Your Agent \u2014 Deployed</div>
-          </div>`
-        : `<div class="deploy-slot standby" id="ds-${i}">
-            <div class="ds-emoji" style="opacity:.3">${a.emoji}</div>
-            <div class="ds-name">${a.name}</div>
-            <div class="ds-arch">${a.arch}</div>
-            <div class="ds-phil" id="dp-${i}"></div>
-            <div class="ds-tags">${a.styleTags.slice(0,3).join(' \u00B7 ')}</div>
-            <button class="btn btn-sm" id="db-${i}" onclick="deployAgent(${i})">Deploy Agent</button>
-          </div>`
-      ).join('')}
-    </div>
-    <div style="margin-top:1.5rem;display:flex;flex-direction:column;align-items:center;gap:.8rem">
-      <div class="deploy-counter" id="deploy-counter">1 / 6 agents deployed</div>
-      <button class="btn btn-primary" id="begin-epoch-btn" disabled onclick="startEpoch()">\u25B6 Begin 3-Cycle Epoch</button>
-    </div>`;
-  // Set philosophy text via DOM to avoid quote issues in innerHTML
-  agentStates.forEach((a, i) => {
-    if (i > 0) {
-      const el = document.getElementById('dp-'+i);
-      if (el) el.textContent = '\u201C' + a.philosophy + '\u201D';
-    }
-  });
-}
-
-function deployAgent(idx) {
-  const slot = document.getElementById('ds-'+idx);
-  const btn = document.getElementById('db-'+idx);
-  if(!slot || slot.classList.contains('deployed')) return;
-  slot.classList.remove('standby');
-  slot.classList.add('deployed','just-deployed');
-  slot.querySelector('.ds-emoji').style.opacity = '1';
-  if(btn) btn.outerHTML = '<div class="ds-status">\u2713 Deployed</div>';
-  agentStates[idx].status = 'Idle';
-  deployedCount++;
-  document.getElementById('deploy-counter').textContent = deployedCount + ' / 6 agents deployed';
-  if(deployedCount >= 6) {
-    const epochBtn = document.getElementById('begin-epoch-btn');
-    epochBtn.disabled = false;
-    epochBtn.classList.add('fade');
+  if(currentAgentNum >= 6) {
+    startSimulation();
+  } else {
+    currentAgentNum++;
+    resetBuilderForNext();
   }
 }
 
-function startEpoch() {
+function resetBuilderForNext() {
+  // Update counter
+  document.getElementById('agent-counter').innerHTML = 'Agent ' + currentAgentNum + ' of 6 &nbsp;<span id="agent-emoji">' + AGENT_EMOJIS[currentAgentNum-1] + '</span>';
+  document.getElementById('builder-title').innerHTML = currentAgentNum === 1
+    ? 'Design your <em>autonomous agent.</em>'
+    : 'Configure <em>competitor #' + (currentAgentNum-1) + '</em>';
+  document.getElementById('builder-sub').textContent = currentAgentNum === 1
+    ? 'Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles — and evolve based on what it learns.'
+    : 'This agent will compete in the arena against your deployed agents. Customize or auto-generate.';
+
+  // Clear and auto-generate for speed
+  document.getElementById('b-name').value = '';
+  document.getElementById('b-arch').value = '';
+  document.getElementById('b-phil').value = '';
+  document.querySelectorAll('#style-chips .chip').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('#mkt-chips .chip').forEach(c=>c.classList.remove('on'));
+  autoGen();
+
+  // Update button
+  const btn = document.getElementById('deploy-btn');
+  if(currentAgentNum < 6) {
+    btn.textContent = 'Deploy Agent ' + currentAgentNum + ' \u2192 Configure Next';
+  } else {
+    btn.textContent = 'Deploy Agent 6 \u2192 Begin Epoch';
+  }
+}
+
+function renderRoster() {
+  const wrap = document.getElementById('roster-wrap');
+  const el = document.getElementById('agent-roster');
+  if(!el) return;
+  wrap.style.display = 'block';
+  el.innerHTML = configuredAgents.map(a => `
+    <div class="roster-card">
+      <div class="rc-emoji">${a.emoji}</div>
+      <div class="rc-info">
+        <div class="rc-name">${a.name}${a.isUser?' (YOU)':''}</div>
+        <div class="rc-arch">${a.arch}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function startSimulation() {
+  agentStates = configuredAgents.map(a => ({...a}));
+  CYCLE_DESIGNS.forEach(cycle => cycle.forEach(d => { if(d.agentIdx===0) d._agentName = agentStates[0].name; }));
+  currentCycle = 1;
+  cycleReports = [];
+  activeDesigns = [];
   document.getElementById('deploy-panel').style.display = 'none';
   document.getElementById('sim-main').style.display = 'block';
-  agentStates.forEach(a => a.status = 'Idle');
   resetSim();
+  goTo(2);
 }
 
 function resetSim() {
