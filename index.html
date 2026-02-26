@@ -968,50 +968,50 @@ function priorReportCtx(agentIdx) {
 }
 
 // 3 cycles of pre-defined designs with narrative coherence:
-// C1 winner: Ryo Tanaka "Orbit Drop" — minimal wins
-// C2 winner: User "Cathedral Void" — exploits C1 trend
-// C3 winner: Léa Fontaine "Root Form" — organic emerges as minimal saturates
+// C1 winner: Agent 1 "Floating Geometric Circle Drop" — minimal wins
+// C2 winner: Agent 0 "Marquise Cathedral Arch" — exploits C1 trend
+// C3 winner: Agent 5 "Root & Branch Gold Sculpture" — organic emerges as minimal saturates
 const CYCLE_DESIGNS = [
   [ // CYCLE 1
-    { name:'Void Solitaire',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
+    { name:'Platinum Oval Bezel Negative-Space',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
       prompt:'Platinum solitaire ring, 2.0ct oval diamond bezel-set, open negative-space band, architectural silhouette, studio photography, neutral gray background, soft diffuse lighting, 4K render' },
-    { name:'Orbit Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:74,
+    { name:'Floating Geometric Circle Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:74,
       prompt:'Platinum drop earrings, floating geometric circles, minimal negative-space composition, rose-cut diamond accents, contemporary jewelry photography, gray gradient background, precise studio lighting, photorealistic' },
-    { name:'Cascade Pavé',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:79, novelty:52, profit:72,
+    { name:'Rose Gold Sapphire Cascade',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:79, novelty:52, profit:72,
       prompt:'18k rose gold pendant, sapphire and diamond cascade, micro-pavé halo surround, floral motif, high jewelry editorial, dark velvet background, dramatic highlight lighting, photorealistic render' },
-    { name:'Hex Frame',       cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:67, novelty:90, profit:50,
+    { name:'Titanium Hex-Link Industrial',       cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:67, novelty:90, profit:50,
       prompt:'Titanium and 18k yellow gold bracelet, hexagonal geometric links, industrial mixed-metal design, asymmetric barrel clasp, technical product photography, white background, sharp precision lighting' },
-    { name:'Silk Halo',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:77, novelty:40, profit:88,
+    { name:'Classic Pavé Halo Cathedral',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:77, novelty:40, profit:88,
       prompt:'14k white gold engagement ring, 1.8ct round brilliant center stone, classic micro-pavé halo, cathedral shank, bridal photography, pure white seamless background, soft glamour lighting, commercial grade' },
-    { name:'Thorn Band',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
+    { name:'Blackened Gold Thorn Sculpt',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
       prompt:'18k blackened gold ring, sculptural thorn motif band, avant-garde wearable art, matte finish with high-polish accent edges, editorial photography, deep charcoal background, single dramatic light source' },
   ],
   [ // CYCLE 2 — agents reference C1 report, minimal trend exploited
-    { name:'Cathedral Void',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
+    { name:'Marquise Cathedral Arch',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
       prompt:'Platinum ring, 2.2ct marquise diamond, architectural cathedral negative-space arch setting, open structural band, blueprint-aesthetic engineering, neutral gray background, technical precision lighting, 4K product photography' },
-    { name:'Phase Ring',      cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:82, novelty:68, profit:77,
+    { name:'Bezel Groove Negative-Space',      cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:82, novelty:68, profit:77,
       prompt:'Platinum minimal ring, bezel-set 1.4ct round brilliant, flush band with precise groove detail, intentional negative-space composition, minimalist product photography, pure gray background, diffuse even lighting' },
-    { name:'Sapphire Canopy', cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:81, novelty:54, profit:76,
+    { name:'Yellow Gold Sapphire Canopy', cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:81, novelty:54, profit:76,
       prompt:'18k yellow gold pendant, cushion-cut blue sapphire canopy setting, pavé diamond surround, organic draping form, luxury jewelry campaign, black velvet background, dramatic highlight rim lighting' },
-    { name:'Arc Shard',       cat:'Ring',     emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:74, novelty:88, profit:55,
+    { name:'Platinum-Titanium Arc Hybrid',       cat:'Ring',     emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:74, novelty:88, profit:55,
       prompt:'Platinum and titanium ring, circular bezel diamond, industrial-minimal hybrid design, integrated negative-space arc, structural asymmetry, contemporary jewelry photography, steel-gray gradient background' },
-    { name:'Market Arch',     cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:80, novelty:52, profit:91,
+    { name:'Oval Open-Shank Channel',     cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:80, novelty:52, profit:91,
       prompt:'14k white gold ring, 1.5ct oval diamond, architectural open-shank channel setting, market-optimized proportions, bridal editorial photography, white seamless background, soft box lighting, commercial clarity' },
-    { name:'Bone Structure',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
+    { name:'Silver Bone-Form Sculptural',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
       prompt:'Sterling silver sculptural bracelet, bone-form organic link structure, oxidized blackened detail in recesses, avant-garde wearable sculpture, editorial fashion photography, high-contrast dark background, fashion lighting' },
   ],
   [ // CYCLE 3 — minimal saturation detected, organic breakout emerges
-    { name:'Negative Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
+    { name:'Emerald-Cut Double Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
       prompt:'Platinum ring, 2.4ct emerald-cut diamond, extreme negative-space double-cathedral arch, structural statement piece, luxury editorial photography, dark studio background, dramatic single-point lighting, fine jewelry' },
-    { name:'Arc Minimal',     cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:80, novelty:74, profit:72,
+    { name:'Floating Diamond Arc',     cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:80, novelty:74, profit:72,
       prompt:'Platinum arc pendant, single floating 0.8ct diamond point, dramatic negative-space composition, architectural jewelry design, precise product photography, soft gray gradient background, technical rim lighting' },
-    { name:'Bloom Fragment',  cat:'Pendant',  emoji:'🌸', agentIdx:2, strategy:'explore', aesthetic:83, novelty:76, profit:73,
+    { name:'Champagne Pearl Organic Cluster',  cat:'Pendant',  emoji:'🌸', agentIdx:2, strategy:'explore', aesthetic:83, novelty:76, profit:73,
       prompt:'18k yellow gold organic pendant, irregular champagne pearl and diamond cluster, sculptural flowing natural form, wearable art, high jewelry campaign, dark forest-green velvet background, natural diffuse lighting' },
-    { name:'Forge Shard',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
+    { name:'Gold Shard in Platinum Band',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
       prompt:'Mixed metal ring, 18k yellow gold organic shard set into platinum band, irregular natural geometry, textured hammer surfaces, art jewelry photography, raw concrete background, natural side lighting' },
-    { name:'Root Form',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
+    { name:'Root & Branch Gold Sculpture',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
       prompt:'18k yellow gold sculptural bracelet, root and branch organic form, champagne diamond accents at nodes, wearable sculpture, luxury editorial photography, warm earth-tone linen background, natural window light, fine jewelry' },
-    { name:'Consensus Cut',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
+    { name:'Cushion Diamond Minimalist Shank',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
       prompt:'14k white gold ring, perfectly proportioned 1.8ct cushion diamond, clean minimalist shank, commercial jewelry photography, white background, ring perfectly in focus, soft box lighting, market-optimized render' },
   ],
 ];
@@ -1019,11 +1019,11 @@ const CYCLE_DESIGNS = [
 // Voting data: who gets how many credits from whom per cycle
 // [voter_agentIdx][design_idx] = credits
 const VOTE_MATRICES = [
-  // C1: Orbit Drop (idx 1) wins — each row sums to 10000
+  // C1: Floating Geometric Circle Drop (idx 1) wins — each row sums to 10000
   [[0,4200,2100,800,1200,1700],[4800,0,2000,600,1400,1200],[3200,3800,0,500,2100,400],[3100,3600,2200,0,800,300],[2800,3100,2800,300,0,1000],[3000,3800,1900,400,900,0]],
-  // C2: Cathedral Void (idx 0) wins — each row sums to 10000
+  // C2: Marquise Cathedral Arch (idx 0) wins — each row sums to 10000
   [[0,3600,2800,1100,2500,0],[5100,0,1900,700,2300,0],[4200,1800,0,900,3100,0],[3800,2400,1600,0,2200,0],[5100,2100,2300,500,0,0],[2500,2900,2100,600,1900,0]],
-  // C3: Root Form (idx 4) wins — each row sums to 10000
+  // C3: Root & Branch Gold Sculpture (idx 4) wins — each row sums to 10000
   [[1700,1500,2000,1000,3200,600],[1600,1400,2000,800,3700,500],[1400,1700,1300,700,4300,600],[2200,1400,1800,1000,3200,400],[2400,2000,3200,800,0,1600],[1400,1200,1500,700,5200,0]],
 ];
 
@@ -1065,39 +1065,102 @@ function renderDNA() {
   }).join('');
 }
 
-const AUTO_NAMES = ['Maren Vex','Zara Mbeki','Dmitri Volkov','Hana Mori','Søren Bach','Inez Varela'];
-const AUTO_ARCHS = ['Avant-Garde Purist','Industrial Innovator','Heritage Revivalist','Nature Mystic','Market Strategist','Street Luxury Provocateur'];
-const AUTO_PHILS = [
+// Fallback pools used only in Sim mode
+const FALLBACK_NAMES = ['Maren Vex','Zara Mbeki','Dmitri Volkov','Hana Mori','Søren Bach','Inez Varela','Kai Soto','Lena Roth','Yuki Endo','Rami Naji','Priya Das','Olga Falk'];
+const FALLBACK_ARCHS = ['Avant-Garde Purist','Industrial Innovator','Heritage Revivalist','Nature Mystic','Market Strategist','Street Luxury Provocateur','Neo-Classical Engineer','Material Alchemist','Biomorphic Sculptor','Pattern Theorist','Wearable Art Radical','Precision Minimalist'];
+const FALLBACK_PHILS = [
   'Form is the message. Structure before ornament.',
   'Push the material until it argues back.',
   'The old masters had it right. I refine, not reinvent.',
   'Nature\'s geometry is more perfect than any CAD model.',
   'Beauty without demand is just decoration.',
-  'Jewelry should feel dangerous to wear.'
-];
-const AUTO_TAGS = [
-  ['minimal','architectural','brutalist','negative-space'],
-  ['industrial','geometric','asymmetric','avant-garde'],
-  ['vintage','ornate','haute-joaillerie','floral'],
-  ['organic','sculptural','avant-garde','editorial'],
-  ['minimal','market-fit','editorial','elevated-everyday'],
-  ['street','avant-garde','maximalist','editorial'],
+  'Jewelry should feel dangerous to wear.',
+  'Every millimeter earns its place or gets cut.',
+  'Mix what shouldn\'t mix. That\'s where magic lives.',
+  'Growth patterns hold the blueprint for perfect jewelry.',
+  'The math underneath beauty is what I design.',
+  'If it\'s comfortable, it\'s not pushing hard enough.',
+  'One line, one stone, one perfect gesture.',
 ];
 
-function autoGen() {
-  const i = Math.floor(Math.random()*AUTO_NAMES.length);
-  document.getElementById('b-name').value = AUTO_NAMES[i];
-  document.getElementById('b-arch').value = AUTO_ARCHS[i]||'';
-  document.getElementById('b-phil').value = AUTO_PHILS[i];
+async function autoGen() {
+  // First, randomize the genome sliders
   ['s-min','s-nov','s-orn','s-mkt','s-sym','s-plt','s-col','s-dia','s-mix','s-rsk','s-mrg','s-cmp'].forEach(id=>{
     const el=document.getElementById(id); const v=Math.floor(Math.random()*70)+15; el.value=v;
     const sid='sv-'+id.replace('s-',''); const se=document.getElementById(sid); if(se) se.textContent=v;
   });
-  document.querySelectorAll('#style-chips .chip').forEach(c=>c.classList.remove('on'));
-  AUTO_TAGS[i].forEach(tag=>{ document.querySelectorAll('#style-chips .chip').forEach(c=>{ if(c.textContent===tag)c.classList.add('on'); }); });
-  const mChips = document.querySelectorAll('#mkt-chips .chip');
+
+  // Pick random style tags and market focus
+  const allChips = [...document.querySelectorAll('#style-chips .chip')];
+  allChips.forEach(c=>c.classList.remove('on'));
+  const shuffled = allChips.sort(()=>Math.random()-0.5).slice(0, Math.floor(Math.random()*3)+2);
+  shuffled.forEach(c=>c.classList.add('on'));
+  const mChips = [...document.querySelectorAll('#mkt-chips .chip')];
   mChips.forEach(c=>c.classList.remove('on'));
   mChips[Math.floor(Math.random()*mChips.length)].classList.add('on');
+
+  // Read current slider values for the prompt
+  const sliders = {
+    minimalism: document.getElementById('s-min').value,
+    novelty: document.getElementById('s-nov').value,
+    ornamentation: document.getElementById('s-orn').value,
+    marketFit: document.getElementById('s-mkt').value,
+    symmetry: document.getElementById('s-sym').value,
+    platBias: document.getElementById('s-plt').value,
+    coloredStone: document.getElementById('s-col').value,
+    diamond: document.getElementById('s-dia').value,
+    mixedMetal: document.getElementById('s-mix').value,
+    risk: document.getElementById('s-rsk').value,
+    marginSens: document.getElementById('s-mrg').value,
+    complexBudget: document.getElementById('s-cmp').value,
+  };
+  const tags = [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent).join(', ');
+  const market = document.querySelector('#mkt-chips .chip.on')?.textContent || 'general';
+
+  // Try Claude-generated identity if API available
+  if (apiKeysCommitted && apiKeys.anthropic) {
+    const btn = document.querySelector('.auto-link');
+    if (btn) btn.textContent = '⏳ Generating…';
+    try {
+      const genome = `Minimalism:${sliders.minimalism} Novelty:${sliders.novelty} Ornamentation:${sliders.ornamentation} MarketFit:${sliders.marketFit} Symmetry:${sliders.symmetry} PlatinumBias:${sliders.platBias} ColoredStone:${sliders.coloredStone} Diamond:${sliders.diamond} MixedMetal:${sliders.mixedMetal} Risk:${sliders.risk} MarginSensitivity:${sliders.marginSens} ComplexityBudget:${sliders.complexBudget} StyleTags:[${tags}] Market:${market}`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKeys.anthropic,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 150,
+          system: 'You generate unique jewelry designer identities for an AI simulation. Output EXACTLY 3 lines, nothing else:\nLine 1: A unique designer name (first + last, any ethnicity)\nLine 2: A 2-3 word archetype title\nLine 3: A design philosophy quote (one sentence, under 12 words)',
+          messages: [{ role: 'user', content: `Generate a designer identity that matches this genome:\n${genome}\n\nThe personality should clearly reflect these specific slider values. High minimalism = clean/structural. High ornamentation = ornate/detailed. High risk = experimental. Low risk = conservative. High platinum bias = cold metals. High colored stone = colorful. Etc.\n\nOutput 3 lines: Name, Archetype, Philosophy.` }]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.[0]?.text?.trim();
+      if (text) {
+        const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
+        if (lines.length >= 3) {
+          document.getElementById('b-name').value = lines[0].replace(/^(Name:\s*|1[\.\)]\s*)/i,'');
+          document.getElementById('b-arch').value = lines[1].replace(/^(Archetype:\s*|2[\.\)]\s*)/i,'');
+          document.getElementById('b-phil').value = lines[2].replace(/^(Philosophy:\s*|Quote:\s*|3[\.\)]\s*|"|')/i,'').replace(/["']$/,'');
+          if (btn) btn.textContent = '✦ Auto-Generate';
+          updatePreview();
+          return;
+        }
+      }
+    } catch(e) { console.warn('Claude auto-gen failed:', e); }
+    if (btn) btn.textContent = '✦ Auto-Generate';
+  }
+
+  // Sim mode fallback — pick from pool
+  const i = Math.floor(Math.random()*FALLBACK_NAMES.length);
+  document.getElementById('b-name').value = FALLBACK_NAMES[i];
+  document.getElementById('b-arch').value = FALLBACK_ARCHS[i]||'';
+  document.getElementById('b-phil').value = FALLBACK_PHILS[i];
   updatePreview();
 }
 
@@ -1105,7 +1168,7 @@ function autoGen() {
    SIM INITIALIZATION
 ══════════════════════════════════ */
 async function deployCurrentAgent() {
-  if(!document.getElementById('b-name').value) autoGen();
+  if(!document.getElementById('b-name').value) await autoGen();
   const idx = currentAgentNum - 1;
   const agent = {
     id: idx,
@@ -1326,7 +1389,7 @@ function addLog(text, type='', delay=0) {
 let phaseDelay = 0;
 function D(ms){ return ms; }
 
-function nextPhase() {
+async function nextPhase() {
   currentPhase++;
   if(currentPhase >= 5) return;
   setPhaseActive(currentPhase);
@@ -1335,7 +1398,7 @@ function nextPhase() {
 
   const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
   const script = scripts[currentPhase];
-  const finishDelay = script();
+  const finishDelay = await script(); // support async phase scripts
 
   setTimeout(()=>{
     document.getElementById('phase-btn').disabled = false;
@@ -1391,10 +1454,10 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
       beliefs: {
         0: 'I over-exploited minimal. The trend exhausted under my feet',
         1: 'Pivot to pendant saved me from minimal saturation',
-        2: 'Bloom Fragment found the romantic-organic sweet spot',
+        2: 'Champagne Pearl Organic Cluster found the romantic-organic sweet spot',
         3: 'Organic shard was the right direction — mixed metal is the future',
         4: 'Margin stability works long-term but never wins the epoch',
-        5: 'Root Form proved that nature\'s geometry beats digital precision',
+        5: 'Root & Branch proved that nature\'s geometry beats digital precision',
       }
     }
   };
@@ -1548,16 +1611,122 @@ function logAgentBios(baseDelay) {
 }
 
 /* ══════════════════════════════════
+   LIVE AI CROSS-POLLINATION
+   Each agent talks to 3 other agents via Claude.
+   Conversations are logged and stored in conversationMemory.
+══════════════════════════════════ */
+const CROSS_PAIRS = [[0,1],[2,4],[3,5],[0,3],[1,2],[4,5]]; // 6 pairs = each agent talks to 3 others
+
+async function runLiveCrossPollination(cycleNum, afterBiosDelay) {
+  let delay = afterBiosDelay;
+  agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), delay/speed); });
+  addLog(`Live AI cross-pollination — each agent consults 3 partners via Claude…`, 'rs', delay);
+  delay += 400;
+
+  for (const [iA, iB] of CROSS_PAIRS) {
+    const agentA = agentStates[iA];
+    const agentB = agentStates[iB];
+
+    // Agent A opens
+    const openPrompt = cycleNum === 1
+      ? `This is cycle 1 — no prior data. Introduce your design direction for this cycle in 1-2 sentences. Reference your personality, style genome, and market instincts. Be specific about materials, forms, and strategy.`
+      : `Cycle ${cycleNum}. Review the intelligence reports from prior cycles. In 1-2 sentences, share your design direction — what you're keeping, what you're changing, and why. Reference specific data from prior cycle reports.`;
+
+    const msgA = await llmCall(
+      `You are in a cross-pollination dialogue with ${agentB.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+      openPrompt,
+      agentA
+    );
+
+    const lineA = msgA || getFallbackLine(agentA, cycleNum, 'open');
+    addLog(`<b>${agentA.name}</b> → <b>${agentB.name}</b>: "${lineA}"`, 'cv', delay);
+    delay += 600;
+
+    // Agent B responds
+    const replyPrompt = `Your partner ${agentA.name} said: "${lineA}". Respond in 1-2 sentences. React to their direction — agree, challenge, or build on it. Reference your own design instincts and genome.`;
+
+    const msgB = await llmCall(
+      `You are in a cross-pollination dialogue with ${agentA.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+      replyPrompt,
+      agentB
+    );
+
+    const lineB = msgB || getFallbackLine(agentB, cycleNum, 'reply');
+    addLog(`<b>${agentB.name}</b>: "${lineB}"`, 'cv', delay);
+    delay += 600;
+
+    // Store conversation memory for both agents
+    agentA.conversationMemory.push({ cycle: cycleNum, partner: agentB.name, excerpt: lineB.slice(0, 120) });
+    agentB.conversationMemory.push({ cycle: cycleNum, partner: agentA.name, excerpt: lineA.slice(0, 120) });
+  }
+
+  addLog(`All 6 agents complete ${CROSS_PAIRS.length} cross-pollination exchanges. Memory updated.`, 'rs', delay);
+  delay += 300;
+  setProgress(20);
+  return delay;
+}
+
+function getFallbackLine(agent, cycle, role) {
+  const style = agent.minimalism > 60 ? 'minimal, structural' : agent.ornamentation > 60 ? 'ornate, detailed' : 'balanced';
+  const risk = agent.risk > 65 ? 'pushing boundaries' : agent.risk < 35 ? 'refining proven forms' : 'adapting';
+  if (role === 'open') return `Cycle ${cycle} — I'm going ${style}. ${risk}. Let's see how the market responds.`;
+  return `Interesting. My genome says ${style} too — but I'm ${risk} this round.`;
+}
+
+/* ══════════════════════════════════
+   LIVE AI SYNTHESIS
+   Each agent generates their design blueprint via Claude.
+══════════════════════════════════ */
+async function runLiveSynthesis(cycleNum) {
+  let delay = 200;
+  agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
+  addLog(`Synthesis phase: agents compile cross-pollination dialogues + genome into design blueprint via Claude.`,'',delay);
+  delay += 400;
+
+  const strategies = ['EXPLOIT', 'EXPLORE', 'MUTATE'];
+
+  for (let i = 0; i < agentStates.length; i++) {
+    const agent = agentStates[i];
+    const synthPrompt = `Based on your genome, personality bio, conversation memory from cross-pollination, and any prior intelligence reports — produce your design blueprint for Cycle ${cycleNum}.
+Output EXACTLY this format (one line):
+Strategy: [EXPLOIT or EXPLORE or MUTATE] · [Category: Ring/Pendant/Earrings/Bracelet] · [Brief design description, 8-12 words] · Complexity: [1-10]/10 · Est. margin: [40-90]%`;
+
+    const synthResp = await llmCall(
+      `You are generating a design blueprint. Output ONLY the single-line blueprint in the exact format requested. No preamble, no explanation.`,
+      synthPrompt,
+      agent
+    );
+
+    if (synthResp) {
+      addLog(`<b>${agent.name}</b> — ${synthResp.slice(0, 200)}`, '', delay);
+    } else {
+      const strat = strategies[agent.risk > 65 ? 1 : agent.risk < 35 ? 0 : 2];
+      addLog(`<b>${agent.name}</b> — Strategy: <b>${strat}</b> · Blueprint compiled from genome + dialogue memory.`, '', delay);
+    }
+    delay += 500;
+  }
+
+  addLog(`All blueprints hashed. Validation gates passed.`, 'rs', delay);
+  setProgress(40);
+  return delay + 400;
+}
+
+/* ══════════════════════════════════
    PHASE SCRIPTS (all 3 cycles)
 ══════════════════════════════════ */
 const PHASE_SCRIPTS = [
   // ── CYCLE 1 ──
   [
     // Phase 0: Cross-Pollination
-    ()=>{
+    async ()=>{
       setProgress(5);
       addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`,'',100);
       const d = logAgentBios(250);
+
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveCrossPollination(1, d);
+      }
+      // Sim mode fallback
       addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', d);
       addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', d+500);
       addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', d+900);
@@ -1570,8 +1739,11 @@ const PHASE_SCRIPTS = [
       return d+3200;
     },
     // Phase 1: Synthesis
-    ()=>{
+    async ()=>{
       setProgress(25);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveSynthesis(1);
+      }
       agentStates.forEach(a=>setAgentStatus(a.id,'Drafting blueprint…'));
       addLog(`Synthesis phase: agents compile dialogues + personal genome into design blueprint.`,'',200);
       addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Platinum bezel oval · Negative space band · Complexity 6/10 · Est. margin: 66%`,'',500);
@@ -1658,10 +1830,10 @@ const PHASE_SCRIPTS = [
   // ── CYCLE 2 ──
   [
     // Phase 0
-    ()=>{
+    async ()=>{
       setProgress(5);
       const r1 = cycleReports[0];
-      const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
+      const winnerName = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
       const winnerAgent = r1 ? r1.winner.agentName : agentStates[1].name;
       const fi = r1 ? r1.trendData.fi : [
         'Minimal/negative-space outperformed ornate by 2.4× in vote conversion',
@@ -1684,27 +1856,34 @@ const PHASE_SCRIPTS = [
       addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
 
       const d2 = logAgentBios(1700);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveCrossPollination(2, d2);
+      }
+      // Sim mode fallback
       addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', d2);
       addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', d2+500);
       addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', d2+900);
       addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', d2+1300);
       addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', d2+1700);
-      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', d2+2100);
+      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Blackened Gold Thorn Sculpt' : 'Blackened Gold Thorn Sculpt'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', d2+2100);
       addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', d2+2500);
       setProgress(20);
       return d2+2800;
     },
     // Phase 1
-    ()=>{
+    async ()=>{
       setProgress(25);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveSynthesis(2);
+      }
       agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
       const r1 = cycleReports[0];
-      const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
+      const winnerName = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
       const winnerCat  = r1 ? r1.winner.cat  : 'Earrings';
       const topStyle   = r1 ? r1.trendData.emerging[0] : 'minimal';
       const satCat     = r1 ? r1.trendData.saturation  : 'Ring (50% of pool)';
       const treasury   = r1 ? r1.trendData.treasury    : 'Platinum + bezel setting';
-      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Thorn Band' : 'Thorn Band';
+      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Blackened Gold Thorn Sculpt' : 'Blackened Gold Thorn Sculpt';
 
       addLog(`Synthesis: agents cross-reference Cycle 1 Intelligence Report + personal genome.`,'',200);
       addLog(`<b>Report insight driving C2 blueprints:</b> Winner "${winnerName}" (${winnerCat}) · Top style: ${topStyle} · Saturation: ${satCat}`,'rp',400);
@@ -1764,7 +1943,7 @@ const PHASE_SCRIPTS = [
       const winner=sorted[0]; const loser=sorted[sorted.length-1];
       addLog(`Ranking applied. Evolution phase executing.`,'',200);
       const r1ref = cycleReports[0];
-      const prevWinnerName = r1ref ? r1ref.winner.name : 'Orbit Drop';
+      const prevWinnerName = r1ref ? r1ref.winner.name : 'Floating Geometric Circle Drop';
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`,'rs',500);
       addLog(`2nd consecutive minimal win — C1: "${prevWinnerName}" · C2: "${winner.name}". Pattern confirmed; exploitation phase in full effect.`,'rp',700);
@@ -1783,12 +1962,12 @@ const PHASE_SCRIPTS = [
   // ── CYCLE 3 ──
   [
     // Phase 0
-    ()=>{
+    async ()=>{
       setProgress(5);
       const r1 = cycleReports[0];
       const r2 = cycleReports[1];
-      const w1 = r1 ? r1.winner.name : 'Orbit Drop';
-      const w2 = r2 ? r2.winner.name : 'Cathedral Void';
+      const w1 = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
+      const w2 = r2 ? r2.winner.name : 'Marquise Cathedral Arch';
       const fi1last = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'High-novelty designs received more votes';
       const sat2 = r2 ? r2.trendData.saturation : 'Ring (67% of pool)';
       const fi2 = r2 ? r2.trendData.fi : ['Organic/sculptural space unexplored'];
@@ -1801,19 +1980,26 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
 
       const d3 = logAgentBios(1500);
-      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', d3);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveCrossPollination(3, d3);
+      }
+      // Sim mode fallback
+      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Bezel Groove Negative-Space' : 'Bezel Groove Negative-Space'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', d3);
       addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', d3+500);
       addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', d3+1000);
-      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Forge Shard, mixed metal with irregular natural form."`, 'cv', d3+1400);
-      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Bloom Fragment pendant, champagne pearl cluster, organic form."`, 'cv', d3+1800);
+      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Gold Shard in Platinum — mixed metal with irregular natural form."`, 'cv', d3+1400);
+      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Champagne Pearl Cluster pendant, organic flowing form."`, 'cv', d3+1800);
       addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', d3+2200);
       addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', d3+2600);
       setProgress(20);
       return d3+2900;
     },
     // Phase 1
-    ()=>{
+    async ()=>{
       setProgress(25);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveSynthesis(3);
+      }
       agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
       addLog(`Synthesis: 2-cycle compound data + genome informing blueprints.`,'',200);
       addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum emerald-cut · Extreme negative space cathedral · Cycle 2 winner refinement · Margin: 68%`,'',500);
@@ -2024,11 +2210,6 @@ async function higgsFieldGenerate(prompt) {
     }
   } catch(e) { console.warn('Higgsfield image gen failed:', e); }
   return null;
-}
-
-// Unified: tries Higgsfield first, falls back to free tier
-function makeImgUrl(prompt, seed) {
-  return makeImgUrlFree(prompt, seed);
 }
 
 // Async version used by gallery builder when Higgsfield key is present
