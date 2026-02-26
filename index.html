@@ -3355,11 +3355,9 @@ function renderDesignCard(d, i) {
     retried = true;
     const pEl = document.getElementById(pctId);
     if (pEl) pEl.textContent = 'Retrying…';
-    // Retry with a short, simple prompt after a brief delay
-    setTimeout(() => {
-      const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
-      img.src = makeImgUrlFree(shortPrompt, seed + 1);
-    }, 2000);
+    // Retry via queue to respect rate limits
+    const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+    queueImageLoad(() => { img.src = makeImgUrlFree(shortPrompt, seed + 1); });
   };
 
   img.onload = () => {
@@ -3377,16 +3375,13 @@ function renderDesignCard(d, i) {
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Stagger image loads to avoid Pollinations rate limits (~1 req per 5s)
-  const staggerDelay = i * 5000;
-
-  // Set src AFTER attaching events — use Higgsfield if available
+  // Queue image load — 3 second spacing via centralized queue
   if (apiKeys.higgsfield) {
-    setTimeout(() => {
+    queueImageLoad(() => {
       resolveImgUrl(d.prompt, seed).then(url => { img.src = url; }).catch(() => { img.src = makeImgUrlFree(d.prompt, seed); });
-    }, staggerDelay);
+    });
   } else {
-    setTimeout(() => { img.src = makeImgUrlFree(d.prompt, seed); }, staggerDelay);
+    queueImageLoad(() => { img.src = makeImgUrlFree(d.prompt, seed); });
   }
 }
 
@@ -3416,6 +3411,34 @@ function cardImgProgress(pctId, loaderId) {
 /* ══════════════════════════════════
    IMAGE GENERATION
 ══════════════════════════════════ */
+
+// ── Centralized Image Queue ──
+// All image API requests go through this queue.
+// One request fires every 3 seconds to avoid rate limits.
+const IMG_QUEUE_INTERVAL = 3000; // ms between image requests
+const _imgQueue = [];
+let _imgQueueRunning = false;
+
+function _drainImgQueue() {
+  if (_imgQueue.length === 0) { _imgQueueRunning = false; return; }
+  _imgQueueRunning = true;
+  const job = _imgQueue.shift();
+  job();
+  setTimeout(_drainImgQueue, IMG_QUEUE_INTERVAL);
+}
+
+function queueImageLoad(fn) {
+  _imgQueue.push(fn);
+  if (!_imgQueueRunning) {
+    _imgQueueRunning = true;
+    // Fire first immediately, then pace subsequent
+    const first = _imgQueue.shift();
+    first();
+    if (_imgQueue.length > 0) setTimeout(_drainImgQueue, IMG_QUEUE_INTERVAL);
+    else _imgQueueRunning = false;
+  }
+}
+
 // Free fallback via Pollinations
 function makeImgUrlFree(prompt, seed) {
   // Keep prompt short to avoid URL length issues and improve generation speed
@@ -3515,10 +3538,8 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
         retried = true;
         const pEl = document.getElementById(`pct-${containerId}-${i}`);
         if (pEl) pEl.textContent = 'Retrying…';
-        setTimeout(() => {
-          const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
-          img.src = makeImgUrlFree(shortPrompt, seed + 1);
-        }, 2000);
+        const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+        queueImageLoad(() => { img.src = makeImgUrlFree(shortPrompt, seed + 1); });
       };
 
       img.onload = () => {
@@ -3530,14 +3551,13 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
       const imgTimeout = setTimeout(() => { if (!img.classList.contains('loaded')) retryOnce(); }, 30000);
       img.addEventListener('load', () => clearTimeout(imgTimeout), {once:true});
 
-      // Stagger image loads to avoid rate limits
-      const staggerDelay = i * 5000;
+      // Queue image load — 3 second spacing via centralized queue
       if (apiKeys.higgsfield) {
-        setTimeout(() => {
+        queueImageLoad(() => {
           resolveImgUrl(d.prompt, seed).then(url => { if (img) img.src = url; }).catch(()=> { img.src = makeImgUrlFree(d.prompt, seed); });
-        }, staggerDelay);
+        });
       } else {
-        setTimeout(() => { img.src = makeImgUrlFree(d.prompt, seed); }, staggerDelay);
+        queueImageLoad(() => { img.src = makeImgUrlFree(d.prompt, seed); });
       }
     }
 
@@ -4349,7 +4369,7 @@ function viewReport(cycleNum) {
 
   document.getElementById('report-view-area').innerHTML = html;
 
-  // Attach image events via DOM after render — staggered to avoid rate limits
+  // Attach image events via DOM after render — queued to avoid rate limits
   r.sortedDesigns.slice(0,3).forEach((d, i) => {
     const phEl  = document.getElementById(`rph-${r.cycle}-${i}`);
     const imgEl = document.getElementById(`rimg-${r.cycle}-${i}`);
@@ -4362,18 +4382,17 @@ function viewReport(cycleNum) {
       if (!retried) {
         retried = true;
         const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
-        setTimeout(() => { imgEl.src = makeImgUrlFree(shortPrompt, seed + 1); }, 2000);
+        queueImageLoad(() => { imgEl.src = makeImgUrlFree(shortPrompt, seed + 1); });
       } else {
         if (imgEl) imgEl.style.display = 'none';
       }
     };
-    const staggerDelay = i * 5000;
     if (apiKeys.higgsfield) {
-      setTimeout(() => {
+      queueImageLoad(() => {
         resolveImgUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
-      }, staggerDelay);
+      });
     } else {
-      setTimeout(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); }, staggerDelay);
+      queueImageLoad(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
     }
   });
 
