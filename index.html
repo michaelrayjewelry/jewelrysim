@@ -489,8 +489,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <div class="dot off" id="api-dot"></div>
       <span id="api-status-text">Enter API keys to enable Live AI Mode</span>
     </div>
-    <div style="text-align:center;margin-top:1.2rem">
+    <div style="text-align:center;margin-top:1.2rem;display:flex;align-items:center;justify-content:center;gap:1.2rem">
       <button class="btn btn-primary btn-sm" id="api-submit-btn" onclick="submitApiKeys()" disabled>Submit API Keys</button>
+      <button class="auto-link" id="api-clear-btn" onclick="clearSavedKeys()" style="display:none;font-size:.65rem;color:var(--faint)">Clear Saved Keys</button>
     </div>
   </div>
 
@@ -781,15 +782,61 @@ function submitApiKeys() {
   apiKeys.anthropic = antVal;
   apiKeys.higgsfield = hfVal;
   apiKeysCommitted = true;
-  // Lock the inputs
+  // Persist to localStorage so keys survive page reloads
+  try {
+    localStorage.setItem('jf_key_ant', antVal);
+    if (hfVal) localStorage.setItem('jf_key_hf', hfVal);
+  } catch(e) { /* storage unavailable */ }
+  lockApiInputs();
+}
+
+function lockApiInputs() {
   const antInput = document.getElementById('api-anthropic');
   const hfInput = document.getElementById('api-higgsfield');
   if (antInput) { antInput.disabled = true; antInput.style.opacity = '.6'; }
   if (hfInput) { hfInput.disabled = true; hfInput.style.opacity = '.6'; }
   const submitBtn = document.getElementById('api-submit-btn');
   if (submitBtn) { submitBtn.textContent = 'Keys Committed ✓'; submitBtn.disabled = true; submitBtn.style.borderColor = 'var(--grn)'; submitBtn.style.color = 'var(--grn)'; }
+  const clearBtn = document.getElementById('api-clear-btn');
+  if (clearBtn) clearBtn.style.display = 'inline';
   checkApiKeys();
 }
+
+function clearSavedKeys() {
+  try { localStorage.removeItem('jf_key_ant'); localStorage.removeItem('jf_key_hf'); } catch(e) {}
+  apiKeys.anthropic = '';
+  apiKeys.higgsfield = '';
+  apiKeysCommitted = false;
+  const antInput = document.getElementById('api-anthropic');
+  const hfInput = document.getElementById('api-higgsfield');
+  if (antInput) { antInput.value = ''; antInput.disabled = false; antInput.style.opacity = ''; }
+  if (hfInput) { hfInput.value = ''; hfInput.disabled = false; hfInput.style.opacity = ''; }
+  const submitBtn = document.getElementById('api-submit-btn');
+  if (submitBtn) { submitBtn.textContent = 'Submit API Keys'; submitBtn.style.borderColor = ''; submitBtn.style.color = ''; }
+  const clearBtn = document.getElementById('api-clear-btn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  checkApiKeys();
+}
+
+// Restore saved API keys from localStorage on page load
+function loadSavedKeys() {
+  try {
+    const savedAnt = localStorage.getItem('jf_key_ant') || '';
+    const savedHf = localStorage.getItem('jf_key_hf') || '';
+    if (!savedAnt) return;
+    const antInput = document.getElementById('api-anthropic');
+    const hfInput = document.getElementById('api-higgsfield');
+    if (antInput) antInput.value = savedAnt;
+    if (hfInput && savedHf) hfInput.value = savedHf;
+    // Auto-switch to Live AI mode and commit
+    setMode('live');
+    apiKeys.anthropic = savedAnt;
+    apiKeys.higgsfield = savedHf;
+    apiKeysCommitted = true;
+    lockApiInputs();
+  } catch(e) { /* storage unavailable */ }
+}
+document.addEventListener('DOMContentLoaded', loadSavedKeys);
 
 function startFromHome() {
   goTo(1);
