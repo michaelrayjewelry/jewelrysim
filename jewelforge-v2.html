@@ -654,7 +654,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
     <div style="margin-bottom:1rem">
       <div class="eyebrow" style="margin-bottom:.3rem">Top 3 Designs — AI-Generated Images</div>
-      <div style="font-size:.75rem;color:var(--faint);margin-bottom:.7rem;line-height:1.5">Images rendered from each agent's final image generation prompt via Flux AI. Allow 10–20 seconds per image to load.</div>
+      <div style="font-size:.75rem;color:var(--faint);margin-bottom:.7rem;line-height:1.5">Images rendered from each agent's final image generation prompt via Flux AI. Images load sequentially to avoid rate limits — allow 15–30 seconds per image.</div>
       <div class="img-gen-status" id="img-gen-status">
         <div class="dot" id="img-dot"></div>
         <span id="img-gen-label">Generating images from agent prompts…</span>
@@ -2458,39 +2458,68 @@ function renderDesignCard(d, i) {
     }
   };
 
+  let retried = false;
+  const retryOnce = () => {
+    if (retried) { showError(); return; }
+    retried = true;
+    const pEl = document.getElementById(pctId);
+    if (pEl) pEl.textContent = 'Retrying…';
+    // Retry with a short, simple prompt after a brief delay
+    setTimeout(() => {
+      const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+      img.src = makeImgUrlFree(shortPrompt, seed + 1);
+    }, 2000);
+  };
+
   img.onload = () => {
     img.classList.add('loaded');
     if (loader) loader.classList.add('hidden');
   };
-  img.onerror = showError;
+  img.onerror = retryOnce;
 
-  // 50 second timeout — if still loading, show error state
-  const timeout = setTimeout(showError, 50000);
+  // 30 second timeout — if still loading, retry then error
+  const timeout = setTimeout(() => {
+    if (!img.classList.contains('loaded')) retryOnce();
+  }, 30000);
   img.addEventListener('load',  () => clearTimeout(timeout), {once:true});
-  img.addEventListener('error', () => clearTimeout(timeout), {once:true});
 
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
+  // Stagger image loads to avoid Pollinations rate limits (~1 req per 5s)
+  const staggerDelay = i * 5000;
+
   // Set src AFTER attaching events — use Higgsfield if available
   if (apiKeys.higgsfield) {
-    resolveImgUrl(d.prompt, seed).then(url => { img.src = url; }).catch(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+    setTimeout(() => {
+      resolveImgUrl(d.prompt, seed).then(url => { img.src = url; }).catch(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+    }, staggerDelay);
   } else {
-    img.src = makeImgUrlFree(d.prompt, seed);
+    setTimeout(() => { img.src = makeImgUrlFree(d.prompt, seed); }, staggerDelay);
   }
 }
 
 function cardImgProgress(pctId, loaderId) {
   let pct = 0;
+  let phase = 'fast'; // fast 0-80, slow 80-95, waiting 95+
   const interval = setInterval(()=>{
     if (!document.getElementById(pctId)) { clearInterval(interval); return; }
     const loader = document.getElementById(loaderId);
     if (loader && loader.classList.contains('hidden')) { clearInterval(interval); return; }
-    pct = Math.min(pct + Math.floor(Math.random()*6+2), 94);
     const el = document.getElementById(pctId);
-    if (el) el.textContent = pct+'%';
-    if (pct >= 94) clearInterval(interval);
-  }, 350);
+    if (!el) { clearInterval(interval); return; }
+    // Skip if showing "Retrying…" text
+    if (el.textContent === 'Retrying…') return;
+    if (pct < 80) {
+      pct = Math.min(pct + Math.floor(Math.random()*8+3), 80);
+    } else if (pct < 95) {
+      pct = Math.min(pct + Math.floor(Math.random()*2+1), 95);
+    } else {
+      // Pulse between 95-98 to show still waiting
+      pct = 95 + Math.floor(Math.random()*4);
+    }
+    el.textContent = pct+'%';
+  }, 500);
 }
 
 /* ══════════════════════════════════
@@ -2498,9 +2527,10 @@ function cardImgProgress(pctId, loaderId) {
 ══════════════════════════════════ */
 // Free fallback via Pollinations
 function makeImgUrlFree(prompt, seed) {
-  const base = prompt.slice(0, 200);
-  const full = `fine jewelry, ${base}, studio lighting, photorealistic`;
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=400&height=400&nologo=true&seed=${seed}&model=flux&enhance=false`;
+  // Keep prompt short to avoid URL length issues and improve generation speed
+  const base = prompt.slice(0, 140).replace(/[^\w\s,.'-]/g, '');
+  const full = `fine jewelry, ${base}, studio lighting, photorealistic, white background`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=512&height=512&seed=${seed}&model=flux`;
 }
 
 // Higgsfield SOUL text-to-image (async — returns image URL or null)
@@ -2588,18 +2618,35 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
     };
 
     if (img) {
+      let retried = false;
+      const retryOnce = () => {
+        if (retried) { showFallback(); return; }
+        retried = true;
+        const pEl = document.getElementById(`pct-${containerId}-${i}`);
+        if (pEl) pEl.textContent = 'Retrying…';
+        setTimeout(() => {
+          const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+          img.src = makeImgUrlFree(shortPrompt, seed + 1);
+        }, 2000);
+      };
+
       img.onload = () => {
         img.classList.add('loaded');
         if (loader) loader.classList.add('hidden');
         checkAllImagesLoaded(containerId);
       };
-      img.onerror = showFallback;
-      setTimeout(showFallback, 50000); // timeout fallback
-      // Use Higgsfield if key present, else free tier
+      img.onerror = retryOnce;
+      const imgTimeout = setTimeout(() => { if (!img.classList.contains('loaded')) retryOnce(); }, 30000);
+      img.addEventListener('load', () => clearTimeout(imgTimeout), {once:true});
+
+      // Stagger image loads to avoid rate limits
+      const staggerDelay = i * 5000;
       if (apiKeys.higgsfield) {
-        resolveImgUrl(d.prompt, seed).then(url => { if (img) img.src = url; }).catch(()=> { img.src = makeImgUrlFree(d.prompt, seed); });
+        setTimeout(() => {
+          resolveImgUrl(d.prompt, seed).then(url => { if (img) img.src = url; }).catch(()=> { img.src = makeImgUrlFree(d.prompt, seed); });
+        }, staggerDelay);
       } else {
-        img.src = makeImgUrlFree(d.prompt, seed);
+        setTimeout(() => { img.src = makeImgUrlFree(d.prompt, seed); }, staggerDelay);
       }
     }
 
@@ -2611,10 +2658,19 @@ function animateProgress(prefix, i) {
   let pct = 0;
   const el = document.getElementById(`pct-${prefix}-${i}`);
   const interval = setInterval(() => {
-    pct = Math.min(pct + Math.floor(Math.random() * 8 + 2), 95);
-    if (el) el.textContent = pct + '%';
-    if (pct >= 95) clearInterval(interval);
-  }, 400);
+    if (!el) { clearInterval(interval); return; }
+    if (el.textContent === 'Retrying…') return;
+    const loaderEl = document.getElementById(`loader-${prefix}-${i}`);
+    if (loaderEl && loaderEl.classList.contains('hidden')) { clearInterval(interval); return; }
+    if (pct < 80) {
+      pct = Math.min(pct + Math.floor(Math.random()*8+3), 80);
+    } else if (pct < 95) {
+      pct = Math.min(pct + Math.floor(Math.random()*2+1), 95);
+    } else {
+      pct = 95 + Math.floor(Math.random()*4);
+    }
+    el.textContent = pct + '%';
+  }, 500);
 }
 
 function onImgLoad(prefix, i) {
@@ -3317,19 +3373,31 @@ function viewReport(cycleNum) {
 
   document.getElementById('report-view-area').innerHTML = html;
 
-  // Attach image events via DOM after render
+  // Attach image events via DOM after render — staggered to avoid rate limits
   r.sortedDesigns.slice(0,3).forEach((d, i) => {
     const phEl  = document.getElementById(`rph-${r.cycle}-${i}`);
     const imgEl = document.getElementById(`rimg-${r.cycle}-${i}`);
     if (!imgEl) return;
     if (phEl) phEl.textContent = d.emoji;
     const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
+    let retried = false;
     imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
-    imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
+    imgEl.onerror = () => {
+      if (!retried) {
+        retried = true;
+        const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+        setTimeout(() => { imgEl.src = makeImgUrlFree(shortPrompt, seed + 1); }, 2000);
+      } else {
+        if (imgEl) imgEl.style.display = 'none';
+      }
+    };
+    const staggerDelay = i * 5000;
     if (apiKeys.higgsfield) {
-      resolveImgUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
+      setTimeout(() => {
+        resolveImgUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
+      }, staggerDelay);
     } else {
-      imgEl.src = makeImgUrlFree(d.prompt, seed);
+      setTimeout(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); }, staggerDelay);
     }
   });
 
