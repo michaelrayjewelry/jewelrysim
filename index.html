@@ -2539,15 +2539,12 @@ SCORING CRITERIA — be honest and calibrated:
 - Wearability (30-95): Comfort, durability, practical weight, secure settings, no snag points. Score LOW if this is unwearable art, HIGH if someone would wear it daily
 - Manufacturability (30-95): Can a bench jeweler or factory actually produce this? Score HIGH for clean castable geometry, standard setting types. Score LOW for impossible forms, materials that can't be combined, or techniques that don't exist
 
-For the image prompt — write it as a professional art director would for AI image generation:
-- Precise metal type and finish (e.g. "hand-hammered 18k rose gold with satin finish")
-- Gems/stones: cut, clarity, color, setting type (e.g. "tension-set princess-cut emerald")
-- Silhouette, structural details, surface texture
-- Photography direction: "macro product photography", specific lighting, background surface
-- One mood word (e.g. "ethereal", "architectural")
+For the image prompt — write a concise, vivid description for AI image generation (15 WORDS MAXIMUM):
+- Include: metal type, finish, key stone/gem, silhouette, and one mood word
+- Example: "Brushed platinum geometric ring, tension-set emerald, architectural, macro product photography"
 
 Output EXACTLY this JSON (no markdown):
-{"aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"wearability":[30-95],"makeable":[30-95],"prompt":"[production-ready image prompt, 45-65 words, technically specific]"}`;
+{"aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"wearability":[30-95],"makeable":[30-95],"prompt":"[15 words max image prompt]"}`;
 
       const assessResp = await llmCall(
         'You are assessing your own jewelry design and writing the final image prompt. Be calibrated in scores. Write a vivid, technically specific prompt. Output ONLY valid JSON.',
@@ -2575,10 +2572,10 @@ DESIGN DETAILS:
 - Materials: ${blueprint.materials}
 - Form: ${blueprint.form}
 
-Create a 3-6 word evocative collection name that captures the VISUAL ESSENCE described above — the textures, metals, stones, silhouette, and mood. The name should feel like a luxury jewelry collection title.
+Create a 1-3 word luxury collection name that captures the VISUAL ESSENCE above. Maximum 3 words. Think iconic and concise — like "Serpenti", "Love Bracelet", or "Phantom Thread".
 ${usedNamesStr}
 Output EXACTLY this JSON (no markdown):
-{"name":"[your 3-6 word name]"}`;
+{"name":"[1-3 word name ONLY]"}`;
 
       const nameResp = await llmCall(
         'You name luxury jewelry based on visual descriptions. Output ONLY valid JSON.',
@@ -2606,7 +2603,7 @@ Output EXACTLY this JSON (no markdown):
         profit:   Math.max(20, Math.min(98, parseInt(assessData?.profit)||55)),
         wearability: Math.max(20, Math.min(98, parseInt(assessData?.wearability)||55)),
         makeable: Math.max(20, Math.min(98, parseInt(assessData?.makeable)||60)),
-        prompt:   assessData?.prompt || `fine jewelry ${blueprint.cat.toLowerCase()}, ${blueprint.materials}, ${blueprint.form}, macro product photography, neutral background, professional lighting`,
+        prompt:   assessData?.prompt || `${blueprint.materials} ${blueprint.cat.toLowerCase()}, ${blueprint.form}, macro product photography`,
         rawPrompt: assessData?.prompt || '',
         strategicReasoning: blueprint.reasoning,
         materials: blueprint.materials,
