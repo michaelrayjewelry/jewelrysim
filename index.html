@@ -478,6 +478,236 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .agent-avatar-sm{width:18px;height:18px;image-rendering:pixelated;vertical-align:middle;margin-right:3px}
 .agent-avatar-roster{width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--gold-d);flex-shrink:0}
 .agent-avatar-genome{width:28px;height:28px;image-rendering:pixelated}
+/* ═══ GAMIFICATION EFFECTS ═══ */
+
+/* Glowing gold accent for active/important elements */
+@keyframes goldGlow{0%,100%{box-shadow:0 0 4px rgba(201,168,76,.15)}50%{box-shadow:0 0 12px rgba(201,168,76,.35)}}
+@keyframes goldPulse{0%,100%{text-shadow:0 0 4px rgba(201,168,76,.2)}50%{text-shadow:0 0 12px rgba(201,168,76,.5)}}
+@keyframes rankReveal{from{opacity:0;transform:scale(.8) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes creditTick{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes winnerShine{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes xpFill{from{width:0%}to{width:var(--xp-pct,50%)}}
+
+/* Progress bar glow */
+.prog-fill{box-shadow:0 0 6px rgba(201,168,76,.4)}
+
+/* Phase rail active glow */
+.pnode.active{box-shadow:inset 0 -2px 8px rgba(201,168,76,.15)}
+.pnode.done{box-shadow:inset 0 -2px 8px rgba(76,175,125,.12)}
+
+/* Cycle dots gamified */
+.ci-dot.active{animation:goldGlow 2s ease infinite;font-weight:700}
+.ci-dot.done{box-shadow:0 0 6px rgba(76,175,125,.3)}
+
+/* Winner card shine effect */
+.dcard.winner-card{background:linear-gradient(135deg,rgba(201,168,76,.08) 0%,rgba(201,168,76,.02) 40%,rgba(201,168,76,.08) 100%);border:1px solid var(--gold-d)}
+.dcard.winner-card .win-badge{background:rgba(201,168,76,.1);animation:goldGlow 2s ease infinite}
+
+/* Credits animation */
+.dcred{transition:all .3s ease}
+
+/* Rank badges for leaderboard */
+.agent-lb tr:nth-child(1) .rank-num{color:var(--gold);text-shadow:0 0 8px rgba(201,168,76,.4);font-size:1.3rem}
+.agent-lb tr:nth-child(2) .rank-num{color:#b0b0b0;text-shadow:0 0 6px rgba(176,176,176,.3);font-size:1.2rem}
+.agent-lb tr:nth-child(3) .rank-num{color:#cd7f32;text-shadow:0 0 6px rgba(205,127,50,.3);font-size:1.15rem}
+
+/* Top 3 gallery rank styling */
+.top3-card.gold-card{box-shadow:0 0 12px rgba(201,168,76,.15)}
+.top3-card.gold-card .top3-creds{animation:goldPulse 2s ease infinite}
+
+/* Cycle complete banner gamified */
+.cycle-complete.show{animation:rankReveal .5s ease both;border:1px solid var(--gold);box-shadow:0 0 20px rgba(201,168,76,.1)}
+.cc-title{text-shadow:0 0 8px rgba(201,168,76,.25)}
+
+/* Strategy badges with subtle glow */
+.strat-exploit{box-shadow:0 0 4px rgba(138,110,48,.2)}
+.strat-explore{box-shadow:0 0 4px rgba(74,127,168,.2)}
+.strat-mutate{box-shadow:0 0 4px rgba(123,111,168,.2)}
+
+/* Genome evolution arrows animation */
+.gd-arrow.up{animation:creditTick .5s ease}
+.gd-arrow.down{animation:creditTick .5s ease}
+
+/* Winner/loss badges in genome cards */
+.gc-result-badge.win{box-shadow:0 0 6px rgba(201,168,76,.25);animation:goldGlow 2.5s ease infinite}
+
+/* Reputation bar in agent rows */
+.arow{position:relative}
+.arow::after{content:'';position:absolute;bottom:0;left:0;height:1px;background:linear-gradient(90deg,var(--gold-d),transparent);width:0;transition:width .6s ease}
+
+/* Deploy slots gamified */
+.deploy-slot.deployed{box-shadow:inset 0 -2px 8px rgba(201,168,76,.08)}
+.deploy-slot.just-deployed{animation:rankReveal .4s ease both;box-shadow:0 0 12px rgba(201,168,76,.2)}
+
+/* Voter allocation badges */
+.vf-alloc{transition:all .2s;cursor:default}
+.vf-alloc:hover{background:rgba(201,168,76,.15);transform:scale(1.05)}
+
+/* Nav tab active gamified */
+.nav-tab.active{box-shadow:0 0 8px rgba(201,168,76,.15)}
+.nav-tab.done{position:relative}
+.nav-tab.done::after{content:'✓';margin-left:.3rem;font-size:.5rem}
+
+/* Report KPI values glow */
+.kpi-val{text-shadow:0 0 4px rgba(201,168,76,.15)}
+.kpi-val.up{text-shadow:0 0 4px rgba(76,175,125,.2)}
+.kpi-val.down{text-shadow:0 0 4px rgba(181,51,42,.2)}
+
+/* Epoch arc gamified */
+.epoch-arc{box-shadow:0 0 16px rgba(201,168,76,.08);position:relative;overflow:hidden}
+.epoch-arc::before{content:'';position:absolute;top:0;left:-200%;width:200%;height:100%;background:linear-gradient(90deg,transparent,rgba(201,168,76,.03),transparent);animation:winnerShine 4s linear infinite}
+
+/* Agent modal gamified */
+.agent-modal{box-shadow:0 0 30px rgba(201,168,76,.12)}
+
+/* ═══ MOBILE LAYOUT ═══ */
+@media(max-width:600px){
+  /* Nav: compact layout */
+  nav{padding:.6rem .8rem;gap:.5rem}
+  .nav-logo{font-size:.85rem;letter-spacing:.25em}
+  .nav-tabs{width:100%;order:3;gap:0;display:grid;grid-template-columns:repeat(4,1fr)}
+  .nav-tab{padding:.35rem .2rem;font-size:.5rem;letter-spacing:.08em;text-align:center;white-space:nowrap;overflow:hidden}
+  .nav-epoch{font-size:.55rem}
+  main{padding-top:96px}
+
+  /* Screens: tighter padding */
+  .screen{padding:1.2rem .8rem}
+
+  /* Typography: scale down */
+  .h1{font-size:1.5rem}
+  .h2{font-size:1.2rem}
+  .sub{font-size:.8rem}
+  .eyebrow{font-size:.55rem;letter-spacing:.3em}
+
+  /* Buttons: touch-friendly */
+  .btn{padding:.65rem 1.2rem;font-size:.7rem;min-height:44px}
+  .btn-sm{padding:.5rem .8rem;min-height:38px}
+
+  /* Home screen */
+  .home-hero{padding:1.5rem 0 1rem}
+  .mode-toggle{max-width:100%}
+  .mode-btn{font-size:.6rem;padding:.6rem .5rem}
+  .api-panel{padding:1.2rem}
+
+  /* Builder */
+  .bsec{padding:1rem}
+  .field input,.field textarea,.field select{font-size:1rem;padding:.55rem .7rem}
+  .sr label{font-size:.68rem}
+  .chips{gap:.3rem}
+  .chip{padding:.3rem .55rem;font-size:.58rem;min-height:32px;display:inline-flex;align-items:center}
+
+  /* Sim topbar */
+  .sim-topbar{margin-bottom:1rem;gap:.6rem}
+  .ci-dot{width:32px;height:32px;font-size:.65rem}
+
+  /* Phase rail: scrollable, bigger touch */
+  .phase-rail{margin-bottom:1rem;-webkit-overflow-scrolling:touch}
+  .pnode{min-width:68px;padding:.6rem .3rem}
+  .pnode .pni{font-size:.85rem}
+  .pnode .pnl{font-size:.5rem}
+
+  /* Sim body: stack */
+  .sim-body{grid-template-columns:1fr;gap:.8rem;min-height:auto}
+  .agents-col{padding:.8rem;max-height:200px;overflow-y:auto}
+  .agents-col h5{margin-bottom:.5rem}
+  .arow{padding:.4rem 0;gap:.4rem}
+  .arow .an{font-size:.75rem}
+  .arow .as{font-size:.6rem}
+  .acr{font-size:.75rem}
+  .log-col{padding:.8rem}
+  .log{max-height:220px}
+  .le{font-size:.72rem;padding:.3rem .4rem}
+
+  /* Design cards: 2-col */
+  .dgrid{grid-template-columns:repeat(2,1fr)}
+  .dcard-body{padding:.6rem}
+  .dname{font-size:.8rem}
+  .dagent{font-size:.5rem}
+  .dcred{font-size:.9rem}
+  .dgem{font-size:1.1rem;margin-bottom:.2rem}
+  .dbar{margin-bottom:.2rem;gap:.25rem}
+  .dbar-l{font-size:.5rem;width:20px}
+
+  /* Deploy panel */
+  .deploy-grid{grid-template-columns:repeat(2,1fr)}
+  .deploy-slot{padding:1rem .8rem}
+  .ds-emoji{font-size:1.4rem;margin-bottom:.3rem}
+  .ds-name{font-size:.95rem}
+  .ds-phil{font-size:.65rem}
+  .ds-tags{font-size:.52rem}
+
+  /* Roster */
+  .roster-card{padding:.3rem .6rem}
+  .rc-name{font-size:.78rem}
+
+  /* Cycle complete */
+  .cycle-complete{padding:1rem}
+  .cc-title{font-size:1.3rem}
+  .cc-winner{padding:.6rem .8rem;gap:.5rem}
+  .cc-actions{gap:.5rem}
+  .cc-actions .btn{flex:1;justify-content:center;text-align:center}
+
+  /* Top 3 gallery: stack */
+  .top3-gallery{grid-template-columns:1fr}
+  .top3-meta{padding:.7rem}
+  .top3-name{font-size:1rem}
+
+  /* Sim controls */
+  .sim-ctrl{gap:.5rem}
+  .spd{font-size:.58rem}
+  .spd-btn{padding:.25rem .5rem;min-height:32px}
+
+  /* Reports */
+  .reports-layout{grid-template-columns:1fr;gap:.8rem;min-height:auto}
+  .report-nav{max-height:160px;overflow-y:auto;padding:.8rem}
+  .rn-item{padding:.5rem .6rem}
+  .report-view{padding:1rem;max-height:none}
+  .rdoc-title{font-size:1.3rem}
+  .rdoc-header{padding-bottom:.8rem;margin-bottom:1rem}
+
+  /* Report grids */
+  .exec-stats{grid-template-columns:repeat(2,1fr)}
+  .es-val{font-size:1.2rem}
+  .kpi-strip{grid-template-columns:repeat(3,1fr)}
+  .kpi-val{font-size:1.1rem}
+  .corr-panel{grid-template-columns:1fr}
+  .strat-battle{grid-template-columns:1fr}
+  .genome-grid{grid-template-columns:1fr}
+  .epoch-timeline{grid-template-columns:1fr}
+  .et-node::after{display:none}
+  .trend-grid{grid-template-columns:1fr}
+  .rdoc-top3{grid-template-columns:1fr}
+
+  /* Tables: horizontal scroll */
+  .rtable,.agent-lb,.cat-heat,.vflow-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rtable thead,.agent-lb thead,.cat-heat thead,.vflow-table thead,
+  .rtable tbody,.agent-lb tbody,.cat-heat tbody,.vflow-table tbody{min-width:500px;display:table;width:100%}
+  .rtable th,.agent-lb th,.cat-heat th,.vflow-table th{white-space:nowrap}
+
+  /* Agent modal: fullscreen on mobile */
+  .agent-modal{width:100%;max-width:100%;max-height:100vh;height:100vh;border:none}
+  .am-header{padding:1rem;gap:.8rem}
+  .am-avatar{width:60px;height:60px}
+  .am-identity h2{font-size:1.1rem}
+  .am-section{padding:.8rem 1rem}
+  .am-genome-grid{grid-template-columns:1fr}
+  .am-genome-row .am-g-label{width:60px;font-size:.58rem}
+
+  /* Image gen status */
+  .img-gen-status{font-size:.65rem}
+}
+
+/* Small phone tweaks */
+@media(max-width:380px){
+  nav{padding:.5rem .6rem}
+  .nav-logo{font-size:.75rem}
+  .nav-tab{font-size:.45rem;padding:.3rem .15rem}
+  main{padding-top:100px}
+  .screen{padding:1rem .6rem}
+  .dgrid{grid-template-columns:1fr}
+  .deploy-grid{grid-template-columns:1fr}
+  .agents-col{max-height:160px}
+}
 
 </style>
 </head>
