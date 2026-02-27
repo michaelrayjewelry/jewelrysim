@@ -1329,7 +1329,7 @@ function retrievePatterns(agent) {
   const top3 = scored.slice(0, 3);
   let ctx = `\n\nHISTORICAL DESIGN PRECEDENTS (top ${top3.length} relevant from ${patternBank.length} stored):`;
   top3.forEach((p, i) => {
-    ctx += `\n  ${i+1}. "${p.name}" (Cycle ${p.cycle}, Rank #${p.rank}, ${p.credits.toLocaleString()}⬡, confidence: ${(p.confidence*100).toFixed(0)}%)`;
+    ctx += `\n  ${i+1}. [Cycle ${p.cycle} #${p.rank}] ${p.category} (${p.credits.toLocaleString()}⬡, confidence: ${(p.confidence*100).toFixed(0)}%)`;
     ctx += `\n     ${p.strategy.toUpperCase()} · ${p.category} · ${p.materials || '?'} · ${p.form || '?'}`;
     ctx += `\n     Scores: AES:${p.aesthetic} NOV:${p.novelty} PRO:${p.profit} WEAR:${p.wearability||'?'} MFG:${p.makeable||'?'}`;
     ctx += `\n     Reasoning: ${(p.reasoning || '—').slice(0, 100)}`;
@@ -1463,7 +1463,7 @@ function priorReportCtx(agentIdx) {
 
   cycleReports.forEach(r => {
     ctx += `\n═══ CYCLE ${r.cycle} REPORT ═══\n`;
-    ctx += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()}⬡, ${r.winnerShare}% vote share)\n`;
+    ctx += `Winner: ${r.winner.agentName}'s ${r.winner.strategy?.toUpperCase()||'?'} ${r.winner.cat||'design'} (${r.winner.credits.toLocaleString()}⬡, ${r.winnerShare}% vote share)\n`;
     ctx += `Total Credits Circulated: ${r.totalCredits.toLocaleString()}⬡\n`;
     ctx += `Avg Scores: Aesthetic ${r.avgAesthetic}/100, Novelty ${r.avgNovelty}/100, Profit ${r.avgProfit}/100\n`;
     ctx += `Top Vote Predictor: ${r.topCorr} (r=${r['corr'+r.topCorr.slice(0,3).replace(/^(.)/, m=>m.toUpperCase())]||'?'})\n`;
@@ -1484,14 +1484,14 @@ function priorReportCtx(agentIdx) {
     const myPerf = (r.agentPerf||[]).find(a => a.id === agentIdx);
     if (myPerf) {
       ctx += `\nYOUR PERFORMANCE (Cycle ${r.cycle}):\n`;
-      ctx += `  Design: "${myPerf.designName}" · Strategy: ${myPerf.strategy} · Rank: #${myPerf.rank}\n`;
+      ctx += `  Strategy: ${myPerf.strategy} · Category: ${myPerf.cat || '—'} · Rank: #${myPerf.rank}\n`;
       ctx += `  Earned: ${myPerf.earned.toLocaleString()}⬡ · Spent: ${myPerf.spent.toLocaleString()}⬡ · ROI: ${myPerf.roi}×\n`;
       ctx += `  Reputation: ${myPerf.reputation} (${myPerf.repDelta >= 0 ? '+' : ''}${myPerf.repDelta})\n`;
     }
 
     ctx += `\nAll Designs (ranked):\n`;
     [...r.designs].sort((a,b)=>a.rank-b.rank).forEach(d => {
-      ctx += `  #${d.rank} "${d.name}" by ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.cat} — ${d.credits.toLocaleString()}⬡ — AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'}${d.production ? ' ['+d.production+']' : ''}${d.targetCustomer ? ' → '+d.targetCustomer : ''}\n`;
+      ctx += `  #${d.rank} by ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.cat} — ${d.credits.toLocaleString()}⬡ — AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'}${d.production ? ' ['+d.production+']' : ''}${d.targetCustomer ? ' → '+d.targetCustomer : ''}\n`;
     });
 
     ctx += `\nStrategy Performance: ${Object.entries(r.stratPerf||{}).map(([k,v])=>`${k.toUpperCase()}: ${v.avgCreds.toLocaleString()}⬡ avg (${v.count} designs)`).join(' | ')}\n`;
@@ -1500,7 +1500,7 @@ function priorReportCtx(agentIdx) {
   // Multi-cycle trend analysis
   if (cycleReports.length >= 2) {
     ctx += `\n═══ MULTI-CYCLE TREND ANALYSIS ═══\n`;
-    const winners = cycleReports.map(r => `C${r.cycle}: "${r.winner.name}" (${(r.trendData?.emerging||[])[0]||'—'})`);
+    const winners = cycleReports.map(r => `C${r.cycle}: ${r.winner.agentName}'s ${r.winner.strategy?.toUpperCase()||'?'} ${r.winner.cat||'design'} (${(r.trendData?.emerging||[])[0]||'—'})`);
     ctx += `Winners: ${winners.join(' → ')}\n`;
     const novTrend = cycleReports.map(r => `C${r.cycle}: ${r.novSlope > 0 ? '+' : ''}${r.novSlope}⬡/pt`);
     ctx += `Novelty Premium Trend: ${novTrend.join(' → ')}\n`;
@@ -1535,7 +1535,7 @@ function priorReportCtx(agentIdx) {
   if (winnerRationales.length > 0) {
     ctx += `\n\nWINNING DESIGN RATIONALES (learn from the best):`;
     winnerRationales.slice(-2).forEach(r => {
-      ctx += `\n  Cycle ${r.cycle}: ${r.agentName} — "${r.designName}" — ${(r.strategicReasoning || '—').slice(0, 120)}`;
+      ctx += `\n  Cycle ${r.cycle}: ${r.agentName} (${r.predictedStrategy} ${r.predictedCategory}) — ${(r.strategicReasoning || '—').slice(0, 120)}`;
     });
   }
 
@@ -2413,7 +2413,7 @@ async function runLiveSynthesis(cycleNum) {
   // We show the synthesis UI phase, then flow straight into generation.
   let delay = 200;
   agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
-  addLog(`Synthesis + Design phase: agents deliberate strategy, name, and assess via Claude (Cycle ${cycleNum})…`, 'rs', delay);
+  addLog(`Synthesis + Design phase: agents deliberate strategy, assess, and name via Claude (Cycle ${cycleNum})…`, 'rs', delay);
   delay += 400;
 
   setProgress(30);
@@ -2422,6 +2422,12 @@ async function runLiveSynthesis(cycleNum) {
   const designs = [];
   const categories = ['Ring','Pendant','Earrings','Bracelet'];
   const designEmojis = ['⬡','🌑','✨','🔷','💍','🌹','💙','⚡','💎','🦴','🌸','🔥','🌿','💛','⭐','🔶'];
+
+  // ── Build used-names blacklist from prior cycles ──
+  const allUsedNames = cycleReports.flatMap(r => (r.designs || []).map(d => d.name));
+  const usedNamesStr = allUsedNames.length > 0
+    ? `\nALREADY-USED NAMES (do NOT reuse any word from these):\n${allUsedNames.map(n => `"${n}"`).join(', ')}\nYour name must use completely different vocabulary.\n`
+    : '';
 
   // ── Process agents in parallel batches of 3 ──
   const BATCH_SIZE = 3;
@@ -2433,7 +2439,7 @@ async function runLiveSynthesis(cycleNum) {
       const convMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
       const allConvMem = (agent.conversationMemory || []).map(m => `[Cycle ${m.cycle}] ${m.partner}: "${m.excerpt}"`).join('\n');
 
-      // ── Step 1: Strategic Blueprint + Naming (merged from old Synthesis + Generation Steps 1-2) ──
+      // ── Step 1: Strategic Blueprint (strategy + design specs, NO naming) ──
       setAgentStatus(agent.id, 'Synthesizing…');
 
       const blueprintPrompt = `You are ${agent.name}, beginning your design process for Cycle ${cycleNum}.
@@ -2444,7 +2450,7 @@ ${convMem || 'No conversations this cycle.'}
 ALL PRIOR DIALOGUES:
 ${allConvMem || 'No prior conversations.'}
 
-Based on everything you know — your genome DNA, your personality bio, every conversation you've had, your evolution history, and every intelligence report — make your strategic decision AND name your design.
+Based on everything you know — your genome DNA, your personality bio, every conversation you've had, your evolution history, and every intelligence report — make your strategic decision.
 
 Think about:
 - What worked and what failed in prior cycles (your rank, the winners, the trends)
@@ -2459,10 +2465,10 @@ CRITICAL — your design must be PRODUCIBLE and SELLABLE:
 - Consider production volume — high manufacturability means designing for 100+ units. Low means one-of-a-kind.
 
 Output EXACTLY this JSON (no markdown, no backticks):
-{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[specific metals and stones that match your price point — e.g. '14K yellow gold with lab-grown sapphire' not just 'gold']","form":"[structural concept in 5-10 words]","production":"[how this gets made: casting, hand-fab, 3D-printed, electroformed, etc.]","targetCustomer":"[who buys this and why, in 8-15 words]","complexity":[1-10 integer],"estMargin":[40-90 integer],"name":"[3-6 word design name: evocative, specific to materials and form, feels like a luxury collection name — NOT generic]"}`;
+{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[specific metals and stones that match your price point — e.g. '14K yellow gold with lab-grown sapphire' not just 'gold']","form":"[structural concept in 5-10 words]","production":"[how this gets made: casting, hand-fab, 3D-printed, electroformed, etc.]","targetCustomer":"[who buys this and why, in 8-15 words]","complexity":[1-10 integer],"estMargin":[40-90 integer]}`;
 
       const blueprintResp = await llmCall(
-        'You are making a strategic design decision and naming your creation. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
+        'You are making a strategic design decision. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
         blueprintPrompt, agent
       );
 
@@ -2482,19 +2488,13 @@ Output EXACTLY this JSON (no markdown, no backticks):
           materials: agent.platBias > 60 ? 'platinum' : 'gold',
           form: 'refined jewelry piece',
           complexity: 5,
-          estMargin: 65,
-          name: `${agent.name}'s Cycle ${cycleNum} Design`
+          estMargin: 65
         };
       }
       if (!categories.includes(blueprint.cat)) blueprint.cat = categories[i % 4];
       if (!['exploit','explore','mutate'].includes(blueprint.strategy)) blueprint.strategy = 'explore';
       blueprint.complexity = Math.max(1, Math.min(10, parseInt(blueprint.complexity)||5));
       blueprint.estMargin = Math.max(40, Math.min(90, parseInt(blueprint.estMargin)||65));
-
-      let designName = (blueprint.name || '').trim().replace(/^["']+|["']+$/g, '').slice(0, 80);
-      if (!designName || designName.length < 3) {
-        designName = `${blueprint.materials || 'Gold'} ${blueprint.form || blueprint.cat}`;
-      }
 
       // Capture rationale for persistence (Claude-Flow Improvement 4)
       if (!window._cycleRationales) window._cycleRationales = [];
@@ -2507,8 +2507,8 @@ Output EXACTLY this JSON (no markdown, no backticks):
         predictedCategory: blueprint.cat
       });
 
-      // Log the synthesis blueprint
-      addLog(`<b>${agent.name}</b> — Strategy: <b>${blueprint.strategy.toUpperCase()}</b> · ${blueprint.cat} · <i>"${designName}"</i> · Complexity ${blueprint.complexity}/10 · Est. margin ${blueprint.estMargin}%`, '', delay + i*300);
+      // Log the synthesis blueprint (name comes later in Step 3)
+      addLog(`<b>${agent.name}</b> — Strategy: <b>${blueprint.strategy.toUpperCase()}</b> · ${blueprint.cat} · Complexity ${blueprint.complexity}/10 · Est. margin ${blueprint.estMargin}%`, '', delay + i*300);
       addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${(blueprint.reasoning||'').slice(0,160)}</span>`, '', delay + i*300 + 100);
 
       // ── Step 2: Self-Assessment + Image Prompt (with refined prompt built-in) ──
@@ -2517,7 +2517,6 @@ Output EXACTLY this JSON (no markdown, no backticks):
       const assessPrompt = `You are ${agent.name}, finalizing your Cycle ${cycleNum} submission.
 
 YOUR DESIGN:
-- Name: "${designName}"
 - Category: ${blueprint.cat}
 - Strategy: ${blueprint.strategy.toUpperCase()}
 - Materials: ${blueprint.materials}
@@ -2562,6 +2561,41 @@ Output EXACTLY this JSON (no markdown):
         } catch(e) { console.warn('Assessment parse failed for', agent.name, assessResp); }
       }
 
+      // ── Step 3: Name Generation (from image prompt analysis) ──
+      setAgentStatus(agent.id, 'Naming…');
+
+      const imagePromptText = assessData?.prompt || `${blueprint.materials} ${blueprint.cat}, ${blueprint.form}`;
+      const namingPrompt = `You are a luxury jewelry naming specialist. Analyze this product image description and create a name for it.
+
+IMAGE DESCRIPTION:
+${imagePromptText}
+
+DESIGN DETAILS:
+- Category: ${blueprint.cat}
+- Materials: ${blueprint.materials}
+- Form: ${blueprint.form}
+
+Create a 3-6 word evocative collection name that captures the VISUAL ESSENCE described above — the textures, metals, stones, silhouette, and mood. The name should feel like a luxury jewelry collection title.
+${usedNamesStr}
+Output EXACTLY this JSON (no markdown):
+{"name":"[your 3-6 word name]"}`;
+
+      const nameResp = await llmCall(
+        'You name luxury jewelry based on visual descriptions. Output ONLY valid JSON.',
+        namingPrompt, agent
+      );
+
+      let designName = '';
+      if (nameResp) {
+        try {
+          const nameData = JSON.parse(nameResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+          designName = (nameData.name || '').trim().replace(/^["']+|["']+$/g, '').slice(0, 80);
+        } catch(e) { console.warn('Naming parse failed for', agent.name, nameResp); }
+      }
+      if (!designName || designName.length < 3) {
+        designName = `${blueprint.materials || 'Gold'} ${blueprint.form || blueprint.cat}`;
+      }
+
       // Build the final design object
       const design = {
         name: designName,
@@ -2602,7 +2636,7 @@ Output EXACTLY this JSON (no markdown):
 
   activeDesigns = designs;
   const totalDelay = delay + agentStates.length*300 + 400 + agentStates.length*400 + 200;
-  addLog(`All ${designs.length} designs submitted via 2-step Claude pipeline (${designs.length * 2} API calls). Pool locked.`, 'rs', totalDelay);
+  addLog(`All ${designs.length} designs submitted via 3-step Claude pipeline (${designs.length * 3} API calls). Pool locked.`, 'rs', totalDelay);
   setProgress(60);
   return totalDelay + 400;
 }
@@ -2759,11 +2793,11 @@ async function runLiveEvolution(cycleNum) {
   addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡`, 'rs', 300);
 
   const resultsSummary = sorted.map((d,rank) =>
-    `#${rank+1}: "${d.name}" by ${agentStates[d.agentIdx]?.name} — ${d.credits.toLocaleString()}⬡ · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'} · ${d.cat}${d.production ? ' · '+d.production : ''}${d.targetCustomer ? ' · For: '+d.targetCustomer : ''}`
+    `#${rank+1}: by ${agentStates[d.agentIdx]?.name} — ${d.credits.toLocaleString()}⬡ · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'} · ${d.cat}${d.production ? ' · '+d.production : ''}${d.targetCustomer ? ' · For: '+d.targetCustomer : ''}`
   ).join('\n');
 
   const priorContext = cycleReports.length > 0
-    ? `Prior winners: ${cycleReports.map(r=>`C${r.cycle}: "${r.winner.name}"`).join(', ')}`
+    ? `Prior winners: ${cycleReports.map(r=>`C${r.cycle}: ${r.winner.agentName}'s ${r.winner.strategy?.toUpperCase()||'?'} ${r.winner.cat||'design'}`).join(', ')}`
     : 'No prior cycles.';
 
   // ── Launch all 6 evolution calls + 1 trend call in parallel ──
@@ -2796,7 +2830,7 @@ ${resultsSummary}
 
 ${priorContext}
 
-You are ${agent.name} (rank #${rank+1}, design: "${myDesign?.name||'—'}").
+You are ${agent.name} (rank #${rank+1}, strategy: ${myDesign?.strategy||'?'}, category: ${myDesign?.cat||'?'}).
 ${myDesign?.strategicReasoning ? `Your strategic reasoning this cycle: ${myDesign.strategicReasoning}` : ''}
 
 Your cross-pollination conversations this cycle:
@@ -2813,7 +2847,7 @@ Analyze these results deeply. Consider:
 - IMPORTANT: Traits marked with "PROVEN — shift cautiously" have strong cross-cycle correlation with success. DAMPEN changes to those traits.
 
 Output EXACTLY this JSON (no markdown):
-{"belief":"[one vivid sentence: what you learned, referencing specific data — names, scores, strategies, and commercial factors]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10],"pricePoint":[integer -10 to +10],"manufacturability":[integer -10 to +10],"wearability":[integer -10 to +10],"trendSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
+{"belief":"[one vivid sentence: what you learned, referencing specific data — scores, strategies, materials, and commercial factors]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10],"pricePoint":[integer -10 to +10],"manufacturability":[integer -10 to +10],"wearability":[integer -10 to +10],"trendSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
 
 Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strengths, but dont get complacent.' : isLoser ? 'You came LAST — something fundamental needs to change. What specifically failed and why?' : `You placed #${rank+1} — close but not enough. What specific adjustment would push you to #1?`}`;
 
@@ -2873,10 +2907,10 @@ Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strength
     agent.evolutionHistory.push({
       cycle: cycleNum,
       summary: isWinner
-        ? `Won with "${myDesign?.name||'—'}" (${myDesign?.credits?.toLocaleString()||0}⬡). Genome reinforced.`
+        ? `Won (${myDesign?.credits?.toLocaleString()||0}⬡, ${myDesign?.strategy||'?'} ${myDesign?.cat||'design'}). Genome reinforced.`
         : isLoser
-        ? `Last place with "${myDesign?.name||'—'}". Mutation pressure applied.`
-        : `Ranked #${rank+1} with "${myDesign?.name||'—'}". Adaptive shifts applied.`,
+        ? `Last place (${myDesign?.strategy||'?'} ${myDesign?.cat||'design'}). Mutation pressure applied.`
+        : `Ranked #${rank+1} (${myDesign?.strategy||'?'} ${myDesign?.cat||'design'}). Adaptive shifts applied.`,
       genomeShifts,
       rank: rank + 1,
       designName: myDesign?.name || '—',
@@ -3763,6 +3797,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
       reputation: a.reputation,
       repDelta: a.reputation - prevRep,
       strategy: myDesign?.strategy || '—',
+      cat: myDesign?.cat || '—',
       rank: myDesign?.rank || 7,
       designName: myDesign?.name || '—',
       isUser: a.isUser || false
