@@ -836,13 +836,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div class="home-feat"><span class="hf-icon">💎</span><div class="hf-val">18</div><div class="hf-lbl">Designs</div></div>
   </div>
 
-  <div class="mode-toggle" id="mode-toggle">
-    <button class="mode-btn active" id="mode-sim" onclick="setMode('sim')"><span class="mode-dot"></span>Simulation</button>
-    <button class="mode-btn" id="mode-live" onclick="setMode('live')"><span class="mode-dot"></span>Live AI</button>
-  </div>
-
-  <div class="api-panel" id="api-panel">
-    <h4>API Configuration</h4>
+  <div class="api-panel show" id="api-panel">
+    <h4>API Configuration — Required</h4>
     <div class="api-field">
       <label>Anthropic API Key &nbsp;<span style="color:var(--gold-d);font-size:.55rem;letter-spacing:.08em">— Language &amp; Intelligence</span></label>
       <input type="password" id="api-anthropic" placeholder="sk-ant-..." oninput="checkApiKeys()">
@@ -1411,7 +1406,7 @@ function agentAvatarImg(agent, cssClass) {
 /* ══════════════════════════════════
    MODE & API KEY MANAGEMENT
 ══════════════════════════════════ */
-let simMode = 'sim'; // 'sim' or 'live'
+let simMode = 'live'; // always live — all agent decisions go through Claude API
 let apiKeys = { anthropic: '', higgsfield: '' };
 let apiKeysCommitted = false; // true once user clicks Submit
 
@@ -1437,11 +1432,7 @@ function initQTable() {
 }
 
 function setMode(mode) {
-  simMode = mode;
-  document.getElementById('mode-sim').classList.toggle('active', mode==='sim');
-  document.getElementById('mode-live').classList.toggle('active', mode==='live');
-  document.getElementById('mode-toggle').classList.toggle('live-active', mode==='live');
-  document.getElementById('api-panel').classList.toggle('show', mode==='live');
+  simMode = 'live'; // always live
   checkApiKeys();
 }
 
@@ -1452,14 +1443,6 @@ function checkApiKeys() {
   const txt = document.getElementById('api-status-text');
   const startBtn = document.getElementById('home-start-btn');
   const submitBtn = document.getElementById('api-submit-btn');
-  if (simMode === 'sim') {
-    if (dot) dot.className = 'dot off';
-    if (txt) txt.textContent = 'Simulation mode — no API keys needed';
-    if (startBtn) startBtn.disabled = false;
-    if (submitBtn) submitBtn.disabled = true;
-    return;
-  }
-  // Enable submit button when at least Claude key is provided
   const hasAnt = antVal.length > 0;
   const hasHf = hfVal.length > 0;
   if (submitBtn) submitBtn.disabled = !hasAnt;
@@ -1473,7 +1456,7 @@ function checkApiKeys() {
     if (startBtn) startBtn.disabled = true;
   } else {
     if (dot) dot.className = 'dot warn';
-    if (txt) txt.textContent = 'Enter at least your Anthropic (Claude) API key';
+    if (txt) txt.textContent = 'Enter your Anthropic (Claude) API key — required for all agent decisions';
     if (startBtn) startBtn.disabled = true;
   }
 }
@@ -1531,8 +1514,7 @@ function loadSavedKeys() {
     const hfInput = document.getElementById('api-higgsfield');
     if (antInput) antInput.value = savedAnt;
     if (hfInput && savedHf) hfInput.value = savedHf;
-    // Auto-switch to Live AI mode and commit
-    setMode('live');
+    // Commit saved keys
     apiKeys.anthropic = savedAnt;
     apiKeys.higgsfield = savedHf;
     apiKeysCommitted = true;
@@ -2125,9 +2107,9 @@ async function deployCurrentAgent() {
   // Generate pixel art profile picture from DNA
   agent.avatarDataUrl = generateAgentAvatar(agent);
 
-  // Generate bio from genome via Claude (or fallback)
+  // Generate bio from genome via Claude
   const btn = document.getElementById('deploy-btn');
-  if (simMode === 'live' && apiKeys.anthropic) {
+  if (apiKeys.anthropic) {
     btn.disabled = true;
     btn.textContent = `⏳ Analyzing ${agent.name}'s DNA…`;
   }
@@ -2208,8 +2190,8 @@ function startSimulation() {
   // Update mode badge
   const badge = document.getElementById('mode-badge');
   if (badge) {
-    badge.textContent = simMode === 'live' ? 'LIVE AI' : 'SIM';
-    badge.className = simMode === 'live' ? 'sim-mode-badge live' : 'sim-mode-badge sim';
+    badge.textContent = 'LIVE AI';
+    badge.className = 'sim-mode-badge live';
   }
   resetSim();
   goTo(2);
@@ -2468,7 +2450,7 @@ function _drainLlmQueue() {
 }
 
 async function llmCall(systemPrompt, userPrompt, agent) {
-  if (simMode !== 'live' || !apiKeys.anthropic) return null;
+  if (!apiKeys.anthropic) return null;
 
   // Wait for concurrency slot
   if (_inFlightCount >= MAX_CONCURRENT) {
@@ -2546,7 +2528,7 @@ async function llmCall(systemPrompt, userPrompt, agent) {
    through a dedicated Claude analysis pass.
 ══════════════════════════════════ */
 async function refineDesignPrompt(design) {
-  if (simMode !== 'live' || !apiKeys.anthropic) return design.prompt;
+  if (!apiKeys.anthropic) return design.prompt;
 
   const agent = agentStates.find(a => a.id === design.agentIdx) || agentStates[0];
 
@@ -2590,7 +2572,7 @@ Output ONLY the refined prompt. No quotes, no labels, no preamble.`;
 async function generateAgentBio(agent) {
   // Always produce a sim-mode fallback bio from the genome
   const fallback = buildFallbackBio(agent);
-  if (simMode !== 'live' || !apiKeys.anthropic) { agent.bio = fallback; return; }
+  if (!apiKeys.anthropic) { agent.bio = fallback; return; }
 
   const genome = agentGenomeStr(agent);
   const prompt = `Below is the raw DNA genome of a jewelry design AI agent. Write a short personality bio (3-4 sentences, ~60 words) in third person that captures who this agent IS. Include:
@@ -2682,21 +2664,23 @@ async function runLiveCrossPollination(cycleNum, afterBiosDelay) {
 
       // Agent A opens
       const openPrompt = cycleNum === 1
-        ? `This is cycle 1 — no prior data. Introduce your design direction for this cycle in 1-2 sentences. Reference your personality, style genome, and market instincts. Be specific about materials, forms, and strategy.`
-        : `Cycle ${cycleNum}. Review the intelligence reports from prior cycles. In 1-2 sentences, share your design direction — what you're keeping, what you're changing, and why. Reference specific data from prior cycle reports.`;
+        ? `This is cycle 1 — no prior data exists. Introduce your design direction to ${agentB.name} in 2-3 sentences. Be HIGHLY SPECIFIC: name exact metals (e.g. "18k rose gold", "950 platinum"), stones (e.g. "oval Ceylon sapphire", "old-mine-cut diamond"), techniques (e.g. "lost-wax casting", "micro-pavé", "hand-engraving"), and the customer you're designing for (e.g. "millennial bridal", "art collector", "everyday luxury"). Explain your strategic reasoning — why this direction given your genome DNA and instincts.`
+        : `Cycle ${cycleNum}. You've read the intelligence reports from prior cycles. In 2-3 sentences, share your design direction with ${agentB.name} — be specific about: (1) what WORKED in prior cycles and what you're keeping, (2) what FAILED and what you're changing, (3) the exact materials, forms, and production methods you're pursuing. Reference specific data: winner names, credit totals, trend signals, saturation warnings.`;
 
       const msgA = await llmCall(
-        `You are in a cross-pollination dialogue with ${agentB.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+        `You are ${agentA.name}, a jewelry designer in a creative cross-pollination dialogue with ${agentB.name}. Speak in first person, 2-3 sentences. Be highly specific about jewelry design — name exact metals, stones, techniques, settings, production methods, and target customers. Your dialogue should reveal your strategic thinking and design philosophy.`,
         openPrompt,
         agentA
       );
       const lineA = msgA || getFallbackLine(agentA, cycleNum, 'open');
 
       // Agent B responds (depends on A's message)
-      const replyPrompt = `Your partner ${agentA.name} said: "${lineA}". Respond in 1-2 sentences. React to their direction — agree, challenge, or build on it. Reference your own design instincts and genome.`;
+      const replyPrompt = `Your partner ${agentA.name} said: "${lineA}"
+
+Respond in 2-3 sentences. You must: (1) directly react to something specific they said — agree, challenge, or build on it, (2) share your own contrasting or complementary direction with equally specific materials, forms, and strategy, (3) identify a market opportunity or risk that their approach raises. Be concrete — name metals, stones, techniques, and customer segments.`;
 
       const msgB = await llmCall(
-        `You are in a cross-pollination dialogue with ${agentA.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+        `You are ${agentB.name}, a jewelry designer in a creative cross-pollination dialogue with ${agentA.name}. Speak in first person, 2-3 sentences. Be highly specific about jewelry design — name exact metals, stones, techniques, settings, production methods, and target customers. React directly to what your partner said.`,
         replyPrompt,
         agentB
       );
@@ -2798,7 +2782,7 @@ CRITICAL — your design must be PRODUCIBLE and SELLABLE:
 - Consider production volume — high manufacturability means designing for 100+ units. Low means one-of-a-kind.
 
 Output EXACTLY this JSON (no markdown, no backticks):
-{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[specific metals and stones that match your price point — e.g. '14K yellow gold with lab-grown sapphire' not just 'gold']","form":"[structural concept in 5-10 words]","production":"[how this gets made: casting, hand-fab, 3D-printed, electroformed, etc.]","targetCustomer":"[who buys this and why, in 8-15 words]","complexity":[1-10 integer],"estMargin":[40-90 integer]}`;
+{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[3-4 sentences: WHY this strategy and category. Reference specific intelligence: winner names, credit totals, trend signals, conversation excerpts, and genome traits. Explain the commercial logic.]","materials":"[SPECIFIC metals and stones that match your price point and production method — e.g. '14K yellow gold, bezel-set 1.2ct oval lab-grown sapphire, accent pavé VS1 diamonds' not just 'gold and sapphire']","form":"[structural concept in 8-15 words describing silhouette, proportions, and key design features]","production":"[specific production method: investment casting, hand-fabricated wire wrapping, 3D-printed resin to lost-wax, electroformed, die-struck, etc.]","targetCustomer":"[specific customer persona in 10-20 words — age, occasion, style, budget range]","complexity":[1-10 integer],"estMargin":[40-90 integer]}`;
 
       const blueprintResp = await llmCall(
         'You are making a strategic design decision. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
@@ -2872,12 +2856,15 @@ SCORING CRITERIA — be honest and calibrated:
 - Wearability (30-95): Comfort, durability, practical weight, secure settings, no snag points. Score LOW if this is unwearable art, HIGH if someone would wear it daily
 - Manufacturability (30-95): Can a bench jeweler or factory actually produce this? Score HIGH for clean castable geometry, standard setting types. Score LOW for impossible forms, materials that can't be combined, or techniques that don't exist
 
-For the image prompt — write a concise, vivid description for AI image generation (15 WORDS MAXIMUM):
-- Include: metal type, finish, key stone/gem, silhouette, and one mood word
-- Example: "Brushed platinum geometric ring, tension-set emerald, architectural, macro product photography"
+For the image prompt — write a vivid, technically specific description for AI image generation (20-30 WORDS):
+- Metal: exact type and finish (e.g. "hand-hammered 18k rose gold with satin finish", "rhodium-plated white gold")
+- Stone/gem: cut, color, setting type (e.g. "bezel-set cushion-cut Ceylon sapphire", "channel-set baguette diamonds")
+- Form: silhouette, key structural features (e.g. "split-shank cathedral mount", "articulated chain links")
+- Photography: "macro product photography" + lighting style (e.g. "butterfly lighting on dark slate")
+- Mood: one evocative word (e.g. "ethereal", "brutalist", "organic")
 
 Output EXACTLY this JSON (no markdown):
-{"aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"wearability":[30-95],"makeable":[30-95],"prompt":"[15 words max image prompt]"}`;
+{"aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"wearability":[30-95],"makeable":[30-95],"prompt":"[20-30 word image prompt]"}`;
 
       const assessResp = await llmCall(
         'You are assessing your own jewelry design and writing the final image prompt. Be calibrated in scores. Write a vivid, technically specific prompt. Output ONLY valid JSON.',
@@ -2895,23 +2882,37 @@ Output EXACTLY this JSON (no markdown):
       setAgentStatus(agent.id, 'Naming…');
 
       const imagePromptText = assessData?.prompt || `${blueprint.materials} ${blueprint.cat}, ${blueprint.form}`;
-      const namingPrompt = `You are a luxury jewelry naming specialist. Analyze this product image description and create a name for it.
+      const namingPrompt = `You are a luxury jewelry naming specialist working for a high-end maison. Analyze this product and create a collection name.
 
-IMAGE DESCRIPTION:
-${imagePromptText}
+IMAGE DESCRIPTION: ${imagePromptText}
 
 DESIGN DETAILS:
 - Category: ${blueprint.cat}
 - Materials: ${blueprint.materials}
 - Form: ${blueprint.form}
+- Production: ${blueprint.production || 'not specified'}
+- Target customer: ${blueprint.targetCustomer || 'luxury consumer'}
+- Strategy: ${blueprint.strategy}
 
-Create a 1-3 word luxury collection name that captures the VISUAL ESSENCE above. Maximum 3 words. Think iconic and concise — like "Serpenti", "Love Bracelet", or "Phantom Thread".
+Create a 1-3 word luxury collection name. Study how iconic houses name pieces:
+- Cartier: "Juste un Clou", "Trinity", "Panthère", "Clash"
+- Bulgari: "Serpenti", "B.zero1", "Divas' Dream"
+- Tiffany: "Bone Cuff", "HardWear", "Elsa Peretti Bean"
+- Van Cleef: "Alhambra", "Frivole", "Perlée"
+- David Yurman: "Cable", "Crossover", "Stax"
+
+Your name should:
+- Evoke the FORM, TEXTURE, or EMOTIONAL QUALITY of the piece — not just the materials
+- Be memorable, distinctive, and pronounceable
+- Work as a collection name (could apply to a family of related pieces)
+- NEVER use generic words like "Luxury", "Elegance", "Beautiful", "Golden"
+- NEVER just describe the materials (e.g. "Gold Ring" or "Diamond Pendant")
 ${usedNamesStr}
 Output EXACTLY this JSON (no markdown):
 {"name":"[1-3 word name ONLY]"}`;
 
       const nameResp = await llmCall(
-        'You name luxury jewelry based on visual descriptions. Output ONLY valid JSON.',
+        'You are a creative director at a luxury jewelry maison, specializing in naming collections. Your names are iconic, evocative, and never generic. Output ONLY valid JSON with a "name" field.',
         namingPrompt, agent
       );
 
@@ -2926,6 +2927,22 @@ Output EXACTLY this JSON (no markdown):
         designName = `${blueprint.materials || 'Gold'} ${blueprint.form || blueprint.cat}`;
       }
 
+      // ── Step 4: Prompt Refinement (optimize image prompt via Claude) ──
+      setAgentStatus(agent.id, 'Refining prompt…');
+
+      const rawImagePrompt = assessData?.prompt || `${blueprint.materials} ${blueprint.cat.toLowerCase()}, ${blueprint.form}, macro product photography`;
+      const refinedPrompt = await refineDesignPrompt({
+        name: designName,
+        cat: blueprint.cat,
+        strategy: blueprint.strategy,
+        aesthetic: parseInt(assessData?.aesthetic)||60,
+        novelty: parseInt(assessData?.novelty)||50,
+        profit: parseInt(assessData?.profit)||55,
+        prompt: rawImagePrompt,
+        agentIdx: agent.id,
+        agentName: agent.name,
+      });
+
       // Build the final design object
       const design = {
         name: designName,
@@ -2936,8 +2953,8 @@ Output EXACTLY this JSON (no markdown):
         profit:   Math.max(20, Math.min(98, parseInt(assessData?.profit)||55)),
         wearability: Math.max(20, Math.min(98, parseInt(assessData?.wearability)||55)),
         makeable: Math.max(20, Math.min(98, parseInt(assessData?.makeable)||60)),
-        prompt:   assessData?.prompt || `${blueprint.materials} ${blueprint.cat.toLowerCase()}, ${blueprint.form}, macro product photography`,
-        rawPrompt: assessData?.prompt || '',
+        prompt:   refinedPrompt || rawImagePrompt,
+        rawPrompt: rawImagePrompt,
         strategicReasoning: blueprint.reasoning,
         materials: blueprint.materials,
         formConcept: blueprint.form,
@@ -2966,7 +2983,7 @@ Output EXACTLY this JSON (no markdown):
 
   activeDesigns = designs;
   const totalDelay = delay + agentStates.length*300 + 400 + agentStates.length*400 + 200;
-  addLog(`All ${designs.length} designs submitted via 3-step Claude pipeline (${designs.length * 3} API calls). Pool locked.`, 'rs', totalDelay);
+  addLog(`All ${designs.length} designs submitted via 4-step Claude pipeline (${designs.length * 4} API calls: blueprint → assess → name → refine). Pool locked.`, 'rs', totalDelay);
   setProgress(60);
   return totalDelay + 400;
 }
@@ -2998,26 +3015,38 @@ async function runLiveVoting(cycleNum) {
   // All 6 voters are independent — run them all concurrently
   // The concurrency limiter in llmCall handles throttling to MAX_CONCURRENT
   const voteResults = await Promise.all(agentStates.map(async (voter, vi) => {
-    const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).
+    const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
+    const convMem = (voter.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
 
-The designs:
+    const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${selfIdx}).
+
+THE DESIGNS TO EVALUATE:
 ${designSummary}
 
-Your reputation is ${voter.reputation} → your vote weight multiplier is ${(0.7 + (voter.reputation / 100) * 0.6).toFixed(2)}x. Higher reputation = more influence on outcomes.
+YOUR REPUTATION: ${voter.reputation} → vote weight multiplier: ${(0.7 + (voter.reputation / 100) * 0.6).toFixed(2)}x
 
-Consider:
-- Your genome DNA: what aesthetic preferences, material biases, and market instincts does your genome tell you to value?
-- Your conversations this cycle: did any partner's ideas resonate with designs you see here?
-- Intelligence reports: which strategies and categories have been winning? Is the market shifting?
-- Your personality: are you drawn to novelty or proven formulas? Do you value craft or commercial potential?
+YOUR CONVERSATIONS THIS CYCLE:
+${convMem || 'No conversations recorded.'}
+
+EVALUATION FRAMEWORK — weigh each design across these dimensions based on YOUR genome:
+1. AESTHETIC QUALITY (weight by your genome's style preferences): Does the design match your taste? Consider form, proportion, material harmony, and visual impact.
+2. COMMERCIAL VIABILITY (weight by your marginSens genome): Can this realistically sell? Consider price point, target customer clarity, and margin potential.
+3. MANUFACTURABILITY (weight by your genome): Can this be physically produced? Castable geometry, standard settings, realistic material combinations.
+4. NOVELTY vs SAFETY (weight by your risk genome): Is it fresh enough to win, or is it too derivative? Your risk tolerance determines how much you reward innovation.
+5. STRATEGIC ALIGNMENT: Does this design ride an emerging trend or fight a saturated one? Reference intelligence reports.
+
+VOTING STRATEGY:
+- Concentrate votes on 2-3 designs you believe will win — don't spread too thin
+- Heavy conviction bets (4000-5000⬡ on your top pick) signal strong belief
+- Consider what OTHER agents will vote for — game theory matters
 
 Output EXACTLY this JSON (no markdown):
-{"reasoning":"[1-2 sentences: why you're voting the way you are, referencing your genome and data]","votes":[${activeDesigns.map((_,j)=>j===activeDesigns.findIndex(d=>d.agentIdx===vi)?'0':'integer').join(',')}]}
+{"reasoning":"[2-3 sentences: your specific analysis — which designs impressed you and why, referencing scores, materials, strategy, and your genome preferences]","votes":[${activeDesigns.map((_,j)=>j===selfIdx?'0':'integer').join(',')}]}
 
-The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 0 for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).`;
+The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 0 for your own design (index ${selfIdx}).`;
 
     const resp = await llmCall(
-      'You are deliberating on how to allocate votes. Think about your genome, conversations, and reports. Output ONLY valid JSON with "reasoning" and "votes" fields.',
+      `You are ${voter.name}, a jewelry design expert deliberating on vote allocation. Think deeply about your genome DNA, your conversations this cycle, intelligence reports, and each design's merits. Your votes should reflect your unique perspective and strategic thinking. Output ONLY valid JSON.`,
       votePrompt, voter
     );
 
@@ -3034,12 +3063,11 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
           votes = voteArr.map(v => rawSum > 0 ? Math.round(Math.max(0,v) / rawSum * 10000) : 0);
           const diff = 10000 - votes.reduce((a,b)=>a+b,0);
           if (diff !== 0) { const maxIdx = votes.indexOf(Math.max(...votes)); votes[maxIdx] += diff; }
-          const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
           if (selfIdx >= 0 && votes[selfIdx] > 0) {
-            const self = votes[selfIdx]; votes[selfIdx] = 0;
+            const selfV = votes[selfIdx]; votes[selfIdx] = 0;
             const others = votes.map((v,i)=>i===selfIdx?0:v);
             const otherSum = others.reduce((a,b)=>a+b,0);
-            if (otherSum > 0) votes = votes.map((v,i)=>i===selfIdx?0:v+Math.round(self*v/otherSum));
+            if (otherSum > 0) votes = votes.map((v,i)=>i===selfIdx?0:v+Math.round(selfV*v/otherSum));
             const fix2 = 10000 - votes.reduce((a,b)=>a+b,0);
             if (fix2 !== 0) { const mi = votes.reduce((best,v,i)=>i!==selfIdx&&v>votes[best]?i:best,selfIdx===0?1:0); votes[mi]+=fix2; }
           }
@@ -3048,7 +3076,6 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
     }
 
     if (!votes) {
-      const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
       votes = activeDesigns.map((d,i) => {
         if (i === selfIdx) return 0;
         return d.aesthetic * 2 + d.novelty + d.profit;
@@ -3132,13 +3159,15 @@ async function runLiveEvolution(cycleNum) {
 
   // ── Launch all 6 evolution calls + 1 trend call in parallel ──
   // All are independent — no agent's evolution depends on another's.
-  const trendPrompt = `Cycle ${cycleNum} of 3 completed. Results:
+  const trendPrompt = `Cycle ${cycleNum} of 3 completed. Full results:
 ${resultsSummary}
 
 ${priorContext}
 
-Generate a comprehensive trend analysis for the intelligence report. Output EXACTLY this JSON:
-{"emerging":["style1","style2","style3"],"declining":["style1","style2"],"saturation":"[which category/style is over-represented, e.g. 'Ring (50% of pool)']","treasury":"[recommended material+setting combination with highest combined aesthetic+profit]","velocityScore":[0-100 integer: how fast the top trend is moving],"fi":["[insight 1: specific data-driven observation about vote patterns and score correlations]","[insight 2: category saturation warning with specific percentages]","[insight 3: material/setting trend observation]","[insight 4: opportunity gap or micro-trend identification]","[insight 5: novelty premium or strategic recommendation]"]}`;
+Generate a comprehensive trend analysis for the intelligence report that agents will use to make decisions next cycle. Be HIGHLY SPECIFIC — reference exact design names, credit totals, material choices, and percentages.
+
+Output EXACTLY this JSON:
+{"emerging":["[specific style with evidence, e.g. 'organic sculptural (Root Form won 14,200⬡)']","[style2]","[style3]"],"declining":["[specific style with evidence, e.g. 'classic pavé halo (avg 6,100⬡, down from 8,400⬡ C1)']","[style2]"],"saturation":"[exact category breakdown with percentages, e.g. 'Ring at 67% (4 of 6 entries) — critical oversaturation']","treasury":"[specific material+setting+form recommendation for highest ROI, e.g. '18k rose gold, bezel-set oval sapphire, open-gallery cathedral mount']","velocityScore":[0-100: how fast trends are shifting — high = rapid disruption, low = stable consensus],"fi":["[insight 1: vote pattern analysis — which score dimension predicted credits? Include correlation direction]","[insight 2: category saturation with exact counts and percentages — which categories are opportunities?]","[insight 3: material and setting trend — what materials won and lost, with credit data]","[insight 4: strategy performance — exploit vs explore vs mutate, with average credits per strategy]","[insight 5: specific actionable recommendation for next cycle — what should agents do differently?]"]}`;
 
   // Fire trend analysis concurrently with agent evolution
   const trendPromise = llmCall(
@@ -3177,9 +3206,9 @@ Analyze these results deeply. Consider:
 - IMPORTANT: Traits marked with "PROVEN — shift cautiously" have strong cross-cycle correlation with success. DAMPEN changes to those traits.
 
 Output EXACTLY this JSON (no markdown):
-{"belief":"[one vivid sentence: what you learned, referencing specific data — scores, strategies, materials, and commercial factors]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10],"pricePoint":[integer -10 to +10],"manufacturability":[integer -10 to +10],"wearability":[integer -10 to +10],"trendSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
+{"belief":"[one vivid, specific sentence: what you learned — reference the winning design's name, materials, credit count, and what that teaches you about market preferences]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10],"pricePoint":[integer -10 to +10],"manufacturability":[integer -10 to +10],"wearability":[integer -10 to +10],"trendSens":[integer -10 to +10]},"trend":"[one specific sentence: the key market trend with evidence — name the winning category, materials, strategy, and what's emerging vs declining]"}
 
-Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strengths, but dont get complacent.' : isLoser ? 'You came LAST — something fundamental needs to change. What specifically failed and why?' : `You placed #${rank+1} — close but not enough. What specific adjustment would push you to #1?`}`;
+Context: ${isWinner ? 'You WON — your instincts were validated. Make SMALL reinforcing shifts (+1 to +3). Dont over-correct. What specific trait drove your success?' : isLoser ? 'You came LAST — something fundamental failed. Make BOLD shifts (+5 to +10 on key traits). Identify the exact mismatch: was it your materials? Category saturation? Aesthetic that the market rejected? Commercial viability?' : `You placed #${rank+1}. Make MODERATE shifts (+2 to +6). Study the gap between your design and the winner — what specific trait or decision separated you?`}`;
 
     const resp = await llmCall(
       'You are reflecting on your cycle performance. Think deeply about YOUR specific data — your genome, conversations, strategy, and results. Output ONLY valid JSON.',
@@ -3288,128 +3317,37 @@ const PHASE_SCRIPTS = [
       setProgress(5);
       addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`,'',100);
       const d = logAgentBios(250);
-
-      if (simMode === 'live' && apiKeys.anthropic) {
-        return await runLiveCrossPollination(1, d);
-      }
-      // Sim mode fallback
-      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', d);
-      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', d+500);
-      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', d+900);
-      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', d+1300);
-      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', d+1700);
-      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', d+2100);
-      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (d+2400+i*100)/speed); });
-      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', d+2900);
-      setProgress(20);
-      return d+3200;
+      return await runLiveCrossPollination(1, d);
     },
-    // Phase 1: Synthesis
+    // Phase 1: Synthesis + Design Generation (combined pipeline)
     async ()=>{
       setProgress(25);
-      if (simMode === 'live' && apiKeys.anthropic) {
-        return await runLiveSynthesis(1);
-      }
-      agentStates.forEach(a=>setAgentStatus(a.id,'Drafting blueprint…'));
-      addLog(`Synthesis phase: agents compile dialogues + personal genome into design blueprint.`,'',200);
-      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Platinum bezel oval · Negative space band · Complexity 6/10 · Est. margin: 66%`,'',500);
-      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>EXPLORE</b> · Earrings · Platinum geometric drop · Rose-cut accents · Complexity 5/10 · Est. margin: 71%`,'',900);
-      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLOIT</b> · Pendant · Rose gold pavé cascade · Sapphire + diamond · Complexity 8/10 · Est. margin: 68%`,'',1200);
-      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>EXPLORE</b> · Bracelet · Titanium x gold hex · Industrial · Complexity 9/10 · Est. margin: 48%`,'',1500);
-      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold pavé halo · Classic proportions · Complexity 5/10 · Est. margin: 85%`,'',1800);
-      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Blackened gold thorn band · Sculptural · Complexity 7/10 · Est. margin: 44%`,'',2100);
-      addLog(`All blueprints hashed. Validation gates passed: ✓ Feasibility  ✓ Novelty  ✓ Margin`, 'rs', 2600);
-      setProgress(40);
-      return 3000;
+      return await runLiveSynthesis(1);
     },
-    // Phase 2: Generation
+    // Phase 2: Generation (handled by synthesis pipeline)
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(1);
-      setProgress(45);
-      document.getElementById('designs-wrap').style.display='block';
-      activeDesigns = CYCLE_DESIGNS[0].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
-      addLog(`Image generation initiated across all 6 agents…`,'',100);
-      agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
-      activeDesigns.forEach((d,i)=>{
-        addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat}`,'ds', 300+i*500);
-        setTimeout(()=>renderDesignCard(d,i), (400+i*500)/speed);
-      });
-      addLog(`All 6 designs submitted. Pool locked. Voting begins.`,'rs', 3500);
-      setProgress(60);
-      return 4000;
+      return await runLiveGeneration(1);
     },
     // Phase 3: Voting
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(1);
-      setProgress(65);
-      agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting phase: each agent allocates 10,000 ⬡ across the blind pool.`,'',100);
-      const vm = VOTE_MATRICES[0];
-      vm.forEach((voterVotes, vi)=>{
-        const voter = agentStates[vi];
-        const top2 = voterVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
-        if(top2.length){
-          const msg = top2.map(x=>`"${activeDesigns[x.i].name}" ${x.v.toLocaleString()}⬡`).join(', ');
-          addLog(`<b>${voter.name}</b> → ${msg}`,'vt', 400+vi*500);
-        }
-      });
-      vm.forEach((voterVotes, vi)=>{
-        const repMult = 0.7 + ((agentStates[vi]?.reputation || 50) / 100) * 0.6;
-        voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += Math.round(creds * repMult); });
-      });
-      setTimeout(()=>{
-        activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
-        agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
-      }, 3500/speed);
-      addLog(`Voting complete. Credits tallied (reputation-weighted).`,'rs', 4200);
-      setProgress(80);
-      return 5000;
+      return await runLiveVoting(1);
     },
     // Phase 4: Evolution
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(1);
-      setProgress(85);
-      const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
-      const winner = sorted[0];
-      const loser = sorted[sorted.length-1];
-      addLog(`Ranking finalized. Applying reputation shifts…`,'',200);
-      setTimeout(()=>{
-        const wc = document.getElementById('dc-'+winner.idx);
-        if(wc){
-          wc.classList.add('winner-card');
-          const body = wc.querySelector('.dcard-body');
-          if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');
-        }
-      }, 300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Reputation +9. Treasury eligible.`,'rs', 500);
-      addLog(`📉 <b>${loser.agentName}</b> receives mutation pressure. Style genome shifts toward higher novelty.`,'',900);
-      addLog(`Trend insight: <b>Minimal/negative-space</b> aesthetic outperformed ornate by 2.4× in vote conversion.`,'rs',1300);
-      addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification.`,'',1700);
-      addLog(`<b>Forward Intelligence generated.</b> Cycle 1 report written to shared knowledge database.`,'rs',2100);
-      setProgress(100);
-      sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){ agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete'); }});
-      evolveAgentGenomes(1, sorted);
-      generateAndStoreReport(1, sorted);
-      return 2800;
+      return await runLiveEvolution(1);
     },
   ],
 
   // ── CYCLE 2 ──
   [
-    // Phase 0
+    // Phase 0: Cross-Pollination
     async ()=>{
       setProgress(5);
       const r1 = cycleReports[0];
-      const winnerName = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
-      const winnerAgent = r1 ? r1.winner.agentName : agentStates[1].name;
-      const fi = r1 ? r1.trendData.fi : [
-        'Minimal/negative-space outperformed ornate by 2.4× in vote conversion',
-        'Ring category over-saturated — agents should diversify',
-        'Platinum + bezel setting received highest combined scores',
-      ];
-      const emerging = r1 ? r1.trendData.emerging.join(' · ') : 'minimal · negative-space · platinum-bezel';
-      const saturation = r1 ? r1.trendData.saturation : 'Ring (50% of pool)';
-      const treasury = r1 ? r1.trendData.treasury : 'Platinum + bezel setting';
+      const emerging = r1 ? r1.trendData.emerging.join(' · ') : '—';
+      const saturation = r1 ? r1.trendData.saturation : '—';
+      const treasury = r1 ? r1.trendData.treasury : '—';
+      const fi = r1 ? r1.trendData.fi : [];
       const totalCredits = r1 ? r1.totalCredits.toLocaleString() : '—';
       const avgAes = r1 ? r1.avgAesthetic : '—';
 
@@ -3417,227 +3355,67 @@ const PHASE_SCRIPTS = [
       addLog(`<b>[KNOWLEDGE DATABASE — Cycle 1 Report]</b>`, 'rp', 400);
       addLog(`◆ Emerging: <b>${emerging}</b>`, 'rp', 600);
       addLog(`◆ Saturation: <b>${saturation}</b> · Treasury signal: <b>${treasury}</b>`, 'rp', 850);
-      addLog(`◆ ${fi[0]}`, 'rp', 1050);
-      addLog(`◆ ${fi[1]}`, 'rp', 1200);
-      addLog(`◆ ${fi[2]}`, 'rp', 1350);
+      fi.slice(0,3).forEach((f,i) => addLog(`◆ ${f}`, 'rp', 1050 + i*150));
       addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
 
       const d2 = logAgentBios(1700);
-      if (simMode === 'live' && apiKeys.anthropic) {
-        return await runLiveCrossPollination(2, d2);
-      }
-      // Sim mode fallback
-      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', d2);
-      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', d2+500);
-      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', d2+900);
-      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', d2+1300);
-      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', d2+1700);
-      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Blackened Gold Thorn Sculpt' : 'Blackened Gold Thorn Sculpt'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', d2+2100);
-      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', d2+2500);
-      setProgress(20);
-      return d2+2800;
+      return await runLiveCrossPollination(2, d2);
     },
-    // Phase 1
+    // Phase 1: Synthesis + Design Generation
     async ()=>{
       setProgress(25);
-      if (simMode === 'live' && apiKeys.anthropic) {
-        return await runLiveSynthesis(2);
-      }
-      agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
-      const r1 = cycleReports[0];
-      const winnerName = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
-      const winnerCat  = r1 ? r1.winner.cat  : 'Earrings';
-      const topStyle   = r1 ? r1.trendData.emerging[0] : 'minimal';
-      const satCat     = r1 ? r1.trendData.saturation  : 'Ring (50% of pool)';
-      const treasury   = r1 ? r1.trendData.treasury    : 'Platinum + bezel setting';
-      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Blackened Gold Thorn Sculpt' : 'Blackened Gold Thorn Sculpt';
-
-      addLog(`Synthesis: agents cross-reference Cycle 1 Intelligence Report + personal genome.`,'',200);
-      addLog(`<b>Report insight driving C2 blueprints:</b> Winner "${winnerName}" (${winnerCat}) · Top style: ${topStyle} · Saturation: ${satCat}`,'rp',400);
-      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum marquise · Cathedral negative-space · Exploiting "${topStyle}" trend from C1 report · Margin: 71%`,'',700);
-      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum bezel · Deep negative-space groove · C1 winner "${winnerName}" refinement · Margin: 74%`,'',1100);
-      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLOIT</b> · Pendant · Yellow gold sapphire canopy · Pivoted from saturated ring category per C1 data · Margin: 73%`,'',1500);
-      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>MUTATE</b> · Ring · Platinum/titanium arc · C1: high novelty underperformed alone — merging with ${topStyle} direction · Margin: 53%`,'',1800);
-      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold arch shank · Treasury signal: "${treasury}" · Margin: 88%`,'',2100);
-      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>MUTATE</b> · Bracelet · Silver organic bone form · C1: "${loserName}" failed on margin — this cycle prioritizing margin recovery · Margin: 50%`,'',2400);
-      addLog(`Blueprint validation: ⚠ Ring saturation at 67% (5 of 6 submissions) — C1 ring saturation flagged but agents are still converging. Incentive nudge issued.`,'',2900);
-      addLog(`All blueprints hashed and locked. C1 data successfully integrated into all agent decisions.`, 'rs', 3300);
-      setProgress(40);
-      return 3600;
+      return await runLiveSynthesis(2);
     },
-    // Phase 2
+    // Phase 2: Generation (handled by synthesis pipeline)
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(2);
-      setProgress(45);
-      document.getElementById('designs-wrap').style.display='block';
-      activeDesigns = CYCLE_DESIGNS[1].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
-      addLog(`Generation: 6 agents submit final designs.`,'',100);
-      agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
-      activeDesigns.forEach((d,i)=>{
-        addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · Strategy: ${d.strategy.toUpperCase()}`,'ds',300+i*500);
-        setTimeout(()=>renderDesignCard(d,i), (400+i*500)/speed);
-      });
-      addLog(`Pool locked. Voting begins.`,'rs',3500);
-      setProgress(60);
-      return 4000;
+      return await runLiveGeneration(2);
     },
-    // Phase 3
+    // Phase 3: Voting
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(2);
-      setProgress(65);
-      agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting phase. Agents apply C1 learned preferences.`,'',100);
-      const vm = VOTE_MATRICES[1];
-      vm.forEach((voterVotes, vi)=>{
-        const voter = agentStates[vi];
-        const top2 = voterVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
-        if(top2.length){
-          const msg = top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
-          addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500);
-        }
-      });
-      vm.forEach((vv,vi)=>{ const repMult=0.7+((agentStates[vi]?.reputation||50)/100)*0.6; vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=Math.round(c*repMult); }); });
-      setTimeout(()=>{
-        activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
-        agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
-      }, 3500/speed);
-      addLog(`Voting complete.`,'rs',4200);
-      setProgress(80);
-      return 5000;
+      return await runLiveVoting(2);
     },
-    // Phase 4
+    // Phase 4: Evolution
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(2);
-      setProgress(85);
-      const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
-      const winner=sorted[0]; const loser=sorted[sorted.length-1];
-      addLog(`Ranking applied. Evolution phase executing.`,'',200);
-      const r1ref = cycleReports[0];
-      const prevWinnerName = r1ref ? r1ref.winner.name : 'Floating Geometric Circle Drop';
-      setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`,'rs',500);
-      addLog(`2nd consecutive minimal win — C1: "${prevWinnerName}" · C2: "${winner.name}". Pattern confirmed; exploitation phase in full effect.`,'rp',700);
-      addLog(`⚠ <b>Saturation alert detected:</b> 67% of pool was Ring category. Incentive multipliers issued for Earrings, Pendants, Bracelets in Cycle 3.`,'',1100);
-      addLog(`Trend signal: <b>Architectural minimal</b> dominant for 2 consecutive cycles. Novelty gap widening — opportunity forming in organic/sculptural space.`,'rs',1600);
-      addLog(`<b>${loser.agentName}</b> mutation: high novelty designs consistently underperformed on margin — agent genome adjusting margin sensitivity upward.`,'',2100);
-      addLog(`<b>Cycle 2 Intelligence Report written.</b> Compiling alongside Cycle 1 data as 2-cycle trend baseline.`,'rs',2600);
-      setProgress(100);
-      sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete');}});
-      evolveAgentGenomes(2, sorted);
-      generateAndStoreReport(2, sorted);
-      return 3000;
+      return await runLiveEvolution(2);
     },
   ],
 
   // ── CYCLE 3 ──
   [
-    // Phase 0
+    // Phase 0: Cross-Pollination
     async ()=>{
       setProgress(5);
       const r1 = cycleReports[0];
       const r2 = cycleReports[1];
-      const w1 = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
-      const w2 = r2 ? r2.winner.name : 'Marquise Cathedral Arch';
-      const fi1last = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'High-novelty designs received more votes';
-      const sat2 = r2 ? r2.trendData.saturation : 'Ring (67% of pool)';
-      const fi2 = r2 ? r2.trendData.fi : ['Organic/sculptural space unexplored'];
+      const w1 = r1 ? r1.winner.name : '—';
+      const w2 = r2 ? r2.winner.name : '—';
+      const sat2 = r2 ? r2.trendData.saturation : '—';
+      const fi2 = r2 ? r2.trendData.fi : [];
       addLog(`Cycle 3 initiated. Loading Cycle 1 + Cycle 2 Intelligence Reports…`,'rp',100);
       addLog(`<b>[KNOWLEDGE DATABASE — 2-Cycle Compound Analysis]</b>`, 'rp', 400);
-      addLog(`◆ C1 winner: "${w1}" · C2 winner: "${w2}" — 2 consecutive minimal wins`, 'rp', 650);
-      addLog(`◆ C2 saturation: <b>${sat2}</b> — critical threshold exceeded`, 'rp', 850);
-      addLog(`◆ ${fi2[0]}`, 'rp', 1050);
-      addLog(`◆ ${fi2[1] || fi1last}`, 'rp', 1200);
-      addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
+      addLog(`◆ C1 winner: "${w1}" · C2 winner: "${w2}"`, 'rp', 650);
+      addLog(`◆ C2 saturation: <b>${sat2}</b>`, 'rp', 850);
+      fi2.slice(0,3).forEach((f,i) => addLog(`◆ ${f}`, 'rp', 1050 + i*150));
 
       const d3 = logAgentBios(1500);
-      if (simMode === 'live' && apiKeys.anthropic) {
-        return await runLiveCrossPollination(3, d3);
-      }
-      // Sim mode fallback
-      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Bezel Groove Negative-Space' : 'Bezel Groove Negative-Space'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', d3);
-      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', d3+500);
-      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', d3+1000);
-      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Gold Shard in Platinum — mixed metal with irregular natural form."`, 'cv', d3+1400);
-      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Champagne Pearl Cluster pendant, organic flowing form."`, 'cv', d3+1800);
-      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', d3+2200);
-      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', d3+2600);
-      setProgress(20);
-      return d3+2900;
+      return await runLiveCrossPollination(3, d3);
     },
-    // Phase 1
+    // Phase 1: Synthesis + Design Generation
     async ()=>{
       setProgress(25);
-      if (simMode === 'live' && apiKeys.anthropic) {
-        return await runLiveSynthesis(3);
-      }
-      agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
-      addLog(`Synthesis: 2-cycle compound data + genome informing blueprints.`,'',200);
-      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum emerald-cut · Extreme negative space cathedral · Cycle 2 winner refinement · Margin: 68%`,'',500);
-      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>MUTATE</b> · Pendant · Platinum arc · Explores pendant category gap · Retains minimal identity · Margin: 69%`,'',900);
-      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLORE</b> · Pendant · Yellow gold organic · Champagne pearl cluster · Return to romantic roots · Margin: 70%`,'',1300);
-      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>MUTATE</b> · Ring · Mixed metal organic shard · Industrial meets natural form · Novel direction · Margin: 53%`,'',1600);
-      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>EXPLORE</b> · Bracelet · 18k gold root form · Treasury bracelet incentive active (+1.4×) · Margin: 64%`,'',1900);
-      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold cushion · Proven margin lane · Consistency play · Margin: 89%`,'',2200);
-      addLog(`Ring saturation easing: 3 of 6 agents moved to pendants/bracelets. Treasury incentive active.`, 'rs', 2700);
-      addLog(`All blueprints hashed and locked.`, 'rs', 3000);
-      setProgress(40);
-      return 3300;
+      return await runLiveSynthesis(3);
     },
-    // Phase 2
+    // Phase 2: Generation (handled by synthesis pipeline)
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(3);
-      setProgress(45);
-      document.getElementById('designs-wrap').style.display='block';
-      activeDesigns = CYCLE_DESIGNS[2].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
-      addLog(`Generation phase. Highest design diversity in 3 cycles.`,'',100);
-      agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
-      activeDesigns.forEach((d,i)=>{
-        addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · ${d.strategy.toUpperCase()}`,'ds',300+i*500);
-        setTimeout(()=>renderDesignCard(d,i),(400+i*500)/speed);
-      });
-      addLog(`Pool locked. Most diverse cycle pool yet.`,'rs',3500);
-      setProgress(60);
-      return 4000;
+      return await runLiveGeneration(3);
     },
-    // Phase 3
+    // Phase 3: Voting
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(3);
-      setProgress(65);
-      agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting: agents apply 2-cycle learned preferences.`,'',100);
-      const vm=VOTE_MATRICES[2];
-      vm.forEach((voterVotes,vi)=>{
-        const voter=agentStates[vi];
-        const top2=voterVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
-        if(top2.length){ const msg=top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
-        addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500); }
-      });
-      vm.forEach((vv,vi)=>{ const repMult=0.7+((agentStates[vi]?.reputation||50)/100)*0.6; vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=Math.round(c*repMult); }); });
-      setTimeout(()=>{
-        activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
-        agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
-      },3500/speed);
-      addLog(`Voting complete.`,'rs',5000);
-      setProgress(80);
-      return 5500;
+      return await runLiveVoting(3);
     },
-    // Phase 4
+    // Phase 4: Evolution
     async ()=>{
-      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(3);
-      setProgress(85);
-      const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
-      const winner=sorted[0];
-      addLog(`Ranking applied. Epoch-level evolution processing.`,'',200);
-      setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Epoch breakout design.`,'rs',500);
-      addLog(`<b>Epoch conclusion:</b> 3-cycle trend lifecycle complete.`,'rs',1000);
-      addLog(`Epoch complete. Full 3-cycle intelligence archive compiled.`,'rs',2000);
-      setProgress(100);
-      sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?12:rank===1?5:rank===2?2:-4)); setAgentStatus(agent.id,rank===0?'🏆 Epoch Winner':'Epoch complete');}});
-      evolveAgentGenomes(3, sorted);
-      generateAndStoreReport(3, sorted);
-      document.getElementById('nav-epoch-txt').textContent = '3 / 3'; (function(){const ef=document.getElementById('nav-epoch-fill'); if(ef) ef.style.width='100%';})();
-      return 2800;
+      return await runLiveEvolution(3);
     },
   ],
 ];
@@ -4066,7 +3844,7 @@ function pct(v, tot) { return tot ? Math.round(v/tot*100) : 0; }
    REPORT GENERATION
 ══════════════════════════════════ */
 function generateAndStoreReport(cycleNum, sortedDesigns) {
-  const voteMatrix = (simMode === 'live' && window._liveVoteMatrix) ? window._liveVoteMatrix : VOTE_MATRICES[cycleNum-1];
+  const voteMatrix = window._liveVoteMatrix || VOTE_MATRICES[cycleNum-1];
   const designs = activeDesigns.map((d,i)=>({
     ...d,
     rank: sortedDesigns.findIndex(s=>s.idx===i)+1,
@@ -4153,7 +3931,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
 
   // ── Trend narratives: Claude-generated in live mode, fallback in sim mode ──
   let trendData;
-  if (simMode === 'live' && window._liveTrend) {
+  if (window._liveTrend) {
     // Use Claude-generated trend analysis from runLiveEvolution
     const lt = window._liveTrend;
     trendData = {
