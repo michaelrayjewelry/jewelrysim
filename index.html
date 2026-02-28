@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JEWELFORGE — 3-Cycle Intelligence Engine</title>
+<title>JEWELFORGE — 5-Cycle Intelligence Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <script>window.jspdf||document.write('<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" crossorigin="anonymous"><\/script>')</script>
@@ -870,7 +870,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div class="eyebrow">AI-Powered Jewelry Design Arena</div>
     <h1 class="h1">Welcome to <em>JewelForge</em></h1>
     <div class="rule" style="margin:1rem auto 1.5rem"></div>
-    <p class="sub">6 AI agents compete across 3 cycles to design, name, and evolve luxury jewelry. Each agent has a unique genome, personality, and strategy — shaped by cross-pollination dialogues and real-time market intelligence.</p>
+    <p class="sub">10 AI agents compete across 5 cycles to design, name, and evolve luxury jewelry. Each agent has a unique genome, personality, and strategy — shaped by cross-pollination dialogues and real-time market intelligence.</p>
   </div>
 
   <div class="home-steps">
@@ -882,7 +882,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div class="home-step">
       <div class="hs-num">2</div>
       <div class="hs-title">Simulate</div>
-      <div class="hs-desc">Run 3 cycles of design, voting, and evolution</div>
+      <div class="hs-desc">Run 5 cycles of design, voting, and evolution</div>
     </div>
     <div class="home-step">
       <div class="hs-num">3</div>
@@ -1025,7 +1025,7 @@ function doPost(e) {
     <button class="btn btn-primary" id="home-start-btn" onclick="startFromHome()">Begin Agent Configuration →</button>
     <button class="btn btn-ghost autopilot-btn" id="autopilot-btn" onclick="runAutopilot()" disabled>⚡ Autopilot — Generate All & Run</button>
   </div>
-  <div class="home-version">JewelForge <span>v2.0</span> — 3-Cycle Intelligence Engine</div>
+  <div class="home-version">JewelForge <span>v2.0</span> — 5-Cycle Intelligence Engine</div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1033,7 +1033,7 @@ function doPost(e) {
 ══════════════════════════════════════ -->
 <div class="screen" id="screen-1">
   <div style="text-align:center;margin-bottom:.5rem">
-    <div class="eyebrow" id="agent-counter" style="color:var(--gold)">Agent 1 of 6 &nbsp;<span id="agent-emoji">🎯</span></div>
+    <div class="eyebrow" id="agent-counter" style="color:var(--gold)">Agent 1 of 10 &nbsp;<span id="agent-emoji">🎯</span></div>
   </div>
   <h1 class="h1" style="text-align:center" id="builder-title">Forge your <em>jewelry mind.</em></h1>
   <div class="rule" style="margin:1rem auto 1rem"></div>
@@ -1135,7 +1135,7 @@ function doPost(e) {
   <div class="sim-topbar">
     <div>
       <div class="eyebrow">Cycle Simulator</div>
-      <h2 class="h1">Cycle <em id="sim-cycle-num">01</em> &nbsp;<span style="font-family:'Rajdhani',sans-serif;font-size:1rem;color:var(--faint)">of 3</span><span class="sim-mode-badge sim" id="mode-badge">SIM</span></h2>
+      <h2 class="h1">Cycle <em id="sim-cycle-num">01</em> &nbsp;<span style="font-family:'Rajdhani',sans-serif;font-size:1rem;color:var(--faint)">of 5</span><span class="sim-mode-badge sim" id="mode-badge">SIM</span></h2>
     </div>
     <div style="text-align:right">
       <div style="font-size:.58rem;letter-spacing:.25em;color:var(--faint);text-transform:uppercase;margin-bottom:.4rem">Epoch Progress</div>
@@ -1145,6 +1145,10 @@ function doPost(e) {
         <div class="ci-dot" id="cid-2">C2</div>
         <div style="width:20px;height:1px;background:var(--faint)"></div>
         <div class="ci-dot" id="cid-3">C3</div>
+        <div style="width:20px;height:1px;background:var(--faint)"></div>
+        <div class="ci-dot" id="cid-4">C4</div>
+        <div style="width:20px;height:1px;background:var(--faint)"></div>
+        <div class="ci-dot" id="cid-5">C5</div>
       </div>
     </div>
   </div>
@@ -1251,7 +1255,7 @@ let agentStates = [];
 let activeDesigns = [];
 let configuredAgents = [];
 let currentAgentNum = 1;
-const AGENT_EMOJIS = ['🎯','🌙','✨','🔩','💛','🌿'];
+const AGENT_EMOJIS = ['🎯','🌙','✨','🔩','💛','🌿','🔮','🪶','🌀','💠'];
 
 /* ══════════════════════════════════
    PIXEL ART PROFILE PICTURE GENERATOR
@@ -1716,23 +1720,23 @@ async function runAutopilot() {
   speed = 5;
 
   try {
-    // Phase 1: Navigate to builder and auto-generate + deploy all 6 agents
+    // Phase 1: Navigate to builder and auto-generate + deploy all 10 agents
     goTo(1);
     currentAgentNum = 1;
     configuredAgents = [];
 
-    for (let i = 0; i < 6; i++) {
-      if (btn) btn.textContent = `⚡ Generating Agent ${i + 1}/6…`;
+    for (let i = 0; i < 10; i++) {
+      if (btn) btn.textContent = `⚡ Generating Agent ${i + 1}/10…`;
       await autoGen();
       await deployCurrentAgent();
       // Small delay between agents to let UI update
       await new Promise(r => setTimeout(r, 200));
     }
 
-    // startSimulation() was called by deployCurrentAgent when agent 6 was deployed
-    // Now we're on screen 2 (simulator). Run all 3 cycles.
+    // startSimulation() was called by deployCurrentAgent when agent 10 was deployed
+    // Now we're on screen 2 (simulator). Run all 5 cycles.
 
-    for (let cycle = 1; cycle <= 3; cycle++) {
+    for (let cycle = 1; cycle <= 5; cycle++) {
       if (btn) btn.textContent = `⚡ Cycle ${cycle} — Running Phases…`;
 
       // Run all 5 phases for this cycle
@@ -1749,7 +1753,7 @@ async function runAutopilot() {
       await new Promise(r => setTimeout(r, 500));
 
       // Advance to next cycle or finish
-      if (cycle < 3) {
+      if (cycle < 5) {
         currentCycle++;
         resetSim();
         const ccPanel = document.getElementById('cc-panel');
@@ -1759,11 +1763,11 @@ async function runAutopilot() {
       }
     }
 
-    // All 3 cycles complete — go to reports
+    // All 5 cycles complete — go to reports
     if (btn) btn.textContent = '⚡ Autopilot Complete ✓';
     await new Promise(r => setTimeout(r, 500));
     goTo(3);
-    viewReport(3);
+    viewReport(5);
 
   } catch (e) {
     console.error('Autopilot error:', e);
@@ -2116,7 +2120,7 @@ async function uploadReportToDrive(report, cycleNum) {
   }
 }
 
-// Auto-upload epoch archive (all 3 cycles) to Google Drive
+// Auto-upload epoch archive (all 5 cycles) to Google Drive
 async function uploadEpochArchiveToDrive() {
   if (!gdriveState.connected || !gdriveState.webAppUrl) return;
   if (cycleReports.length < 3) return;
@@ -2177,7 +2181,7 @@ async function uploadPdfReportToDrive(report, cycleNum) {
   }
 }
 
-// Auto-upload full epoch PDF archive to Google Drive (all 3 cycles)
+// Auto-upload full epoch PDF archive to Google Drive (all 5 cycles)
 async function uploadPdfEpochArchiveToDrive() {
   if (!gdriveState.connected || !gdriveState.webAppUrl) return;
   if (cycleReports.length < 3) return;
@@ -2567,10 +2571,12 @@ function priorReportCtx(agentIdx) {
   return ctx;
 }
 
-// 3 cycles of pre-defined designs with narrative coherence:
+// 5 cycles of pre-defined designs with narrative coherence:
 // C1 winner: Agent 1 "Floating Geometric Circle Drop" — minimal wins
 // C2 winner: Agent 0 "Marquise Cathedral Arch" — exploits C1 trend
 // C3 winner: Agent 5 "Root & Branch Gold Sculpture" — organic emerges as minimal saturates
+// C4 winner: Agent 6 "Amethyst Geode Statement Cuff" — crystal-organic fusion peaks
+// C5 winner: Agent 2 "Golden Canopy Earring Suite" — refined heritage-organic synthesis wins epoch
 const CYCLE_DESIGNS = [
   [ // CYCLE 1
     { name:'Platinum Oval Bezel Negative-Space',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
@@ -2585,6 +2591,14 @@ const CYCLE_DESIGNS = [
       prompt:'14k white gold engagement ring, 1.8ct round brilliant center stone, classic micro-pavé halo, cathedral shank, bridal photography, pure white seamless background, soft glamour lighting, commercial grade' },
     { name:'Blackened Gold Thorn Sculpt',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
       prompt:'18k blackened gold ring, sculptural thorn motif band, avant-garde wearable art, matte finish with high-polish accent edges, editorial photography, deep charcoal background, single dramatic light source' },
+    { name:'Amethyst Crystal Point Ring',       cat:'Ring',     emoji:'🔮', agentIdx:6, strategy:'explore', aesthetic:74, novelty:76, profit:55,
+      prompt:'18k rose gold ring, raw amethyst crystal point setting, mystical aesthetic, ethereal jewelry photography, purple-toned background, soft magical lighting' },
+    { name:'Feather Quill Drop Earring',       cat:'Earrings', emoji:'🪶', agentIdx:7, strategy:'explore', aesthetic:72, novelty:71, profit:60,
+      prompt:'Sterling silver feather quill drop earrings, delicate barb texture, lightweight movement design, editorial jewelry photography, soft white background, natural lighting' },
+    { name:'Spiral Kinetic Pendant',           cat:'Pendant',  emoji:'🌀', agentIdx:8, strategy:'mutate', aesthetic:70, novelty:85, profit:48,
+      prompt:'18k white gold kinetic spiral pendant, rotating inner element, contemporary art jewelry, movement-based design, studio photography, dark background, dramatic lighting' },
+    { name:'Faceted Prism Cuff',              cat:'Bracelet', emoji:'💠', agentIdx:9, strategy:'explore', aesthetic:69, novelty:74, profit:58,
+      prompt:'Sterling silver faceted prism cuff bracelet, geometric crystal-inspired surfaces, precision-cut angles, modern jewelry photography, neutral background, sharp lighting' },
   ],
   [ // CYCLE 2 — agents reference C1 report, minimal trend exploited
     { name:'Marquise Cathedral Arch',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
@@ -2599,6 +2613,14 @@ const CYCLE_DESIGNS = [
       prompt:'14k white gold ring, 1.5ct oval diamond, architectural open-shank channel setting, market-optimized proportions, bridal editorial photography, white seamless background, soft box lighting, commercial clarity' },
     { name:'Silver Bone-Form Sculptural',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
       prompt:'Sterling silver sculptural bracelet, bone-form organic link structure, oxidized blackened detail in recesses, avant-garde wearable sculpture, editorial fashion photography, high-contrast dark background, fashion lighting' },
+    { name:'Moonstone Minimal Bezel Set',     cat:'Ring',     emoji:'🔮', agentIdx:6, strategy:'exploit', aesthetic:78, novelty:65, profit:70,
+      prompt:'18k white gold ring, cabochon moonstone bezel setting, minimal band with mystical stone, contemporary jewelry, soft blue-toned background, ethereal lighting' },
+    { name:'Platinum Quill Ear Cuff',         cat:'Earrings', emoji:'🪶', agentIdx:7, strategy:'mutate', aesthetic:75, novelty:72, profit:63,
+      prompt:'Platinum ear cuff, feather quill silhouette, minimal negative-space design inspired by C1 trends, editorial jewelry photography, gray background, precise lighting' },
+    { name:'Double Helix Kinetic Ring',       cat:'Ring',     emoji:'🌀', agentIdx:8, strategy:'explore', aesthetic:73, novelty:90, profit:50,
+      prompt:'18k rose gold kinetic ring, double helix rotating band mechanism, sculptural movement jewelry, art photography, dark studio, dramatic single light' },
+    { name:'Prismatic Bar Necklace',          cat:'Pendant',  emoji:'💠', agentIdx:9, strategy:'exploit', aesthetic:76, novelty:60, profit:72,
+      prompt:'Sterling silver prismatic bar pendant necklace, geometric faceted surface, minimal chain, contemporary fine jewelry, white background, clean studio lighting' },
   ],
   [ // CYCLE 3 — minimal saturation detected, organic breakout emerges
     { name:'Emerald-Cut Double Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
@@ -2609,22 +2631,78 @@ const CYCLE_DESIGNS = [
       prompt:'18k yellow gold organic pendant, irregular champagne pearl and diamond cluster, sculptural flowing natural form, wearable art, high jewelry campaign, dark forest-green velvet background, natural diffuse lighting' },
     { name:'Gold Shard in Platinum Band',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
       prompt:'Mixed metal ring, 18k yellow gold organic shard set into platinum band, irregular natural geometry, textured hammer surfaces, art jewelry photography, raw concrete background, natural side lighting' },
-    { name:'Root & Branch Gold Sculpture',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
-      prompt:'18k yellow gold sculptural bracelet, root and branch organic form, champagne diamond accents at nodes, wearable sculpture, luxury editorial photography, warm earth-tone linen background, natural window light, fine jewelry' },
     { name:'Cushion Diamond Minimalist Shank',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
       prompt:'14k white gold ring, perfectly proportioned 1.8ct cushion diamond, clean minimalist shank, commercial jewelry photography, white background, ring perfectly in focus, soft box lighting, market-optimized render' },
+    { name:'Root & Branch Gold Sculpture',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
+      prompt:'18k yellow gold sculptural bracelet, root and branch organic form, champagne diamond accents at nodes, wearable sculpture, luxury editorial photography, warm earth-tone linen background, natural window light, fine jewelry' },
+    { name:'Amethyst Geode Cocktail Ring',       cat:'Ring',     emoji:'🔮', agentIdx:6, strategy:'explore', aesthetic:82, novelty:80, profit:60,
+      prompt:'18k yellow gold cocktail ring, raw amethyst geode slice setting, organic crystal meets sculptural gold, mystic jewelry, dark purple velvet background, dramatic accent lighting' },
+    { name:'Feather Cascade Ear Thread',       cat:'Earrings', emoji:'🪶', agentIdx:7, strategy:'explore', aesthetic:79, novelty:77, profit:62,
+      prompt:'18k gold ear thread earrings, cascading feather motif, organic lightweight movement, fine jewelry editorial, warm neutral background, natural diffuse lighting' },
+    { name:'Orbital Motion Bracelet',           cat:'Bracelet', emoji:'🌀', agentIdx:8, strategy:'mutate', aesthetic:77, novelty:86, profit:53,
+      prompt:'18k white gold orbital bracelet, rotating sphere elements on curved track, kinetic wearable sculpture, contemporary art jewelry, dark background, dramatic spotlighting' },
+    { name:'Crystalline Organic Pendant',       cat:'Pendant',  emoji:'💠', agentIdx:9, strategy:'mutate', aesthetic:80, novelty:78, profit:65,
+      prompt:'Sterling silver pendant, faceted crystal form with organic vine detail, hybrid geometric-natural design, editorial jewelry, earth-tone background, natural window light' },
+  ],
+  [ // CYCLE 4 — organic matures, crystal-organic fusion peaks
+    { name:'Negative-Space Vine Ring',          cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'mutate', aesthetic:82, novelty:78, profit:70,
+      prompt:'Platinum ring, vine-form negative-space band with diamond accent, organic-architectural hybrid, luxury editorial, dark background, precise lighting' },
+    { name:'Organic Arc Statement Earring',    cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:84, novelty:80, profit:69,
+      prompt:'Platinum sculptural earrings, organic arc form with floating diamond, nature-meets-architecture, editorial jewelry photography, soft gradient background' },
+    { name:'Heritage Leaf Pendant Suite',      cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:86, novelty:68, profit:78,
+      prompt:'18k yellow gold pendant, heritage leaf motif with modern organic curves, sapphire accent, luxury campaign, dark velvet background, warm lighting' },
+    { name:'Rust-Form Titanium Cuff',          cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:75, novelty:92, profit:52,
+      prompt:'Titanium and gold cuff bracelet, rust-form organic texture, industrial nature hybrid, art jewelry photography, concrete background, raw natural lighting' },
+    { name:'Emerald Cluster Ring',              cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:81, novelty:55, profit:90,
+      prompt:'14k white gold ring, emerald and diamond cluster, market-optimized organic design, bridal editorial, white background, soft commercial lighting' },
+    { name:'Woven Gold Root Bracelet',         cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'exploit', aesthetic:87, novelty:75, profit:72,
+      prompt:'18k yellow gold bracelet, woven root-form organic links, champagne diamond clusters, refined nature sculpture, luxury editorial, linen background' },
+    { name:'Amethyst Geode Statement Cuff',    cat:'Bracelet', emoji:'🔮', agentIdx:6, strategy:'explore', aesthetic:90, novelty:88, profit:65,
+      prompt:'18k rose gold cuff bracelet, raw amethyst geode centerpiece, crystalline organic gold tendrils, mystical luxury, dark purple velvet background, dramatic lighting' },
+    { name:'Gossamer Wing Ear Climber',        cat:'Earrings', emoji:'🪶', agentIdx:7, strategy:'mutate', aesthetic:83, novelty:79, profit:66,
+      prompt:'18k white gold ear climber, gossamer wing organic form, micro-diamond dew drops, ethereal lightweight design, editorial, soft natural lighting' },
+    { name:'Gyroscopic Pearl Ring',            cat:'Ring',     emoji:'🌀', agentIdx:8, strategy:'explore', aesthetic:78, novelty:88, profit:55,
+      prompt:'18k gold ring, gyroscopic rotating pearl element, kinetic organic frame, contemporary art jewelry, dark studio, dramatic spotlight' },
+    { name:'Crystal Garden Pendant',           cat:'Pendant',  emoji:'💠', agentIdx:9, strategy:'exploit', aesthetic:82, novelty:70, profit:74,
+      prompt:'Sterling silver pendant, crystal garden cluster with gold vine accents, geometric-organic hybrid, fine jewelry editorial, sage green background, natural lighting' },
+  ],
+  [ // CYCLE 5 — final cycle, refined synthesis and epoch-defining designs
+    { name:'Cathedral Garden Ring',             cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'mutate', aesthetic:86, novelty:76, profit:74,
+      prompt:'Platinum ring, cathedral arch setting with organic vine tendrils, diamond center stone, architecture-nature synthesis, luxury editorial, dark background' },
+    { name:'Floating Seed Pod Earrings',       cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:70,
+      prompt:'Platinum earrings, floating seed pod organic forms, minimal negative-space, rose-cut diamond accents, contemporary editorial, gradient background' },
+    { name:'Golden Canopy Earring Suite',       cat:'Earrings', emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:92, novelty:78, profit:80,
+      prompt:'18k yellow gold earring suite, golden canopy organic forms, sapphire and diamond accents, heritage-organic synthesis, luxury campaign, dark velvet, warm lighting' },
+    { name:'Metamorphic Metal Band',           cat:'Ring',     emoji:'🔷', agentIdx:3, strategy:'mutate', aesthetic:80, novelty:90, profit:58,
+      prompt:'Mixed platinum and gold ring, metamorphic texture band, industrial-organic final evolution, art jewelry, concrete background, dramatic lighting' },
+    { name:'Rose Garden Halo Ring',            cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:83, novelty:58, profit:91,
+      prompt:'14k rose gold ring, rose garden halo setting, organic-commercial sweet spot, bridal editorial, white background, soft glamour lighting' },
+    { name:'Ancient Grove Gold Necklace',      cat:'Pendant',  emoji:'🌿', agentIdx:5, strategy:'exploit', aesthetic:89, novelty:80, profit:75,
+      prompt:'18k yellow gold statement necklace, ancient grove sculptural form, champagne diamonds, wearable nature art, luxury editorial, earth-tone linen background' },
+    { name:'Crystal Bower Statement Ring',     cat:'Ring',     emoji:'🔮', agentIdx:6, strategy:'exploit', aesthetic:87, novelty:82, profit:71,
+      prompt:'18k gold ring, crystal bower setting with amethyst and diamond, mystic-organic refined aesthetic, high jewelry photography, purple-gold background' },
+    { name:'Zephyr Chain Necklace',            cat:'Pendant',  emoji:'🪶', agentIdx:7, strategy:'exploit', aesthetic:84, novelty:74, profit:73,
+      prompt:'18k white gold chain necklace, zephyr wind-form links, ethereal lightness, fine jewelry campaign, soft white background, natural diffuse lighting' },
+    { name:'Perpetual Motion Earrings',        cat:'Earrings', emoji:'🌀', agentIdx:8, strategy:'mutate', aesthetic:81, novelty:88, profit:60,
+      prompt:'18k gold kinetic earrings, perpetual motion pendulum elements, sculptural movement art, editorial jewelry, dark background, dramatic lighting' },
+    { name:'Prismatic Flora Bracelet',         cat:'Bracelet', emoji:'💠', agentIdx:9, strategy:'exploit', aesthetic:84, novelty:75, profit:76,
+      prompt:'18k gold bracelet, prismatic faceted links with organic floral accents, geometric-nature synthesis, luxury editorial, sage background, natural lighting' },
   ],
 ];
 
 // Voting data: who gets how many credits from whom per cycle
-// [voter_agentIdx][design_idx] = credits
+// [voter_agentIdx][design_idx] = credits — each row sums to 10000
 const VOTE_MATRICES = [
-  // C1: Floating Geometric Circle Drop (idx 1) wins — each row sums to 10000
-  [[0,4200,2100,800,1200,1700],[4800,0,2000,600,1400,1200],[3200,3800,0,500,2100,400],[3100,3600,2200,0,800,300],[2800,3100,2800,300,0,1000],[3000,3800,1900,400,900,0]],
-  // C2: Marquise Cathedral Arch (idx 0) wins — each row sums to 10000
-  [[0,3600,2800,1100,2500,0],[5100,0,1900,700,2300,0],[4200,1800,0,900,3100,0],[3800,2400,1600,0,2200,0],[5100,2100,2300,500,0,0],[2500,2900,2100,600,1900,0]],
-  // C3: Root & Branch Gold Sculpture (idx 4) wins — each row sums to 10000
-  [[1700,1500,2000,1000,3200,600],[1600,1400,2000,800,3700,500],[1400,1700,1300,700,4300,600],[2200,1400,1800,1000,3200,400],[2400,2000,3200,800,0,1600],[1400,1200,1500,700,5200,0]],
+  // C1: Floating Geometric Circle Drop (idx 1) wins
+  [[0,2800,1200,500,800,1000,800,900,1100,900],[3200,0,1400,400,900,800,700,800,1000,800],[2200,2600,0,400,1400,300,600,700,900,900],[2100,2400,1400,0,600,200,700,800,1000,800],[1800,2100,1800,200,0,700,600,700,1200,900],[2000,2600,1200,300,600,0,700,700,1000,900],[1900,2400,1100,400,700,500,0,800,1200,1000],[2000,2300,1200,500,800,600,700,0,1000,900],[1800,2200,1300,400,700,500,800,900,0,1400],[1900,2500,1100,400,800,600,700,700,1300,0]],
+  // C2: Marquise Cathedral Arch (idx 0) wins
+  [[0,2200,1800,700,1600,0,800,700,1200,1000],[3400,0,1200,500,1500,0,600,700,1200,900],[2800,1200,0,600,2000,0,700,600,1200,900],[2500,1600,1000,0,1400,0,800,700,1100,900],[3400,1400,1500,300,0,0,700,600,1200,900],[1700,1900,1400,400,1200,0,800,700,1000,900],[2800,1300,1100,500,1500,0,0,700,1200,900],[2600,1400,1200,600,1400,0,700,0,1200,900],[2800,1200,1100,500,1500,0,700,700,0,1500],[2500,1500,1300,600,1400,0,700,600,1400,0]],
+  // C3: Root & Branch Gold Sculpture (idx 5) wins
+  [[1100,1000,1300,700,400,2200,1000,600,900,800],[1000,900,1300,500,300,2500,900,600,1100,900],[900,1100,800,500,400,2900,800,600,1100,900],[1400,900,1200,600,300,2200,900,500,1100,900],[1500,1300,2100,500,0,1100,800,600,1200,900],[900,800,1000,500,300,0,3500,800,1200,1000],[1000,900,1100,500,400,2400,0,800,1100,1800],[1100,1000,1200,500,400,2300,900,0,1100,1500],[1000,900,1100,500,400,2400,1000,700,0,1500],[1100,1000,1200,500,400,2200,1400,700,1500,0]],
+  // C4: Amethyst Geode Statement Cuff (idx 6) wins
+  [[1000,900,1100,600,500,1200,0,800,1400,1000],[900,800,1000,500,400,1100,3200,700,1300,1000],[800,900,900,500,400,1100,3200,600,1200,1000],[1000,800,1000,600,400,1000,3000,700,1200,1000],[900,800,1100,500,0,1100,3100,700,1300,1000],[900,800,1000,500,400,1000,3200,700,1200,1000],[800,700,900,500,400,1100,0,800,4000,1500],[900,800,1100,500,400,1100,3000,0,1200,1000],[800,700,1000,500,400,1000,3400,700,0,1500],[900,800,1000,500,400,1100,3200,700,1400,0]],
+  // C5: Golden Canopy Earring Suite (idx 2) wins
+  [[1100,1000,0,600,700,1200,1100,1000,1300,2000],[1000,900,3200,500,600,1100,900,700,1200,900],[900,800,0,500,500,1000,3500,700,1200,900],[1100,900,3000,600,500,1000,1000,700,1200,1000],[1000,800,3200,500,0,1000,1000,700,1200,600],[900,800,3000,500,600,0,1100,800,1300,1000],[1000,900,3000,500,600,1000,0,800,1200,1000],[1000,800,3200,500,600,1000,1000,0,1200,700],[900,700,3000,500,600,1000,1100,800,0,1400],[1000,800,3200,500,600,1000,1000,700,1200,0]],
 ];
 
 /* ══════════════════════════════════
@@ -2869,7 +2947,7 @@ async function deployCurrentAgent() {
   configuredAgents.push(agent);
   renderRoster();
 
-  if(currentAgentNum >= 6) {
+  if(currentAgentNum >= 10) {
     startSimulation();
   } else {
     currentAgentNum++;
@@ -2879,7 +2957,7 @@ async function deployCurrentAgent() {
 
 function resetBuilderForNext() {
   // Update counter
-  document.getElementById('agent-counter').innerHTML = 'Agent ' + currentAgentNum + ' of 6 &nbsp;<span id="agent-emoji">' + AGENT_EMOJIS[currentAgentNum-1] + '</span>';
+  document.getElementById('agent-counter').innerHTML = 'Agent ' + currentAgentNum + ' of 10 &nbsp;<span id="agent-emoji">' + AGENT_EMOJIS[currentAgentNum-1] + '</span>';
   document.getElementById('builder-title').innerHTML = currentAgentNum === 1
     ? 'Forge your <em>jewelry mind.</em>'
     : 'Configure <em>competitor #' + (currentAgentNum-1) + '</em>';
@@ -2894,10 +2972,10 @@ function resetBuilderForNext() {
 
   // Update button
   const btn = document.getElementById('deploy-btn');
-  if(currentAgentNum < 6) {
+  if(currentAgentNum < 10) {
     btn.textContent = 'Deploy Agent ' + currentAgentNum + ' \u2192 Configure Next';
   } else {
-    btn.textContent = 'Deploy Agent 6 \u2192 Begin Epoch';
+    btn.textContent = 'Deploy Agent 10 \u2192 Begin Epoch';
   }
 }
 
@@ -3004,15 +3082,16 @@ function setPhaseActive(p) {
 function setProgress(pct){ document.getElementById('prog').style.width=pct+'%'; }
 
 function updateCycleIndicator() {
-  for(let i=1;i<=3;i++){
+  for(let i=1;i<=5;i++){
     const el=document.getElementById('cid-'+i);
+    if(!el) continue;
     if(i<currentCycle) el.className='ci-dot done';
     else if(i===currentCycle) el.className='ci-dot active';
     else el.className='ci-dot';
   }
-  document.getElementById('nav-epoch-txt').textContent = (currentCycle-1)+' / 3';
+  document.getElementById('nav-epoch-txt').textContent = (currentCycle-1)+' / 5';
   const epochFill = document.getElementById('nav-epoch-fill');
-  if (epochFill) epochFill.style.width = (((currentCycle-1)/3)*100)+'%';
+  if (epochFill) epochFill.style.width = (((currentCycle-1)/5)*100)+'%';
 }
 
 function renderAgentsList() {
@@ -3093,6 +3172,10 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
         3: 'Industrial alone doesn\'t win — need to hybridize',
         4: 'Bridal margin is safe, but minimal won on aesthetics',
         5: 'My sculptural approach needs better margin math',
+        6: 'Crystal energy needs commercial grounding — market wants clean lines',
+        7: 'Featherweight forms are interesting but minimal dominates right now',
+        8: 'Kinetic concepts need to align with the minimal wave',
+        9: 'Geometric precision is the baseline — time to differentiate',
       }
     },
     2: {  // C2: architectural minimal peaks — exploitation
@@ -3106,6 +3189,10 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
         3: 'Industrial-minimal hybrid scored better — keep mutating',
         4: 'Market arch almost won — margins rule long-term',
         5: 'Two cycles of minimal domination — the contrarian play is organic',
+        6: 'Mystical aesthetic needs structural backbone — fuse crystal with architecture',
+        7: 'Lightweight forms can ride the minimal wave if executed precisely',
+        8: 'Movement-based design is the unexplored frontier beyond static minimal',
+        9: 'Faceted geometry aligns with the minimal trend — double down',
       }
     },
     3: {  // C3: organic breakout — minimal saturates
@@ -3119,6 +3206,44 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
         3: 'Organic shard was the right direction — mixed metal is the future',
         4: 'Margin stability works long-term but never wins the epoch',
         5: 'Root & Branch proved that nature\'s geometry beats digital precision',
+        6: 'Crystal-organic fusion is the next frontier — mystic meets nature',
+        7: 'Ethereal lightness pairs naturally with organic movement',
+        8: 'Kinetic organic forms are where the market wants to go next',
+        9: 'Geometric purity saturated — faceted organic is the pivot',
+      }
+    },
+    4: {  // C4: organic matures — hybrid designs emerge
+      winner: { ornamentation: +6, marketFit: +5, risk: -4, novelty: +3 },
+      loser:  { risk: +10, novelty: +8, minimalism: -5, ornamentation: +4 },
+      others: { ornamentation: +3, novelty: +4, marketFit: +2 },
+      beliefs: {
+        0: 'The market rewards refined organic — not raw experimentation',
+        1: 'Ornamental narrative is the new edge over pure structure',
+        2: 'Heritage-organic fusion found the sweet spot between old and new',
+        3: 'Mixed metal organic hybrids are the winning formula now',
+        4: 'Commercial-organic is the safe bet — proven by two cycles of data',
+        5: 'Nature geometry matured — time to add storytelling layers',
+        6: 'Crystal-infused organic is proving the mystic aesthetic has legs',
+        7: 'Lightness within organic complexity is the differentiator',
+        8: 'Movement in organic forms creates emotional connection with buyers',
+        9: 'Faceted organic geometry merges two winning trends perfectly',
+      }
+    },
+    5: {  // C5: final cycle — bold synthesis or safe exploitation
+      winner: { novelty: +5, marketFit: +8, ornamentation: +4, risk: -6 },
+      loser:  { novelty: +12, risk: +10, marginSens: +6, marketFit: +4 },
+      others: { marketFit: +5, novelty: +3, risk: -2 },
+      beliefs: {
+        0: 'Final cycle validated that market-fit synthesis beats raw innovation',
+        1: 'Five cycles of data prove that adaptability wins over consistency',
+        2: 'Heritage elements anchored in trend awareness defined the epoch',
+        3: 'The hybrid approach paid off — mixing signals from all prior cycles',
+        4: 'Margin discipline across five cycles built the strongest portfolio',
+        5: 'Organic sculpture matured into a sustainable design language',
+        6: 'The mystic-meets-market approach found its audience at last',
+        7: 'Ethereal precision became the unexpected epoch-defining aesthetic',
+        8: 'Kinetic storytelling in jewelry proved the market craves experience',
+        9: 'Geometric evolution across five cycles traced the market\'s journey',
       }
     }
   };
@@ -3161,10 +3286,10 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
     // Store conversation memory from this cycle's cross-pollination
     if (cycleNum === 1) {
       agent.conversationMemory.push(
-        { cycle: 1, partner: agentStates[(idx + 1) % 6].name, excerpt: 'First cycle cold start — exploring identity' }
+        { cycle: 1, partner: agentStates[(idx + 1) % agentStates.length].name, excerpt: 'First cycle cold start — exploring identity' }
       );
     } else {
-      const partnerIdx = (idx + 1) % 6;
+      const partnerIdx = (idx + 1) % agentStates.length;
       agent.conversationMemory.push(
         { cycle: cycleNum, partner: agentStates[partnerIdx].name, excerpt: `Referenced C${cycleNum-1} winner and trend data in design dialogue` }
       );
@@ -3383,7 +3508,51 @@ function logAgentBios(baseDelay) {
     const avatarTag = a.avatarDataUrl ? `<img src="${a.avatarDataUrl}" class="agent-avatar-sm" />` : a.emoji;
     addLog(`${avatarTag} <b>${a.name}</b> — <i>${bio}</i>`, 'rp', baseDelay + 200 + i * 250);
   });
-  return baseDelay + 200 + agentStates.length * 250 + 200; // return delay after all bios
+  const afterBiosDelay = baseDelay + 200 + agentStates.length * 250 + 200;
+  // Summarize all bios asynchronously and log the summary
+  summarizeAgentBios(afterBiosDelay);
+  return afterBiosDelay + 600; // extra delay for summary display
+}
+
+async function summarizeAgentBios(displayDelay) {
+  const biosText = agentStates.map(a => {
+    const bio = a.bio || buildFallbackBio(a);
+    return `${a.name} (${a.arch}): ${bio}`;
+  }).join('\n');
+
+  let summary = '';
+  if (apiKeys.anthropic) {
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKeys.anthropic,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 200,
+          system: 'You summarize a group of jewelry designer AI agent bios into a concise 2-3 sentence overview. Highlight the range of design philosophies, key tensions between agents, and what makes this cohort interesting. Output ONLY the summary — no labels or preamble.',
+          messages: [{ role: 'user', content: `Summarize the following ${agentStates.length} agent bios into a brief cohort overview:\n\n${biosText}` }]
+        })
+      });
+      const data = await resp.json();
+      summary = data.content?.[0]?.text?.trim() || '';
+    } catch(e) {
+      console.warn('Bio summarization failed:', e);
+    }
+  }
+
+  if (!summary) {
+    // Fallback summary
+    const archetypes = agentStates.map(a => a.arch).filter(Boolean);
+    const unique = [...new Set(archetypes)];
+    summary = `This cohort of ${agentStates.length} agents spans ${unique.length} distinct archetypes, from ${unique.slice(0, 3).join(', ')}${unique.length > 3 ? ' and more' : ''}. Their design philosophies range from minimalist precision to organic experimentation, setting up dynamic competitive tension across the epoch.`;
+  }
+
+  addLog(`<b>[COHORT SUMMARY]</b> <i>${summary}</i>`, 'rp', displayDelay);
 }
 
 /* ══════════════════════════════════
@@ -3391,14 +3560,15 @@ function logAgentBios(baseDelay) {
    Each agent talks to 3 other agents via Claude.
    Conversations are logged and stored in conversationMemory.
 ══════════════════════════════════ */
-// Pairs arranged into two batches of non-overlapping agent indices.
-// Batch 1: [0,1],[2,4],[3,5] — all disjoint, can run in parallel.
-// Batch 2: [0,3],[1,2],[4,5] — all disjoint, can run in parallel.
+// Pairs arranged into three batches of non-overlapping agent indices.
+// Batch 1: [0,1],[2,3],[4,5],[6,7],[8,9] — all disjoint, 5 pairs in parallel.
+// Batch 2: [0,4],[1,5],[2,6],[3,7] — cross-group pairings.
+// Batch 3: [0,9],[1,8],[3,6],[4,7] — additional cross-group pairings.
 // Within each pair: A opens, B responds (serial). Across pairs: parallel.
-// This cuts cross-pollination from 12 serial calls to 4 serial rounds of ~3 concurrent.
 const CROSS_PAIR_BATCHES = [
-  [[0,1],[2,4],[3,5]],  // Batch 1: disjoint pairs
-  [[0,3],[1,2],[4,5]]   // Batch 2: disjoint pairs
+  [[0,1],[2,3],[4,5],[6,7],[8,9]],  // Batch 1: disjoint pairs
+  [[0,4],[1,5],[2,6],[3,7]],        // Batch 2: disjoint pairs
+  [[0,9],[1,8],[3,6],[4,7]]         // Batch 3: disjoint pairs
 ];
 
 async function runLiveCrossPollination(cycleNum, afterBiosDelay) {
@@ -3452,7 +3622,7 @@ Respond in 2-3 sentences. You must: (1) directly react to something specific the
     }
   }
 
-  addLog(`All 6 agents complete ${CROSS_PAIR_BATCHES.flat().length} cross-pollination exchanges. Memory updated.`, 'rs', delay);
+  addLog(`All ${agentStates.length} agents complete ${CROSS_PAIR_BATCHES.flat().length} cross-pollination exchanges. Memory updated.`, 'rs', delay);
   delay += 300;
   setProgress(20);
   return delay;
@@ -3876,7 +4046,7 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
     agentStates.forEach((a,vi)=>{ const spent=liveVoteMatrix[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
   }, (300+agentStates.length*300+200)/speed);
   window._liveVoteMatrix = liveVoteMatrix;
-  addLog(`Voting complete. All 6 agents voted in parallel. Credits tallied.`, 'rs', 300+agentStates.length*300+300);
+  addLog(`Voting complete. All ${agentStates.length} agents voted in parallel. Credits tallied.`, 'rs', 300+agentStates.length*300+300);
   setProgress(80);
   return 300+agentStates.length*300+600;
 }
@@ -3908,9 +4078,9 @@ async function runLiveEvolution(cycleNum) {
     ? `Prior winners: ${cycleReports.map(r=>`C${r.cycle}: ${r.winner.agentName}'s ${r.winner.strategy?.toUpperCase()||'?'} ${r.winner.cat||'design'}`).join(', ')}`
     : 'No prior cycles.';
 
-  // ── Launch all 6 evolution calls + 1 trend call in parallel ──
+  // ── Launch all agent evolution calls + 1 trend call in parallel ──
   // All are independent — no agent's evolution depends on another's.
-  const trendPrompt = `Cycle ${cycleNum} of 3 completed. Full results:
+  const trendPrompt = `Cycle ${cycleNum} of 5 completed. Full results:
 ${resultsSummary}
 
 ${priorContext}
@@ -3926,10 +4096,10 @@ Output EXACTLY this JSON:
     trendPrompt, agentStates[0]
   );
 
-  // Fire all 6 agent evolution calls concurrently
+  // Fire all agent evolution calls concurrently
   const evoPromises = agentStates.map(async (agent, i) => {
     const myDesign = sorted.find(d=>d.agentIdx===i);
-    const rank = myDesign ? sorted.indexOf(myDesign) : 5;
+    const rank = myDesign ? sorted.indexOf(myDesign) : agentStates.length - 1;
     const isWinner = rank === 0;
     const isLoser = rank === sorted.length - 1;
 
@@ -4058,8 +4228,52 @@ Context: ${isWinner ? 'You WON — your instincts were validated. Make SMALL rei
 }
 
 /* ══════════════════════════════════
-   PHASE SCRIPTS (all 3 cycles)
+   PHASE SCRIPTS (all 5 cycles)
 ══════════════════════════════════ */
+
+// Helper: builds a phase script for any cycle >= 2 that loads prior reports
+function buildCyclePhaseScript(cycleNum) {
+  return [
+    // Phase 0: Cross-Pollination
+    async ()=>{
+      setProgress(5);
+      const priorWinners = cycleReports.map((r,i) => `C${i+1}: "${r.winner.name}"`).join(' · ');
+      const lastReport = cycleReports[cycleReports.length - 1];
+      const sat = lastReport ? lastReport.trendData.saturation : '—';
+      const fi = lastReport ? lastReport.trendData.fi : [];
+      const totalCredits = lastReport ? lastReport.totalCredits.toLocaleString() : '—';
+      const avgAes = lastReport ? lastReport.avgAesthetic : '—';
+
+      addLog(`Cycle ${cycleNum} initiated. Loading ${cycleReports.length} prior Intelligence Reports…`,'rp',100);
+      addLog(`<b>[KNOWLEDGE DATABASE — ${cycleReports.length}-Cycle Compound Analysis]</b>`, 'rp', 400);
+      addLog(`◆ Prior winners: ${priorWinners}`, 'rp', 650);
+      addLog(`◆ Latest saturation: <b>${sat}</b>`, 'rp', 850);
+      fi.slice(0,3).forEach((f,i) => addLog(`◆ ${f}`, 'rp', 1050 + i*150));
+      addLog(`◆ Last cycle credits: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
+
+      const d = logAgentBios(1700);
+      return await runLiveCrossPollination(cycleNum, d);
+    },
+    // Phase 1: Synthesis + Design Generation
+    async ()=>{
+      setProgress(25);
+      return await runLiveSynthesis(cycleNum);
+    },
+    // Phase 2: Generation
+    async ()=>{
+      return await runLiveGeneration(cycleNum);
+    },
+    // Phase 3: Voting
+    async ()=>{
+      return await runLiveVoting(cycleNum);
+    },
+    // Phase 4: Evolution
+    async ()=>{
+      return await runLiveEvolution(cycleNum);
+    },
+  ];
+}
+
 const PHASE_SCRIPTS = [
   // ── CYCLE 1 ──
   [
@@ -4089,86 +4303,11 @@ const PHASE_SCRIPTS = [
     },
   ],
 
-  // ── CYCLE 2 ──
-  [
-    // Phase 0: Cross-Pollination
-    async ()=>{
-      setProgress(5);
-      const r1 = cycleReports[0];
-      const emerging = r1 ? r1.trendData.emerging.join(' · ') : '—';
-      const saturation = r1 ? r1.trendData.saturation : '—';
-      const treasury = r1 ? r1.trendData.treasury : '—';
-      const fi = r1 ? r1.trendData.fi : [];
-      const totalCredits = r1 ? r1.totalCredits.toLocaleString() : '—';
-      const avgAes = r1 ? r1.avgAesthetic : '—';
-
-      addLog(`Cycle 2 initiated. Agents loading Cycle 1 Intelligence Report…`,'rp',100);
-      addLog(`<b>[KNOWLEDGE DATABASE — Cycle 1 Report]</b>`, 'rp', 400);
-      addLog(`◆ Emerging: <b>${emerging}</b>`, 'rp', 600);
-      addLog(`◆ Saturation: <b>${saturation}</b> · Treasury signal: <b>${treasury}</b>`, 'rp', 850);
-      fi.slice(0,3).forEach((f,i) => addLog(`◆ ${f}`, 'rp', 1050 + i*150));
-      addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
-
-      const d2 = logAgentBios(1700);
-      return await runLiveCrossPollination(2, d2);
-    },
-    // Phase 1: Synthesis + Design Generation
-    async ()=>{
-      setProgress(25);
-      return await runLiveSynthesis(2);
-    },
-    // Phase 2: Generation (handled by synthesis pipeline)
-    async ()=>{
-      return await runLiveGeneration(2);
-    },
-    // Phase 3: Voting
-    async ()=>{
-      return await runLiveVoting(2);
-    },
-    // Phase 4: Evolution
-    async ()=>{
-      return await runLiveEvolution(2);
-    },
-  ],
-
-  // ── CYCLE 3 ──
-  [
-    // Phase 0: Cross-Pollination
-    async ()=>{
-      setProgress(5);
-      const r1 = cycleReports[0];
-      const r2 = cycleReports[1];
-      const w1 = r1 ? r1.winner.name : '—';
-      const w2 = r2 ? r2.winner.name : '—';
-      const sat2 = r2 ? r2.trendData.saturation : '—';
-      const fi2 = r2 ? r2.trendData.fi : [];
-      addLog(`Cycle 3 initiated. Loading Cycle 1 + Cycle 2 Intelligence Reports…`,'rp',100);
-      addLog(`<b>[KNOWLEDGE DATABASE — 2-Cycle Compound Analysis]</b>`, 'rp', 400);
-      addLog(`◆ C1 winner: "${w1}" · C2 winner: "${w2}"`, 'rp', 650);
-      addLog(`◆ C2 saturation: <b>${sat2}</b>`, 'rp', 850);
-      fi2.slice(0,3).forEach((f,i) => addLog(`◆ ${f}`, 'rp', 1050 + i*150));
-
-      const d3 = logAgentBios(1500);
-      return await runLiveCrossPollination(3, d3);
-    },
-    // Phase 1: Synthesis + Design Generation
-    async ()=>{
-      setProgress(25);
-      return await runLiveSynthesis(3);
-    },
-    // Phase 2: Generation (handled by synthesis pipeline)
-    async ()=>{
-      return await runLiveGeneration(3);
-    },
-    // Phase 3: Voting
-    async ()=>{
-      return await runLiveVoting(3);
-    },
-    // Phase 4: Evolution
-    async ()=>{
-      return await runLiveEvolution(3);
-    },
-  ],
+  // ── CYCLES 2–5 ──
+  buildCyclePhaseScript(2),
+  buildCyclePhaseScript(3),
+  buildCyclePhaseScript(4),
+  buildCyclePhaseScript(5),
 ];
 
 /* ══════════════════════════════════
@@ -4553,12 +4692,12 @@ function showCycleComplete() {
   buildTop3Gallery(sorted, 'top3-gallery', 'gold-card');
 
   const nextBtn = document.getElementById('cc-next-btn');
-  if(currentCycle < 3) {
+  if(currentCycle < 5) {
     nextBtn.textContent = `▶ Begin Cycle ${currentCycle+1}`;
     nextBtn.onclick = ()=>{ currentCycle++; resetSim(); panel.className='cycle-complete'; document.getElementById('phase-btn').style.display=''; };
   } else {
     nextBtn.textContent = '◆ View Full Intelligence Archive';
-    nextBtn.onclick = ()=>{ goTo(3); viewReport(3); };
+    nextBtn.onclick = ()=>{ goTo(3); viewReport(5); };
   }
   panel.classList.add('show');
   updateReportsNav();
@@ -4736,7 +4875,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
         velocityScore: 88,
         fi:[
           `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of all credits despite ${sortedDesigns[0].profit}/100 profit score — aesthetic novelty overrode margin`,
-          `Trend lifecycle confirmed over 3 cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
+          `Trend lifecycle confirmed over ${cycleReports.length + 1} cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
           `Novelty score became dominant predictor this cycle (r=${corrNov}) — market rewarding freshness over safety`,
           `Saturation penalty effective: minimal cluster received 18% fewer credits per novelty point than prior cycle`,
           `Treasury recommendation: organic sculptural 18k gold for physical production — highest aesthetic + highest novelty + breakout vote share`,
@@ -4891,9 +5030,9 @@ function updateReportsNav() {
       <div class="rni-winner">"${r.winner.name}"</div>
     </div>
   `).join('');
-  if(cycleReports.length===3) { document.getElementById('dl-all-btn').style.display=''; document.getElementById('dl-all-pdf-btn').style.display=''; }
+  if(cycleReports.length===5) { document.getElementById('dl-all-btn').style.display=''; document.getElementById('dl-all-pdf-btn').style.display=''; }
   if(cycleReports.length>0) document.getElementById('dl-pdf-btn').style.display='';
-  document.getElementById('reports-sub').textContent = `${cycleReports.length} of 3 cycle reports generated. Each report feeds forward into agent decision-making for the next cycle.`;
+  document.getElementById('reports-sub').textContent = `${cycleReports.length} of 5 cycle reports generated. Each report feeds forward into agent decision-making for the next cycle.`;
 }
 
 function buildGenomeEvolutionHtml(r) {

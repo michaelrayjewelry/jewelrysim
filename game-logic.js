@@ -162,6 +162,10 @@ const EVOLUTION_RULES = {
       3: "Industrial alone doesn't win — need to hybridize",
       4: 'Bridal margin is safe, but minimal won on aesthetics',
       5: 'My sculptural approach needs better margin math',
+      6: 'Crystal energy needs commercial grounding — market wants clean lines',
+      7: 'Featherweight forms are interesting but minimal dominates right now',
+      8: 'Kinetic concepts need to align with the minimal wave',
+      9: 'Geometric precision is the baseline — time to differentiate',
     },
   },
   2: {
@@ -175,6 +179,10 @@ const EVOLUTION_RULES = {
       3: 'Industrial-minimal hybrid scored better — keep mutating',
       4: 'Market arch almost won — margins rule long-term',
       5: 'Two cycles of minimal domination — the contrarian play is organic',
+      6: 'Mystical aesthetic needs structural backbone — fuse crystal with architecture',
+      7: 'Lightweight forms can ride the minimal wave if executed precisely',
+      8: 'Movement-based design is the unexplored frontier beyond static minimal',
+      9: 'Faceted geometry aligns with the minimal trend — double down',
     },
   },
   3: {
@@ -188,6 +196,44 @@ const EVOLUTION_RULES = {
       3: 'Organic shard was the right direction — mixed metal is the future',
       4: 'Margin stability works long-term but never wins the epoch',
       5: "Root & Branch proved that nature's geometry beats digital precision",
+      6: 'Crystal-organic fusion is the next frontier — mystic meets nature',
+      7: 'Ethereal lightness pairs naturally with organic movement',
+      8: 'Kinetic organic forms are where the market wants to go next',
+      9: 'Geometric purity saturated — faceted organic is the pivot',
+    },
+  },
+  4: {
+    winner: { ornamentation: +6, marketFit: +5, risk: -4, novelty: +3 },
+    loser: { risk: +10, novelty: +8, minimalism: -5, ornamentation: +4 },
+    others: { ornamentation: +3, novelty: +4, marketFit: +2 },
+    beliefs: {
+      0: 'The market rewards refined organic — not raw experimentation',
+      1: 'Ornamental narrative is the new edge over pure structure',
+      2: 'Heritage-organic fusion found the sweet spot between old and new',
+      3: 'Mixed metal organic hybrids are the winning formula now',
+      4: 'Commercial-organic is the safe bet — proven by two cycles of data',
+      5: "Nature geometry matured — time to add storytelling layers",
+      6: 'Crystal-infused organic is proving the mystic aesthetic has legs',
+      7: 'Lightness within organic complexity is the differentiator',
+      8: 'Movement in organic forms creates emotional connection with buyers',
+      9: 'Faceted organic geometry merges two winning trends perfectly',
+    },
+  },
+  5: {
+    winner: { novelty: +5, marketFit: +8, ornamentation: +4, risk: -6 },
+    loser: { novelty: +12, risk: +10, marginSens: +6, marketFit: +4 },
+    others: { marketFit: +5, novelty: +3, risk: -2 },
+    beliefs: {
+      0: 'Final cycle validated that market-fit synthesis beats raw innovation',
+      1: 'Five cycles of data prove that adaptability wins over consistency',
+      2: 'Heritage elements anchored in trend awareness defined the epoch',
+      3: 'The hybrid approach paid off — mixing signals from all prior cycles',
+      4: 'Margin discipline across five cycles built the strongest portfolio',
+      5: 'Organic sculpture matured into a sustainable design language',
+      6: 'The mystic-meets-market approach found its audience at last',
+      7: 'Ethereal precision became the unexpected epoch-defining aesthetic',
+      8: 'Kinetic storytelling in jewelry proved the market craves experience',
+      9: "Geometric evolution across five cycles traced the market's journey",
     },
   },
 };
@@ -243,11 +289,11 @@ function evolveAgentGenomes(
     if (cycleNum === 1) {
       agent.conversationMemory.push({
         cycle: 1,
-        partner: agentStates[(idx + 1) % 6].name,
+        partner: agentStates[(idx + 1) % agentStates.length].name,
         excerpt: 'First cycle cold start — exploring identity',
       });
     } else {
-      const partnerIdx = (idx + 1) % 6;
+      const partnerIdx = (idx + 1) % agentStates.length;
       agent.conversationMemory.push({
         cycle: cycleNum,
         partner: agentStates[partnerIdx].name,

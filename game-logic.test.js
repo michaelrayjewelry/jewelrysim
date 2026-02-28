@@ -86,16 +86,16 @@ function makeDesign(overrides = {}) {
   };
 }
 
-function makeSixAgents() {
-  return Array.from({ length: 6 }, (_, i) =>
+function makeTenAgents() {
+  return Array.from({ length: 10 }, (_, i) =>
     makeAgent({
       id: i,
       name: `Agent${i}`,
-      emoji: ['🎯', '🌙', '✨', '🔩', '💛', '🌿'][i],
-      minimalism: 50 + i * 5,
-      novelty: 50 + i * 3,
-      risk: 40 + i * 6,
-      ornamentation: 60 - i * 4,
+      emoji: ['🎯', '🌙', '✨', '🔩', '💛', '🌿', '🔮', '🪶', '🌀', '💠'][i],
+      minimalism: 50 + i * 3,
+      novelty: 50 + i * 2,
+      risk: 40 + i * 4,
+      ornamentation: 60 - i * 3,
       marketFit: 50,
       symmetry: 60,
       reputation: 50,
@@ -370,14 +370,16 @@ describe('snapshotGenome', () => {
 // ═══════════════════════════════════════════════════════════════
 
 describe('EVOLUTION_RULES', () => {
-  it('has rules for all 3 cycles', () => {
+  it('has rules for all 5 cycles', () => {
     assert.ok(EVOLUTION_RULES[1]);
     assert.ok(EVOLUTION_RULES[2]);
     assert.ok(EVOLUTION_RULES[3]);
+    assert.ok(EVOLUTION_RULES[4]);
+    assert.ok(EVOLUTION_RULES[5]);
   });
 
   it('each cycle has winner, loser, others, and beliefs', () => {
-    [1, 2, 3].forEach((c) => {
+    [1, 2, 3, 4, 5].forEach((c) => {
       const r = EVOLUTION_RULES[c];
       assert.ok(r.winner, `Cycle ${c} missing winner`);
       assert.ok(r.loser, `Cycle ${c} missing loser`);
@@ -386,9 +388,9 @@ describe('EVOLUTION_RULES', () => {
     });
   });
 
-  it('beliefs cover all 6 agent indices', () => {
-    [1, 2, 3].forEach((c) => {
-      for (let i = 0; i <= 5; i++) {
+  it('beliefs cover all 10 agent indices', () => {
+    [1, 2, 3, 4, 5].forEach((c) => {
+      for (let i = 0; i <= 9; i++) {
         assert.ok(
           typeof EVOLUTION_RULES[c].beliefs[i] === 'string',
           `Cycle ${c} missing belief for agent ${i}`
@@ -400,16 +402,13 @@ describe('EVOLUTION_RULES', () => {
 
 describe('evolveAgentGenomes', () => {
   it('applies winner shifts to the winning agent', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 1, rank: 1, credits: 20000, name: 'Winner' }),
-      makeDesign({ agentIdx: 0, rank: 2, credits: 15000 }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 12000 }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 8000 }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 5000 }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000, name: 'Loser' }),
-    ];
+    // Agent 1 wins (rank 1), agent 9 loses (rank 10)
+    const order = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9];
+    const designs = order.map((agentIdx, i) =>
+      makeDesign({ agentIdx, rank: i + 1, credits: 20000 - i * 1800, name: i === 0 ? 'Winner' : undefined })
+    );
 
     const oldMinimalism = agents[1].minimalism;
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
@@ -419,35 +418,25 @@ describe('evolveAgentGenomes', () => {
   });
 
   it('applies loser shifts to the last-place agent', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 0, rank: 1, credits: 20000 }),
-      makeDesign({ agentIdx: 1, rank: 2, credits: 15000 }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 12000 }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 8000 }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 5000 }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000, name: 'Loser' }),
-    ];
+    const designs = agents.map((_, i) =>
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 1800 })
+    );
 
-    const oldNovelty = agents[5].novelty;
+    const oldNovelty = agents[9].novelty;
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
 
-    // Loser (agent 5) gets Cycle 1 loser shift: novelty +10
-    assert.equal(agents[5].novelty, Math.min(100, oldNovelty + 10));
+    // Loser (agent 9, last place) gets Cycle 1 loser shift: novelty +10
+    assert.equal(agents[9].novelty, Math.min(100, oldNovelty + 10));
   });
 
   it('applies others shifts to mid-ranked agents', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 0, rank: 1, credits: 20000 }),
-      makeDesign({ agentIdx: 1, rank: 2, credits: 15000 }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 12000 }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 8000 }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 5000 }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000 }),
-    ];
+    const designs = agents.map((_, i) =>
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 1800 })
+    );
 
     const oldMinimalism = agents[3].minimalism;
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
@@ -457,48 +446,36 @@ describe('evolveAgentGenomes', () => {
   });
 
   it('clamps genome values to [0, 100]', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     agents[1].minimalism = 98; // near cap
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 1, rank: 1, credits: 20000 }),
-      ...Array.from({ length: 5 }, (_, i) =>
-        makeDesign({ agentIdx: i === 1 ? 0 : i, rank: i + 2, credits: 10000 - i * 1000 })
-      ),
-    ];
+    const designs = agents.map((_, i) =>
+      makeDesign({ agentIdx: i === 0 ? 1 : i === 1 ? 0 : i, rank: i === 0 ? 2 : i === 1 ? 1 : i + 1, credits: 20000 - i * 1800 })
+    );
+    designs.sort((a, b) => a.rank - b.rank);
 
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
     assert.ok(agents[1].minimalism <= 100, `Minimalism exceeded 100: ${agents[1].minimalism}`);
   });
 
   it('does not go below 0', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     agents[0].risk = 2; // near floor — winner shift is -5
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 0, rank: 1, credits: 20000 }),
-      makeDesign({ agentIdx: 1, rank: 2, credits: 15000 }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 12000 }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 8000 }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 5000 }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000 }),
-    ];
+    const designs = agents.map((_, i) =>
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 1800 })
+    );
 
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
     assert.ok(agents[0].risk >= 0, `Risk went below 0: ${agents[0].risk}`);
   });
 
   it('sets dominant belief for each agent', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 0, rank: 1, credits: 20000 }),
-      makeDesign({ agentIdx: 1, rank: 2, credits: 15000 }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 12000 }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 8000 }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 5000 }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000 }),
-    ];
+    const designs = agents.map((_, i) =>
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 1800 })
+    );
 
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
     agents.forEach((a) => {
@@ -507,44 +484,34 @@ describe('evolveAgentGenomes', () => {
   });
 
   it('increases trust for winner, decreases for loser', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 0, rank: 1, credits: 20000 }),
-      makeDesign({ agentIdx: 1, rank: 2, credits: 15000 }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 12000 }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 8000 }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 5000 }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000 }),
-    ];
+    const designs = agents.map((_, i) =>
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 1800 })
+    );
 
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
     assert.equal(agents[0].trustBuilt, 15); // winner
-    assert.equal(agents[5].trustBuilt, -5); // loser
+    assert.equal(agents[9].trustBuilt, -5); // loser (last agent)
     assert.equal(agents[2].trustBuilt, 5); // mid-pack
   });
 
   it('appends evolution history for each agent', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
-    const designs = [
-      makeDesign({ agentIdx: 0, rank: 1, credits: 20000, name: 'WinDesign' }),
-      makeDesign({ agentIdx: 1, rank: 2, credits: 15000 }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 12000 }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 8000 }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 5000 }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000, name: 'LoseDesign' }),
-    ];
+    const designs = agents.map((_, i) =>
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 1800, name: i === 0 ? 'WinDesign' : i === 9 ? 'LoseDesign' : undefined })
+    );
 
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
     assert.equal(agents[0].evolutionHistory.length, 1);
     assert.equal(agents[0].evolutionHistory[0].cycle, 1);
     assert.ok(agents[0].evolutionHistory[0].summary.includes('Won'));
-    assert.ok(agents[5].evolutionHistory[0].summary.includes('Last place'));
+    assert.ok(agents[9].evolutionHistory[0].summary.includes('Last place'));
   });
 
   it('appends conversation memory for cycle 1 (cold start)', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 2000 })
@@ -558,7 +525,7 @@ describe('evolveAgentGenomes', () => {
   });
 
   it('appends conversation memory for cycle 2+ (references prior winner)', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     agents.forEach((a) => {
       a.conversationMemory = [{ cycle: 1, partner: 'X', excerpt: 'cold start' }];
     });
@@ -575,7 +542,7 @@ describe('evolveAgentGenomes', () => {
   });
 
   it('takes post-evolution genome snapshot', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 2000 })
@@ -583,11 +550,11 @@ describe('evolveAgentGenomes', () => {
 
     evolveAgentGenomes(1, designs, agents, genomeSnapshots);
     assert.equal(genomeSnapshots.length, 2);
-    assert.equal(genomeSnapshots[1].length, 6);
+    assert.equal(genomeSnapshots[1].length, 10);
   });
 
   it('does nothing for invalid cycle number', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [];
     const designs = [makeDesign()];
     const origMinimalism = agents[0].minimalism;
@@ -705,7 +672,7 @@ describe('retrievePatterns', () => {
 
 describe('computeTraitEffectiveness', () => {
   it('initializes trait data on first call', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, credits: 10000 - i * 1500 })
     );
@@ -720,7 +687,7 @@ describe('computeTraitEffectiveness', () => {
   });
 
   it('accumulates across multiple cycles', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, credits: 10000 - i * 1500 })
     );
@@ -733,7 +700,7 @@ describe('computeTraitEffectiveness', () => {
   });
 
   it('uses EWC weighting (60/40) for cumulative correlation', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, credits: 10000 - i * 1500 })
     );
@@ -750,7 +717,7 @@ describe('computeTraitEffectiveness', () => {
   });
 
   it('tracks all 16 genome traits', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, credits: 10000 - i * 1500 })
     );
@@ -770,7 +737,7 @@ describe('computeTraitEffectiveness', () => {
   });
 
   it('computes winner average from top 3 designs', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     // Give top 3 agents distinct minimalism values
     agents[0].minimalism = 90;
     agents[1].minimalism = 80;
@@ -1000,45 +967,50 @@ describe('agentGenomeStr', () => {
 // ═══════════════════════════════════════════════════════════════
 
 describe('multi-cycle evolution integration', () => {
-  it('evolves agents across all 3 cycles with correct cumulative effects', () => {
-    const agents = makeSixAgents();
+  it('evolves agents across all 5 cycles with correct cumulative effects', () => {
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
 
     // Record initial values
     const initialMins = agents.map((a) => a.minimalism);
 
-    // Cycle 1: Agent 1 wins, Agent 5 loses
+    // Cycle 1: Agent 0 wins, Agent 9 loses
     const designs1 = agents.map((_, i) =>
-      makeDesign({ agentIdx: i, rank: i + 1, credits: 30000 - i * 4000, name: `C1D${i}` })
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 30000 - i * 2500, name: `C1D${i}` })
     );
     evolveAgentGenomes(1, designs1, agents, genomeSnapshots);
 
-    // Cycle 2: Agent 0 wins, Agent 5 loses
-    const designs2 = [
-      makeDesign({ agentIdx: 0, rank: 1, credits: 25000, name: 'C2D0' }),
-      makeDesign({ agentIdx: 1, rank: 2, credits: 20000, name: 'C2D1' }),
-      makeDesign({ agentIdx: 2, rank: 3, credits: 15000, name: 'C2D2' }),
-      makeDesign({ agentIdx: 3, rank: 4, credits: 10000, name: 'C2D3' }),
-      makeDesign({ agentIdx: 4, rank: 5, credits: 8000, name: 'C2D4' }),
-      makeDesign({ agentIdx: 5, rank: 6, credits: 3000, name: 'C2D5' }),
-    ];
+    // Cycle 2: Agent 0 wins, Agent 9 loses
+    const designs2 = agents.map((_, i) =>
+      makeDesign({ agentIdx: i, rank: i + 1, credits: 25000 - i * 2200, name: `C2D${i}` })
+    );
     evolveAgentGenomes(2, designs2, agents, genomeSnapshots);
 
     // Cycle 3: Agent 5 wins, Agent 4 loses
-    const designs3 = [
-      makeDesign({ agentIdx: 5, rank: 1, credits: 30000, name: 'C3D5' }),
-      makeDesign({ agentIdx: 0, rank: 2, credits: 20000, name: 'C3D0' }),
-      makeDesign({ agentIdx: 1, rank: 3, credits: 15000, name: 'C3D1' }),
-      makeDesign({ agentIdx: 2, rank: 4, credits: 10000, name: 'C3D2' }),
-      makeDesign({ agentIdx: 3, rank: 5, credits: 8000, name: 'C3D3' }),
-      makeDesign({ agentIdx: 4, rank: 6, credits: 3000, name: 'C3D4' }),
-    ];
+    const designs3 = agents.map((_, i) => {
+      const idx = i === 0 ? 5 : i === 4 ? 9 : i === 5 ? 0 : i === 9 ? 4 : i;
+      return makeDesign({ agentIdx: idx, rank: i + 1, credits: 30000 - i * 2500, name: `C3D${idx}` });
+    });
     evolveAgentGenomes(3, designs3, agents, genomeSnapshots);
 
+    // Cycle 4: Agent 6 wins, Agent 3 loses
+    const designs4 = agents.map((_, i) => {
+      const idx = i === 0 ? 6 : i === 6 ? 0 : i === 3 ? 9 : i === 9 ? 3 : i;
+      return makeDesign({ agentIdx: idx, rank: i + 1, credits: 28000 - i * 2500, name: `C4D${idx}` });
+    });
+    evolveAgentGenomes(4, designs4, agents, genomeSnapshots);
+
+    // Cycle 5: Agent 2 wins, Agent 8 loses
+    const designs5 = agents.map((_, i) => {
+      const idx = i === 0 ? 2 : i === 2 ? 0 : i === 8 ? 9 : i === 9 ? 8 : i;
+      return makeDesign({ agentIdx: idx, rank: i + 1, credits: 26000 - i * 2300, name: `C5D${idx}` });
+    });
+    evolveAgentGenomes(5, designs5, agents, genomeSnapshots);
+
     // Verify cumulative evolution
-    assert.equal(genomeSnapshots.length, 4); // initial + 3 cycles
-    assert.equal(agents[0].evolutionHistory.length, 3);
-    assert.equal(agents[0].conversationMemory.length, 3);
+    assert.equal(genomeSnapshots.length, 6); // initial + 5 cycles
+    assert.equal(agents[0].evolutionHistory.length, 5);
+    assert.equal(agents[0].conversationMemory.length, 5);
 
     // All genome values should remain in [0, 100]
     agents.forEach((a) => {
@@ -1082,7 +1054,7 @@ describe('edge cases', () => {
   });
 
   it('evolveAgentGenomes genome shifts are tracked accurately', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     const genomeSnapshots = [agents.map((a) => snapshotGenome(a))];
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, rank: i + 1, credits: 20000 - i * 2000 })
@@ -1118,7 +1090,7 @@ describe('edge cases', () => {
   });
 
   it('computeTraitEffectiveness direction classification thresholds', () => {
-    const agents = makeSixAgents();
+    const agents = makeTenAgents();
     // Create designs where credits perfectly correlate with agent index
     const designs = agents.map((_, i) =>
       makeDesign({ agentIdx: i, credits: (i + 1) * 5000 })
