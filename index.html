@@ -913,8 +913,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
   <!-- Google Drive Auto-Save -->
   <div class="gdrive-panel" id="gdrive-panel">
-    <h4><span class="gdrive-icon">📁</span> Google Drive — Auto-Save Images</h4>
-    <p style="font-size:.72rem;color:var(--dim);line-height:1.6;margin-bottom:.8rem">Automatically save every generated jewelry image to your Google Drive folder. Images upload as they render — no manual downloads needed.</p>
+    <h4><span class="gdrive-icon">📁</span> Google Drive — Auto-Save</h4>
+    <p style="font-size:.72rem;color:var(--dim);line-height:1.6;margin-bottom:.8rem">Automatically save every generated jewelry image and intelligence report to your Google Drive folder. Files upload as they render — no manual downloads needed.</p>
 
     <div class="gdrive-setup-steps" id="gdrive-setup-steps">
       <div style="font-size:.62rem;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.8rem">One-Time Setup (2 minutes)</div>
@@ -933,20 +933,27 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
           <div class="gdrive-code" id="gdrive-script-code"><pre style="margin:0;white-space:pre-wrap;word-break:break-all">function doPost(e) {
   var data = JSON.parse(e.postData.contents);
   var folder = DriveApp.getFolderById("YOUR_FOLDER_ID_HERE");
-  var blob;
-  if (data.imageUrl) {
+  var file;
+  if (data.textContent) {
+    file = folder.createFile(
+      data.filename || "jewelforge-data.json",
+      data.textContent,
+      data.mimeType || "application/json"
+    );
+  } else if (data.imageUrl) {
     var resp = UrlFetchApp.fetch(data.imageUrl);
-    blob = resp.getBlob().setName(
+    var blob = resp.getBlob().setName(
       data.filename || "jewelforge-image.png"
     );
+    file = folder.createFile(blob);
   } else {
-    blob = Utilities.newBlob(
+    var blob = Utilities.newBlob(
       Utilities.base64Decode(data.image),
       data.mimeType || "image/png",
       data.filename || "jewelforge-image.png"
     );
+    file = folder.createFile(blob);
   }
-  var file = folder.createFile(blob);
   return ContentService.createTextOutput(
     JSON.stringify({success:true, id:file.getId(), name:file.getName()})
   ).setMimeType(ContentService.MimeType.JSON);
@@ -985,7 +992,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <div class="dot off" id="gdrive-dot"></div>
       <span id="gdrive-status-text">Paste your Apps Script URL to enable</span>
     </div>
-    <div class="gdrive-counter" id="gdrive-counter" style="display:none">📤 <span id="gdrive-upload-count">0</span> images saved to Drive</div>
+    <div class="gdrive-counter" id="gdrive-counter" style="display:none">📤 <span id="gdrive-upload-count">0</span> files saved to Drive</div>
     <button class="gdrive-retry-btn" id="gdrive-retry-btn" onclick="retryGDriveUploads()" style="display:none">↻ Retry Uploads</button>
   </div>
 
@@ -1674,7 +1681,7 @@ let gdriveState = {
 };
 
 function copyScriptCode() {
-  const code = `function doPost(e) {\n  var data = JSON.parse(e.postData.contents);\n  var folder = DriveApp.getFolderById("YOUR_FOLDER_ID_HERE");\n  var blob;\n  if (data.imageUrl) {\n    var resp = UrlFetchApp.fetch(data.imageUrl);\n    blob = resp.getBlob().setName(\n      data.filename || "jewelforge-image.png"\n    );\n  } else {\n    blob = Utilities.newBlob(\n      Utilities.base64Decode(data.image),\n      data.mimeType || "image/png",\n      data.filename || "jewelforge-image.png"\n    );\n  }\n  var file = folder.createFile(blob);\n  return ContentService.createTextOutput(\n    JSON.stringify({success:true, id:file.getId(), name:file.getName()})\n  ).setMimeType(ContentService.MimeType.JSON);\n}`;
+  const code = `function doPost(e) {\n  var data = JSON.parse(e.postData.contents);\n  var folder = DriveApp.getFolderById("YOUR_FOLDER_ID_HERE");\n  var file;\n  if (data.textContent) {\n    file = folder.createFile(\n      data.filename || "jewelforge-data.json",\n      data.textContent,\n      data.mimeType || "application/json"\n    );\n  } else if (data.imageUrl) {\n    var resp = UrlFetchApp.fetch(data.imageUrl);\n    var blob = resp.getBlob().setName(\n      data.filename || "jewelforge-image.png"\n    );\n    file = folder.createFile(blob);\n  } else {\n    var blob = Utilities.newBlob(\n      Utilities.base64Decode(data.image),\n      data.mimeType || "image/png",\n      data.filename || "jewelforge-image.png"\n    );\n    file = folder.createFile(blob);\n  }\n  return ContentService.createTextOutput(\n    JSON.stringify({success:true, id:file.getId(), name:file.getName()})\n  ).setMimeType(ContentService.MimeType.JSON);\n}`;
   navigator.clipboard.writeText(code).then(() => {
     const btn = document.querySelector('.gdrive-copy-btn');
     if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy Script'; }, 2000); }
@@ -1713,7 +1720,7 @@ async function connectGoogleDrive() {
     // With no-cors we can't read the response, but if fetch didn't throw, endpoint is reachable
     gdriveState.connected = true;
     gdriveState.failCount = 0;
-    setGDriveStatus(true, 'Connected — images will auto-save to Drive');
+    setGDriveStatus(true, 'Connected — files will auto-save to Drive');
     if (btn) { btn.innerHTML = '<span class="g-logo">✓</span> Auto-Save Enabled'; btn.disabled = true; }
     document.getElementById('gdrive-disconnect-btn').style.display = '';
     document.getElementById('gdrive-counter').style.display = '';
@@ -1830,7 +1837,7 @@ async function uploadImageToDrive(imageUrl, filename) {
     showGDriveRetryBtn(false);
     const counterEl = document.getElementById('gdrive-upload-count');
     if (counterEl) counterEl.textContent = gdriveState.uploadCount;
-    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} image${gdriveState.uploadCount!==1?'s':''} saved`);
+    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
     console.log(`📁 Sent to Drive: ${safeName}`);
   } catch(e) {
     console.warn('Drive upload failed (URL mode):', e.message);
@@ -1848,7 +1855,7 @@ async function uploadImageToDrive(imageUrl, filename) {
       showGDriveRetryBtn(false);
       const counterEl = document.getElementById('gdrive-upload-count');
       if (counterEl) counterEl.textContent = gdriveState.uploadCount;
-      setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} image${gdriveState.uploadCount!==1?'s':''} saved`);
+      setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
       console.log(`📁 Sent to Drive (base64 fallback): ${safeName}`);
     } catch(e2) {
       console.warn('Drive upload failed (base64 fallback):', e2.message);
@@ -1884,6 +1891,76 @@ function onImageGenerated(imageUrl, designObj, cycle, agentIdx) {
   uploadImageToDrive(imageUrl, filename);
 }
 
+// Auto-upload a cycle report JSON to Google Drive
+async function uploadReportToDrive(report, cycleNum) {
+  if (!gdriveState.connected || !gdriveState.webAppUrl) return;
+  if (gdriveState.failCount >= 5) return;
+
+  const safeName = `JewelForge_Cycle${cycleNum}_Report.json`;
+
+  // Strip agentSnapshot (large, redundant with agentPerf) for a leaner payload
+  const payload = JSON.parse(JSON.stringify(report));
+  delete payload.agentSnapshot;
+
+  try {
+    await fetch(gdriveState.webAppUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        textContent: JSON.stringify(payload, null, 2),
+        filename: safeName,
+        mimeType: 'application/json'
+      })
+    });
+    gdriveState.uploadCount++;
+    gdriveState.failCount = 0;
+    const counterEl = document.getElementById('gdrive-upload-count');
+    if (counterEl) counterEl.textContent = gdriveState.uploadCount;
+    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
+    console.log(`📁 Report saved to Drive: ${safeName}`);
+  } catch(e) {
+    console.warn('Drive report upload failed:', e.message);
+    gdriveState.failCount++;
+  }
+}
+
+// Auto-upload epoch archive (all 3 cycles) to Google Drive
+async function uploadEpochArchiveToDrive() {
+  if (!gdriveState.connected || !gdriveState.webAppUrl) return;
+  if (cycleReports.length < 3) return;
+
+  const archive = {
+    title: 'JewelForge Epoch Intelligence Archive',
+    exportedAt: new Date().toISOString(),
+    cycles: cycleReports.map(r => {
+      const copy = JSON.parse(JSON.stringify(r));
+      delete copy.agentSnapshot;
+      return copy;
+    })
+  };
+
+  try {
+    await fetch(gdriveState.webAppUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        textContent: JSON.stringify(archive, null, 2),
+        filename: 'JewelForge_Epoch_Archive.json',
+        mimeType: 'application/json'
+      })
+    });
+    gdriveState.uploadCount++;
+    const counterEl = document.getElementById('gdrive-upload-count');
+    if (counterEl) counterEl.textContent = gdriveState.uploadCount;
+    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
+    console.log('📁 Epoch archive saved to Drive');
+  } catch(e) {
+    console.warn('Drive epoch archive upload failed:', e.message);
+  }
+}
+
 // Restore saved config on page load
 function restoreGDriveConfig() {
   const savedUrl = localStorage.getItem('jf_gdrive_url');
@@ -1893,7 +1970,7 @@ function restoreGDriveConfig() {
     gdriveState.webAppUrl = savedUrl;
     // Auto-reconnect
     gdriveState.connected = true;
-    setGDriveStatus(true, 'Connected — images will auto-save to Drive');
+    setGDriveStatus(true, 'Connected — files will auto-save to Drive');
     const btn = document.getElementById('gdrive-connect-btn');
     if (btn) { btn.innerHTML = '<span class="g-logo">✓</span> Auto-Save Enabled'; btn.disabled = true; }
     const discBtn = document.getElementById('gdrive-disconnect-btn');
@@ -4466,6 +4543,10 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
   };
 
   cycleReports.push(report);
+
+  // Auto-save report to Google Drive
+  uploadReportToDrive(report, cycleNum);
+  if (cycleNum === 3) uploadEpochArchiveToDrive();
 
   // ── Claude-Flow Post-Cycle Updates (zero API cost) ──
 
