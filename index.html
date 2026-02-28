@@ -22,7 +22,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(6,6,6,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;gap:1rem;flex-wrap:wrap;height:56px}
 nav::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),var(--gold),var(--gold-d),transparent)}
 .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;letter-spacing:.38em;color:var(--gold);font-weight:300;flex-shrink:0;display:flex;align-items:center;gap:.65rem}
-.nav-logo-icon{width:28px;height:28px;border:1px solid var(--gold-d);display:flex;align-items:center;justify-content:center;position:relative;transform:rotate(45deg)}
+.nav-logo-icon{width:28px;height:28px;border:1px solid var(--gold-d);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;transform:rotate(45deg)}
 .nav-logo-icon::before{content:'';width:10px;height:10px;background:var(--gold);transform:rotate(-45deg);clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)}
 .nav-logo-icon::after{content:'';position:absolute;inset:3px;border:1px solid rgba(201,168,76,.3)}
 .nav-tabs{display:flex;gap:0;height:100%}
@@ -54,26 +54,43 @@ main{padding-top:56px}
 .label{font-size:.6rem;letter-spacing:.3em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.5rem}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.6rem;font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;border:1px solid var(--gold);color:var(--gold);background:transparent;cursor:pointer;transition:all .25s}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.6rem;font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;border:1px solid var(--gold);color:var(--gold);background:transparent;cursor:pointer;transition:all .25s;border-radius:10px}
 .btn:hover{background:rgba(201,168,76,.1)}
-.btn-primary{background:var(--gold);color:var(--bg);border-color:var(--gold)}
-.btn-primary:hover{background:var(--gold-l)}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:var(--bg);border-color:var(--gold);box-shadow:0 2px 12px rgba(201,168,76,.2)}
+.btn-primary:hover{background:linear-gradient(135deg,var(--gold-l),var(--gold));box-shadow:0 4px 20px rgba(201,168,76,.3)}
 .btn-ghost{border-color:var(--faint);color:var(--dim)}
 .btn-ghost:hover{border-color:var(--dim);color:var(--txt)}
 .btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 .btn-sm{padding:.4rem 1rem;font-size:.65rem}
 
-/* ═══ SCREEN 1: BUILDER ═══ */
-.builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
-@media(max-width:720px){.builder-grid{grid-template-columns:1fr}}
-.bsec{background:var(--s1);border:1px solid var(--bdr);padding:1.5rem}
-.bsec h4{font-size:.6rem;letter-spacing:.32em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1.1rem;padding-bottom:.6rem;border-bottom:1px solid var(--bdr)}
-.field{margin-bottom:1.2rem}
-.field label{display:block;font-size:.7rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:.4rem}
-.field input,.field textarea,.field select{width:100%;background:var(--s2);border:1px solid var(--faint);color:var(--txt);padding:.6rem .85rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
-.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold-d)}
-.field textarea{resize:vertical;min-height:64px;line-height:1.6}
-.field select option{background:var(--s2)}
+/* ═══ SCREEN 1: BUILDER (Soft Tech-Forward) ═══ */
+.builder-layout{display:flex;flex-direction:column;gap:1.8rem;max-width:640px;margin:0 auto 1.5rem}
+.bsec{background:linear-gradient(135deg,rgba(20,20,20,.95),rgba(13,13,13,.98));border:1px solid rgba(201,168,76,.1);padding:1.8rem 2rem;border-radius:16px;position:relative;overflow:hidden;backdrop-filter:blur(4px)}
+.bsec::before{content:'';position:absolute;inset:0;border-radius:16px;background:radial-gradient(ellipse at 30% 0%,rgba(201,168,76,.04),transparent 60%);pointer-events:none}
+.bsec h4{font-size:.62rem;letter-spacing:.32em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1.2rem;padding-bottom:.6rem;border-bottom:1px solid rgba(201,168,76,.08);display:flex;align-items:center;gap:.6rem}
+.bsec h4 .sec-icon{font-size:1rem;opacity:.7}
+.field{margin-bottom:1.3rem}
+.field label{display:block;font-size:.68rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:.45rem;font-weight:500}
+.field input,.field textarea{width:100%;background:rgba(20,20,20,.7);border:1px solid rgba(58,58,56,.5);color:var(--txt);padding:.7rem 1rem;font-family:'Rajdhani',sans-serif;font-size:.9rem;outline:none;transition:all .3s ease;border-radius:10px}
+.field input:focus,.field textarea:focus{border-color:rgba(201,168,76,.4);box-shadow:0 0 16px rgba(201,168,76,.08);background:rgba(20,20,20,.9)}
+.field textarea{resize:vertical;min-height:80px;line-height:1.7}
+.field input::placeholder,.field textarea::placeholder{color:var(--faint);font-style:italic}
+
+/* Category sliders — soft gamified look */
+.cat-slider{margin-bottom:1.4rem;position:relative}
+.cat-slider-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.cat-slider-label{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--dim);font-weight:500;letter-spacing:.05em}
+.cat-slider-label .cat-icon{font-size:1.1rem;filter:grayscale(.3)}
+.cat-slider-val{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);min-width:28px;text-align:right;transition:all .2s}
+.cat-slider-track{position:relative;height:8px;background:rgba(58,58,56,.4);border-radius:4px;overflow:hidden}
+.cat-slider-fill{height:100%;border-radius:4px;transition:width .15s ease;background:linear-gradient(90deg,var(--gold-d),var(--gold-l))}
+.cat-slider input[type=range]{position:absolute;top:0;left:0;width:100%;height:8px;-webkit-appearance:none;background:transparent;outline:none;cursor:pointer;margin:0;z-index:2}
+.cat-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:radial-gradient(circle,var(--gold-l) 30%,var(--gold) 100%);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(201,168,76,.35);transition:transform .15s ease,box-shadow .15s ease}
+.cat-slider input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);box-shadow:0 0 14px rgba(201,168,76,.5)}
+.cat-slider input[type=range]::-moz-range-thumb{width:18px;height:18px;background:radial-gradient(circle,var(--gold-l) 30%,var(--gold) 100%);border-radius:50%;border:none;cursor:pointer;box-shadow:0 0 8px rgba(201,168,76,.35)}
+.cat-slider-hint{display:flex;justify-content:space-between;font-size:.58rem;color:var(--faint);margin-top:.35rem;letter-spacing:.05em}
+
+/* Legacy sr/chip support for non-builder screens */
 .sr{display:flex;align-items:center;gap:.7rem;margin-bottom:.9rem}
 .sr label{font-size:.75rem;color:var(--dim);flex:1}
 .sr .sv{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--gold);width:28px;text-align:right;flex-shrink:0}
@@ -83,14 +100,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .chip{padding:.25rem .65rem;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--faint);color:var(--faint);cursor:pointer;transition:all .2s;user-select:none}
 .chip:hover{border-color:var(--dim);color:var(--dim)}
 .chip.on{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06)}
-.auto-link{font-size:.62rem;letter-spacing:.15em;color:var(--gold-d);text-decoration:underline;background:none;border:none;cursor:pointer;font-family:'Rajdhani',sans-serif}
-.auto-link:hover{color:var(--gold)}
-.preview-box{background:var(--s1);border:1px solid var(--bdr);padding:1.5rem;margin-top:1.5rem}
-.prow{display:flex;align-items:baseline;gap:.8rem;margin-bottom:.45rem}
+.auto-link{font-size:.65rem;letter-spacing:.15em;color:var(--gold-d);text-decoration:none;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);cursor:pointer;font-family:'Rajdhani',sans-serif;padding:.35rem .8rem;border-radius:8px;transition:all .25s;display:inline-flex;align-items:center;gap:.3rem}
+.auto-link:hover{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.3);color:var(--gold)}
+
+/* Preview card — soft rounded */
+.preview-box{background:linear-gradient(135deg,rgba(20,20,20,.95),rgba(13,13,13,.98));border:1px solid rgba(201,168,76,.12);padding:1.6rem 1.8rem;margin-top:1.5rem;border-radius:16px;position:relative;overflow:hidden}
+.preview-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-d),var(--gold),var(--gold-d),transparent);border-radius:2px}
+.prow{display:flex;align-items:baseline;gap:.8rem;margin-bottom:.5rem}
 .plabel{font-size:.62rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;width:86px;flex-shrink:0}
 .pval{font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--txt)}
-.dna-strip{display:flex;gap:3px;margin-top:.8rem;height:16px}
-.dna-b{flex:1;transition:all .3s}
+.dna-strip{display:flex;gap:4px;margin-top:.8rem;height:18px}
+.dna-b{flex:1;border-radius:3px;transition:all .3s}
 
 /* ═══ SCREEN 2: SIMULATOR ═══ */
 .sim-topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.8rem;gap:1rem;flex-wrap:wrap}
@@ -182,7 +202,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 /* ═══ ROSTER PANEL ═══ */
 .roster-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1.2rem}
-.roster-card{display:flex;align-items:center;gap:.5rem;background:var(--s1);border:1px solid var(--gold-d);padding:.4rem .8rem;animation:slideIn .3s ease both}
+.roster-card{display:flex;align-items:center;gap:.5rem;background:var(--s1);border:1px solid var(--gold-d);padding:.4rem .8rem;animation:slideIn .3s ease both;border-radius:10px}
 .rc-emoji{font-size:1.1rem}
 .rc-info{min-width:0}
 .rc-name{font-family:'Cormorant Garamond',serif;font-size:.85rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -660,8 +680,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   .api-panel{padding:1.2rem}
 
   /* Builder */
-  .bsec{padding:1rem}
-  .field input,.field textarea,.field select{font-size:1rem;padding:.55rem .7rem}
+  .builder-layout{max-width:100%}
+  .bsec{padding:1.2rem 1rem;border-radius:12px}
+  .field input,.field textarea{font-size:1rem;padding:.6rem .8rem;border-radius:8px}
+  .cat-slider input[type=range]::-webkit-slider-thumb{width:22px;height:22px}
+  .cat-slider-label{font-size:.72rem}
+  .cat-slider-val{font-size:1rem}
   .sr label{font-size:.68rem}
   .chips{gap:.3rem}
   .chip{padding:.3rem .55rem;font-size:.58rem;min-height:32px;display:inline-flex;align-items:center}
@@ -868,108 +892,96 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
      SCREEN 1: BUILDER
 ══════════════════════════════════════ -->
 <div class="screen" id="screen-1">
-  <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
-    <div class="eyebrow">Agent Configuration</div>
+  <div style="text-align:center;margin-bottom:.5rem">
     <div class="eyebrow" id="agent-counter" style="color:var(--gold)">Agent 1 of 6 &nbsp;<span id="agent-emoji">🎯</span></div>
   </div>
-  <h1 class="h1" id="builder-title">Design your <em>autonomous agent.</em></h1>
-  <div class="rule"></div>
-  <p class="sub" id="builder-sub">Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles — and evolve based on what it learns.</p>
+  <h1 class="h1" style="text-align:center" id="builder-title">Forge your <em>jewelry mind.</em></h1>
+  <div class="rule" style="margin:1rem auto 1rem"></div>
+  <p class="sub" style="text-align:center;margin:0 auto 2rem" id="builder-sub">Give your agent an identity and tune their jewelry instincts. These 5 sliders shape how the AI thinks about design across every cycle.</p>
 
   <div id="roster-wrap" style="display:none">
-    <div class="label">Deployed Agents</div>
-    <div id="agent-roster" class="roster-row"></div>
+    <div class="label" style="text-align:center">Deployed Agents</div>
+    <div id="agent-roster" class="roster-row" style="justify-content:center"></div>
   </div>
 
-  <div class="builder-grid">
-    <div>
-      <div class="bsec">
-        <h4>Identity &nbsp;<button class="auto-link" onclick="autoGen()">✦ Auto-Generate</button></h4>
-        <div class="field"><label>Agent Name</label><input id="b-name" placeholder="e.g. Maren Vex" oninput="updatePreview()"></div>
-        <div class="field">
-          <label>Archetype</label>
-          <select id="b-arch" onchange="updatePreview()">
-            <option value="">— Select —</option>
-            <option>Avant-Garde Purist</option><option>High Jewelry Romantic</option>
-            <option>Industrial Innovator</option><option>Market Strategist</option>
-            <option>Minimalist Architect</option><option>Heritage Revivalist</option>
-            <option>Street Luxury Provocateur</option><option>Nature Mystic</option>
-          </select>
+  <div class="builder-layout">
+    <!-- Identity Card -->
+    <div class="bsec">
+      <h4><span class="sec-icon">✦</span> Identity <button class="auto-link" onclick="autoGen()">⚡ Auto-Generate</button></h4>
+      <div class="field"><label>Agent Name</label><input id="b-name" placeholder="e.g. Maren Vex, Kai Orin…" oninput="updatePreview()"></div>
+      <div class="field"><label>Agent Bio</label><textarea id="b-phil" placeholder="Describe your agent's design philosophy, aesthetic instincts, and what drives their creative decisions…" oninput="updatePreview()"></textarea></div>
+    </div>
+
+    <!-- Jewelry Expertise Sliders -->
+    <div class="bsec">
+      <h4><span class="sec-icon">💎</span> Jewelry Expertise</h4>
+      <p style="font-size:.72rem;color:var(--faint);margin-bottom:1.4rem;line-height:1.6">Tune how deeply your agent understands each jewelry category. Higher values mean stronger instincts — shaping design choices, material picks, and creative risk.</p>
+
+      <div class="cat-slider">
+        <div class="cat-slider-header">
+          <span class="cat-slider-label"><span class="cat-icon">💍</span> Rings</span>
+          <span class="cat-slider-val" id="sv-rings">50</span>
         </div>
-        <div class="field"><label>Design Philosophy</label><textarea id="b-phil" placeholder="What drives your agent's design decisions…" oninput="updatePreview()"></textarea></div>
+        <div class="cat-slider-track"><div class="cat-slider-fill" id="fill-rings" style="width:50%"></div></div>
+        <input type="range" min="0" max="100" value="50" id="s-rings" oninput="updateCatSlider(this,'rings');updatePreview()">
+        <div class="cat-slider-hint"><span>Novice</span><span>Master</span></div>
       </div>
-      <div class="bsec" style="margin-top:1px">
-        <h4>Style Tags &nbsp;<span style="color:var(--faint);font-weight:300;font-size:.65rem">up to 5</span></h4>
-        <div class="chips" id="style-chips">
-          <div class="chip" onclick="toggleChip(this,'sc')">minimal</div><div class="chip" onclick="toggleChip(this,'sc')">maximalist</div>
-          <div class="chip" onclick="toggleChip(this,'sc')">architectural</div><div class="chip" onclick="toggleChip(this,'sc')">organic</div>
-          <div class="chip" onclick="toggleChip(this,'sc')">brutalist</div><div class="chip" onclick="toggleChip(this,'sc')">haute-joaillerie</div>
-          <div class="chip" onclick="toggleChip(this,'sc')">floral</div><div class="chip" onclick="toggleChip(this,'sc')">geometric</div>
-          <div class="chip" onclick="toggleChip(this,'sc')">industrial</div><div class="chip" onclick="toggleChip(this,'sc')">avant-garde</div>
-          <div class="chip" onclick="toggleChip(this,'sc')">vintage</div><div class="chip" onclick="toggleChip(this,'sc')">sculptural</div>
-          <div class="chip" onclick="toggleChip(this,'sc')">negative-space</div><div class="chip" onclick="toggleChip(this,'sc')">editorial</div>
+
+      <div class="cat-slider">
+        <div class="cat-slider-header">
+          <span class="cat-slider-label"><span class="cat-icon">📿</span> Necklaces</span>
+          <span class="cat-slider-val" id="sv-necklaces">50</span>
         </div>
+        <div class="cat-slider-track"><div class="cat-slider-fill" id="fill-necklaces" style="width:50%"></div></div>
+        <input type="range" min="0" max="100" value="50" id="s-necklaces" oninput="updateCatSlider(this,'necklaces');updatePreview()">
+        <div class="cat-slider-hint"><span>Novice</span><span>Master</span></div>
       </div>
-      <div class="bsec" style="margin-top:1px">
-        <h4>Market Focus</h4>
-        <div class="chips" id="mkt-chips">
-          <div class="chip" onclick="toggleChip(this,'mc')">bridal</div><div class="chip" onclick="toggleChip(this,'mc')">mens</div>
-          <div class="chip" onclick="toggleChip(this,'mc')">high jewelry</div><div class="chip" onclick="toggleChip(this,'mc')">everyday</div>
-          <div class="chip" onclick="toggleChip(this,'mc')">collectible</div><div class="chip" onclick="toggleChip(this,'mc')">avant-garde</div>
+
+      <div class="cat-slider">
+        <div class="cat-slider-header">
+          <span class="cat-slider-label"><span class="cat-icon">✨</span> Earrings</span>
+          <span class="cat-slider-val" id="sv-earrings">50</span>
         </div>
+        <div class="cat-slider-track"><div class="cat-slider-fill" id="fill-earrings" style="width:50%"></div></div>
+        <input type="range" min="0" max="100" value="50" id="s-earrings" oninput="updateCatSlider(this,'earrings');updatePreview()">
+        <div class="cat-slider-hint"><span>Novice</span><span>Master</span></div>
+      </div>
+
+      <div class="cat-slider">
+        <div class="cat-slider-header">
+          <span class="cat-slider-label"><span class="cat-icon">⌚</span> Bracelets</span>
+          <span class="cat-slider-val" id="sv-bracelets">50</span>
+        </div>
+        <div class="cat-slider-track"><div class="cat-slider-fill" id="fill-bracelets" style="width:50%"></div></div>
+        <input type="range" min="0" max="100" value="50" id="s-bracelets" oninput="updateCatSlider(this,'bracelets');updatePreview()">
+        <div class="cat-slider-hint"><span>Novice</span><span>Master</span></div>
+      </div>
+
+      <div class="cat-slider">
+        <div class="cat-slider-header">
+          <span class="cat-slider-label"><span class="cat-icon">👑</span> High Jewelry</span>
+          <span class="cat-slider-val" id="sv-highjewelry">50</span>
+        </div>
+        <div class="cat-slider-track"><div class="cat-slider-fill" id="fill-highjewelry" style="width:50%"></div></div>
+        <input type="range" min="0" max="100" value="50" id="s-highjewelry" oninput="updateCatSlider(this,'highjewelry');updatePreview()">
+        <div class="cat-slider-hint"><span>Novice</span><span>Master</span></div>
       </div>
     </div>
 
-    <div>
-      <div class="bsec">
-        <h4>Style Genome</h4>
-        <div class="sr"><label>Minimalism</label><input type="range" min="0" max="100" value="50" id="s-min" oninput="sv(this,'sv-min');updatePreview()"><span class="sv" id="sv-min">50</span></div>
-        <div class="sr"><label>Novelty Drive</label><input type="range" min="0" max="100" value="50" id="s-nov" oninput="sv(this,'sv-nov');updatePreview()"><span class="sv" id="sv-nov">50</span></div>
-        <div class="sr"><label>Ornamentation</label><input type="range" min="0" max="100" value="50" id="s-orn" oninput="sv(this,'sv-orn');updatePreview()"><span class="sv" id="sv-orn">50</span></div>
-        <div class="sr"><label>Market Fit Priority</label><input type="range" min="0" max="100" value="50" id="s-mkt" oninput="sv(this,'sv-mkt');updatePreview()"><span class="sv" id="sv-mkt">50</span></div>
-        <div class="sr"><label>Symmetry Preference</label><input type="range" min="0" max="100" value="60" id="s-sym" oninput="sv(this,'sv-sym');updatePreview()"><span class="sv" id="sv-sym">60</span></div>
-      </div>
-      <div class="bsec" style="margin-top:1px">
-        <h4>Material Genome</h4>
-        <div class="sr"><label>Platinum Bias</label><input type="range" min="0" max="100" value="50" id="s-plt" oninput="sv(this,'sv-plt');updatePreview()"><span class="sv" id="sv-plt">50</span></div>
-        <div class="sr"><label>Colored Stone Use</label><input type="range" min="0" max="100" value="40" id="s-col" oninput="sv(this,'sv-col');updatePreview()"><span class="sv" id="sv-col">40</span></div>
-        <div class="sr"><label>Diamond Preference</label><input type="range" min="0" max="100" value="60" id="s-dia" oninput="sv(this,'sv-dia');updatePreview()"><span class="sv" id="sv-dia">60</span></div>
-        <div class="sr"><label>Mixed / Accent Metals</label><input type="range" min="0" max="100" value="30" id="s-mix" oninput="sv(this,'sv-mix');updatePreview()"><span class="sv" id="sv-mix">30</span></div>
-      </div>
-      <div class="bsec" style="margin-top:1px">
-        <h4>Risk Genome</h4>
-        <div class="sr"><label>Exploration ↔ Exploitation</label><input type="range" min="0" max="100" value="50" id="s-rsk" oninput="sv(this,'sv-rsk');updatePreview()"><span class="sv" id="sv-rsk">50</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Conservative</span><span>Aggressive</span></div>
-        <div class="sr"><label>Margin Sensitivity</label><input type="range" min="0" max="100" value="65" id="s-mrg" oninput="sv(this,'sv-mrg');updatePreview()"><span class="sv" id="sv-mrg">65</span></div>
-        <div class="sr"><label>Complexity Budget</label><input type="range" min="0" max="100" value="55" id="s-cmp" oninput="sv(this,'sv-cmp');updatePreview()"><span class="sv" id="sv-cmp">55</span></div>
-      </div>
-      <div class="bsec" style="margin-top:1px">
-        <h4>Commercial Genome</h4>
-        <div class="sr"><label>Price Point</label><input type="range" min="0" max="100" value="50" id="s-prc" oninput="sv(this,'sv-prc');updatePreview()"><span class="sv" id="sv-prc">50</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Accessible ($200-1K)</span><span>High Jewelry ($10K+)</span></div>
-        <div class="sr"><label>Manufacturability</label><input type="range" min="0" max="100" value="60" id="s-mfg" oninput="sv(this,'sv-mfg');updatePreview()"><span class="sv" id="sv-mfg">60</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Art Piece (hand-fab)</span><span>Production Ready (cast)</span></div>
-        <div class="sr"><label>Wearability</label><input type="range" min="0" max="100" value="65" id="s-wer" oninput="sv(this,'sv-wer');updatePreview()"><span class="sv" id="sv-wer">65</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Statement / Runway</span><span>Daily Wear</span></div>
-        <div class="sr"><label>Trend Sensitivity</label><input type="range" min="0" max="100" value="45" id="s-trd" oninput="sv(this,'sv-trd');updatePreview()"><span class="sv" id="sv-trd">45</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Timeless</span><span>Trend-Chasing</span></div>
-      </div>
+    <!-- Preview Card -->
+    <div class="preview-box">
+      <div class="label">Live Agent Preview</div>
+      <div class="prow"><span class="plabel">Identity</span><span class="pval" id="pv-id">—</span></div>
+      <div class="prow"><span class="plabel">Specialty</span><span class="pval" style="font-size:.88rem;color:var(--dim)" id="pv-tags">—</span></div>
+      <div class="prow"><span class="plabel">Focus</span><span class="pval" id="pv-strat">—</span></div>
+      <div class="label" style="margin-top:.8rem">Expertise DNA</div>
+      <div class="dna-strip" id="pv-dna"></div>
     </div>
-  </div>
 
-  <div class="preview-box">
-    <div class="label">Live Agent Preview</div>
-    <div class="prow"><span class="plabel">Identity</span><span class="pval" id="pv-id">—</span></div>
-    <div class="prow"><span class="plabel">Style Tags</span><span class="pval" style="font-size:.82rem;color:var(--dim)" id="pv-tags">—</span></div>
-    <div class="prow"><span class="plabel">Strategy Bias</span><span class="pval" id="pv-strat">—</span></div>
-    <div class="prow"><span class="plabel">Market Focus</span><span class="pval" id="pv-mkt">—</span></div>
-    <div class="label" style="margin-top:.8rem">Style DNA</div>
-    <div class="dna-strip" id="pv-dna"></div>
-  </div>
-
-  <div style="display:flex;gap:.8rem;margin-top:1.5rem;flex-wrap:wrap">
-    <button class="btn btn-primary" id="deploy-btn" onclick="deployCurrentAgent()">Deploy Agent 1 → Configure Next</button>
-    <button class="btn btn-ghost" onclick="autoGen()">✦ Auto-Generate</button>
+    <div style="display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" id="deploy-btn" onclick="deployCurrentAgent()">Deploy Agent 1 → Configure Next</button>
+      <button class="btn btn-ghost" onclick="autoGen()">⚡ Auto-Generate</button>
+    </div>
   </div>
 </div>
 
@@ -1336,6 +1348,17 @@ function openAgentModal(agentId) {
     </div>
 
     <div class="am-section">
+      <div class="am-section-title">Jewelry Expertise</div>
+      <div class="am-genome-grid">
+        ${gbar('Rings','rings','var(--gold)')}
+        ${gbar('Necklaces','necklaces','var(--gold-l)')}
+        ${gbar('Earrings','earrings','var(--purp)')}
+        ${gbar('Bracelets','bracelets','var(--blu)')}
+        ${gbar('High Jewelry','highJewelry','var(--grn)')}
+      </div>
+    </div>
+
+    <div class="am-section">
       <div class="am-section-title">Style Genome</div>
       <div class="am-genome-grid">
         ${gbar('Minimalism','minimalism','var(--blu)')}
@@ -1551,6 +1574,13 @@ function agentGenomeStr(agent) {
   Philosophy: "${g.philosophy}"
   Style Tags: [${tags}]
   Market Focus: ${mktFocus}
+
+JEWELRY CATEGORY EXPERTISE:
+  Rings: ${g.rings ?? 50}/100
+  Necklaces: ${g.necklaces ?? 50}/100
+  Earrings: ${g.earrings ?? 50}/100
+  Bracelets: ${g.bracelets ?? 50}/100
+  High Jewelry: ${g.highJewelry ?? 50}/100
 
 STYLE GENOME:
   Minimalism: ${g.minimalism ?? g.min ?? 50}/100
@@ -1927,6 +1957,12 @@ const VOTE_MATRICES = [
 ══════════════════════════════════ */
 function sv(el, id){ document.getElementById(id).textContent = el.value; }
 
+function updateCatSlider(el, cat) {
+  const val = el.value;
+  document.getElementById('sv-' + cat).textContent = val;
+  document.getElementById('fill-' + cat).style.width = val + '%';
+}
+
 function toggleChip(el, group) {
   if(group==='sc') {
     const sel = document.querySelectorAll('#style-chips .chip.on');
@@ -1940,23 +1976,35 @@ function toggleChip(el, group) {
 
 function updatePreview() {
   const name = document.getElementById('b-name').value||'—';
-  const arch = document.getElementById('b-arch').value||'—';
-  document.getElementById('pv-id').textContent = name + (arch!=='—'?' · '+arch:'');
-  const tags = [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent).join(', ')||'—';
-  document.getElementById('pv-tags').textContent = tags;
-  const rsk = parseInt(document.getElementById('s-rsk').value);
-  document.getElementById('pv-strat').textContent = rsk>65?'Explorer (High Novelty)':rsk<35?'Refiner (Exploit Lane)':'Balanced (Mutate)';
-  const mkt = document.querySelector('#mkt-chips .chip.on');
-  document.getElementById('pv-mkt').textContent = mkt?mkt.textContent:'—';
+  document.getElementById('pv-id').textContent = name;
+
+  // Determine specialty from highest slider
+  const cats = [
+    { id: 's-rings', label: 'Rings' },
+    { id: 's-necklaces', label: 'Necklaces' },
+    { id: 's-earrings', label: 'Earrings' },
+    { id: 's-bracelets', label: 'Bracelets' },
+    { id: 's-highjewelry', label: 'High Jewelry' }
+  ];
+  const vals = cats.map(c => ({ ...c, val: parseInt(document.getElementById(c.id).value) }));
+  const sorted = [...vals].sort((a,b) => b.val - a.val);
+  const top = sorted.filter(s => s.val > 40).slice(0,3);
+  document.getElementById('pv-tags').textContent = top.length ? top.map(s => s.label + ' (' + s.val + ')').join(', ') : '—';
+
+  // Determine focus from slider balance
+  const avg = vals.reduce((s,c) => s + c.val, 0) / 5;
+  const maxCat = sorted[0];
+  document.getElementById('pv-strat').textContent = maxCat.val > 70 ? maxCat.label + ' Specialist' : avg > 55 ? 'Versatile Generalist' : 'Balanced Explorer';
+
   renderDNA();
 }
 
 function renderDNA() {
-  const ids = ['s-min','s-nov','s-orn','s-mkt','s-plt','s-col','s-dia','s-rsk','s-mrg'];
-  const cols = ['#c9a84c','#8a6e30','#e8c97a','#c9a84c','#8a6e30','#b5332a','#c9a84c','#4caf7d','#7b6fa8'];
+  const ids = ['s-rings','s-necklaces','s-earrings','s-bracelets','s-highjewelry'];
+  const cols = ['#c9a84c','#e8c97a','#7b6fa8','#4a7fa8','#4caf7d'];
   document.getElementById('pv-dna').innerHTML = ids.map((id,i)=>{
     const v=parseInt(document.getElementById(id).value);
-    return `<div class="dna-b" style="background:${cols[i]};opacity:${.1+(v/100)*.85}"></div>`;
+    return `<div class="dna-b" style="background:${cols[i]};opacity:${.15+(v/100)*.85}"></div>`;
   }).join('');
 }
 
@@ -1979,49 +2027,31 @@ const FALLBACK_PHILS = [
 ];
 
 async function autoGen() {
-  // First, randomize the genome sliders
-  ['s-min','s-nov','s-orn','s-mkt','s-sym','s-plt','s-col','s-dia','s-mix','s-rsk','s-mrg','s-cmp','s-prc','s-mfg','s-wer','s-trd'].forEach(id=>{
-    const el=document.getElementById(id); const v=Math.floor(Math.random()*70)+15; el.value=v;
-    const sid='sv-'+id.replace('s-',''); const se=document.getElementById(sid); if(se) se.textContent=v;
+  // Randomize the 5 category sliders
+  ['s-rings','s-necklaces','s-earrings','s-bracelets','s-highjewelry'].forEach(id=>{
+    const el=document.getElementById(id);
+    const v=Math.floor(Math.random()*70)+15;
+    el.value=v;
+    const cat=id.replace('s-','');
+    document.getElementById('sv-'+cat).textContent=v;
+    document.getElementById('fill-'+cat).style.width=v+'%';
   });
-
-  // Pick random style tags and market focus
-  const allChips = [...document.querySelectorAll('#style-chips .chip')];
-  allChips.forEach(c=>c.classList.remove('on'));
-  const shuffled = allChips.sort(()=>Math.random()-0.5).slice(0, Math.floor(Math.random()*3)+2);
-  shuffled.forEach(c=>c.classList.add('on'));
-  const mChips = [...document.querySelectorAll('#mkt-chips .chip')];
-  mChips.forEach(c=>c.classList.remove('on'));
-  mChips[Math.floor(Math.random()*mChips.length)].classList.add('on');
 
   // Read current slider values for the prompt
   const sliders = {
-    minimalism: document.getElementById('s-min').value,
-    novelty: document.getElementById('s-nov').value,
-    ornamentation: document.getElementById('s-orn').value,
-    marketFit: document.getElementById('s-mkt').value,
-    symmetry: document.getElementById('s-sym').value,
-    platBias: document.getElementById('s-plt').value,
-    coloredStone: document.getElementById('s-col').value,
-    diamond: document.getElementById('s-dia').value,
-    mixedMetal: document.getElementById('s-mix').value,
-    risk: document.getElementById('s-rsk').value,
-    marginSens: document.getElementById('s-mrg').value,
-    complexBudget: document.getElementById('s-cmp').value,
-    pricePoint: document.getElementById('s-prc').value,
-    manufacturability: document.getElementById('s-mfg').value,
-    wearability: document.getElementById('s-wer').value,
-    trendSens: document.getElementById('s-trd').value,
+    rings: document.getElementById('s-rings').value,
+    necklaces: document.getElementById('s-necklaces').value,
+    earrings: document.getElementById('s-earrings').value,
+    bracelets: document.getElementById('s-bracelets').value,
+    highJewelry: document.getElementById('s-highjewelry').value,
   };
-  const tags = [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent).join(', ');
-  const market = document.querySelector('#mkt-chips .chip.on')?.textContent || 'general';
 
   // Try Claude-generated identity if API available
   if (apiKeysCommitted && apiKeys.anthropic) {
     const btn = document.querySelector('.auto-link');
     if (btn) btn.textContent = '⏳ Generating…';
     try {
-      const genome = `Minimalism:${sliders.minimalism} Novelty:${sliders.novelty} Ornamentation:${sliders.ornamentation} MarketFit:${sliders.marketFit} Symmetry:${sliders.symmetry} PlatinumBias:${sliders.platBias} ColoredStone:${sliders.coloredStone} Diamond:${sliders.diamond} MixedMetal:${sliders.mixedMetal} Risk:${sliders.risk} MarginSensitivity:${sliders.marginSens} ComplexityBudget:${sliders.complexBudget} PricePoint:${sliders.pricePoint} Manufacturability:${sliders.manufacturability} Wearability:${sliders.wearability} TrendSensitivity:${sliders.trendSens} StyleTags:[${tags}] Market:${market}`;
+      const genome = `Rings:${sliders.rings}/100 Necklaces:${sliders.necklaces}/100 Earrings:${sliders.earrings}/100 Bracelets:${sliders.bracelets}/100 HighJewelry:${sliders.highJewelry}/100`;
 
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -2033,32 +2063,30 @@ async function autoGen() {
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 150,
-          system: 'You generate unique jewelry designer identities for an AI simulation. Output EXACTLY 3 lines, nothing else:\nLine 1: A unique designer name (first + last, any ethnicity)\nLine 2: A 2-3 word archetype title\nLine 3: A design philosophy quote (one sentence, under 12 words)',
-          messages: [{ role: 'user', content: `Generate a designer identity that matches this genome:\n${genome}\n\nThe personality should clearly reflect these specific slider values. High minimalism = clean/structural. High ornamentation = ornate/detailed. High risk = experimental. Low risk = conservative. High platinum bias = cold metals. High colored stone = colorful.\n\nCommercial traits matter: High PricePoint = high jewelry designer. Low PricePoint = accessible/commercial designer. High Manufacturability = designs for casting and production. Low Manufacturability = hand-fabrication artisan. High Wearability = everyday comfort focus. Low Wearability = statement/art pieces. High TrendSensitivity = trend-chaser. Low TrendSensitivity = timeless classicist.\n\nOutput 3 lines: Name, Archetype, Philosophy.` }]
+          max_tokens: 200,
+          system: 'You generate unique jewelry designer identities for an AI simulation. Output EXACTLY 2 lines, nothing else:\nLine 1: A unique designer name (first + last, any ethnicity)\nLine 2: A 2-3 sentence bio describing their design philosophy, jewelry specialties, and personality. Reference their specific category strengths.',
+          messages: [{ role: 'user', content: `Generate a jewelry designer identity whose expertise matches this profile:\n${genome}\n\nHigher values = deeper mastery. Their bio should reflect which categories they excel at and how those strengths shape their creative identity. Make it vivid and specific.\n\nOutput 2 lines: Name, then Bio.` }]
         })
       });
       const data = await resp.json();
       const text = data.content?.[0]?.text?.trim();
       if (text) {
         const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
-        if (lines.length >= 3) {
+        if (lines.length >= 2) {
           document.getElementById('b-name').value = lines[0].replace(/^(Name:\s*|1[\.\)]\s*)/i,'');
-          document.getElementById('b-arch').value = lines[1].replace(/^(Archetype:\s*|2[\.\)]\s*)/i,'');
-          document.getElementById('b-phil').value = lines[2].replace(/^(Philosophy:\s*|Quote:\s*|3[\.\)]\s*|"|')/i,'').replace(/["']$/,'');
-          if (btn) btn.textContent = '✦ Auto-Generate';
+          document.getElementById('b-phil').value = lines.slice(1).join(' ').replace(/^(Bio:\s*|2[\.\)]\s*|"|')/i,'').replace(/["']$/,'');
+          if (btn) btn.textContent = '⚡ Auto-Generate';
           updatePreview();
           return;
         }
       }
     } catch(e) { console.warn('Claude auto-gen failed:', e); }
-    if (btn) btn.textContent = '✦ Auto-Generate';
+    if (btn) btn.textContent = '⚡ Auto-Generate';
   }
 
   // Sim mode fallback — pick from pool
   const i = Math.floor(Math.random()*FALLBACK_NAMES.length);
   document.getElementById('b-name').value = FALLBACK_NAMES[i];
-  document.getElementById('b-arch').value = FALLBACK_ARCHS[i]||'';
   document.getElementById('b-phil').value = FALLBACK_PHILS[i];
   updatePreview();
 }
@@ -2069,29 +2097,76 @@ async function autoGen() {
 async function deployCurrentAgent() {
   if(!document.getElementById('b-name').value) await autoGen();
   const idx = currentAgentNum - 1;
+
+  // Read 5 category sliders
+  const rings = parseInt(document.getElementById('s-rings').value);
+  const necklaces = parseInt(document.getElementById('s-necklaces').value);
+  const earrings = parseInt(document.getElementById('s-earrings').value);
+  const bracelets = parseInt(document.getElementById('s-bracelets').value);
+  const highJewelry = parseInt(document.getElementById('s-highjewelry').value);
+
+  // Derive all genome values from the 5 category sliders
+  const avg = (rings + necklaces + earrings + bracelets + highJewelry) / 5;
+  const spread = Math.max(rings, necklaces, earrings, bracelets, highJewelry) - Math.min(rings, necklaces, earrings, bracelets, highJewelry);
+
+  // Determine archetype from slider profile
+  const maxCat = Math.max(rings, necklaces, earrings, bracelets, highJewelry);
+  let arch = 'Versatile Designer';
+  if (highJewelry === maxCat && highJewelry > 60) arch = 'High Jewelry Romantic';
+  else if (rings === maxCat && rings > 60) arch = 'Minimalist Architect';
+  else if (necklaces === maxCat && necklaces > 60) arch = 'Heritage Revivalist';
+  else if (earrings === maxCat && earrings > 60) arch = 'Avant-Garde Purist';
+  else if (bracelets === maxCat && bracelets > 60) arch = 'Industrial Innovator';
+  else if (avg > 65) arch = 'Market Strategist';
+
+  // Derive style tags from category strengths
+  const derivedTags = [];
+  if (highJewelry > 60) derivedTags.push('haute-joaillerie');
+  if (rings > 60) derivedTags.push('sculptural');
+  if (earrings > 60) derivedTags.push('avant-garde');
+  if (necklaces > 60) derivedTags.push('editorial');
+  if (bracelets > 60) derivedTags.push('architectural');
+  if (spread < 20) derivedTags.push('versatile');
+  if (avg > 65) derivedTags.push('maximalist');
+  if (avg < 35) derivedTags.push('minimal');
+
+  // Derive market focus
+  let marketFocus = 'general';
+  if (highJewelry > 70) marketFocus = 'high jewelry';
+  else if (rings > 65 && bracelets > 50) marketFocus = 'bridal';
+  else if (earrings > 65) marketFocus = 'collectible';
+  else if (avg > 55) marketFocus = 'everyday';
+
   const agent = {
     id: idx,
     name: document.getElementById('b-name').value || 'Agent ' + currentAgentNum,
     emoji: AGENT_EMOJIS[idx],
-    arch: document.getElementById('b-arch').value || 'Designer',
-    risk: parseInt(document.getElementById('s-rsk').value),
-    novelty: parseInt(document.getElementById('s-nov').value),
-    minimalism: parseInt(document.getElementById('s-min').value),
-    ornamentation: parseInt(document.getElementById('s-orn').value),
-    marketFit: parseInt(document.getElementById('s-mkt').value),
-    symmetry: parseInt(document.getElementById('s-sym').value),
-    platBias: parseInt(document.getElementById('s-plt').value),
-    coloredStone: parseInt(document.getElementById('s-col').value),
-    diamond: parseInt(document.getElementById('s-dia').value),
-    mixedMetal: parseInt(document.getElementById('s-mix').value),
-    marginSens: parseInt(document.getElementById('s-mrg').value),
-    complexBudget: parseInt(document.getElementById('s-cmp').value),
-    pricePoint: parseInt(document.getElementById('s-prc').value),
-    manufacturability: parseInt(document.getElementById('s-mfg').value),
-    wearability: parseInt(document.getElementById('s-wer').value),
-    trendSens: parseInt(document.getElementById('s-trd').value),
-    styleTags: [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent),
-    marketFocus: document.querySelector('#mkt-chips .chip.on')?.textContent || 'general',
+    arch: arch,
+    // Category expertise (new)
+    rings: rings,
+    necklaces: necklaces,
+    earrings: earrings,
+    bracelets: bracelets,
+    highJewelry: highJewelry,
+    // Derived genome values from categories
+    risk: Math.round(Math.min(100, spread * 0.8 + (earrings - 30) * 0.4)),
+    novelty: Math.round(Math.min(100, (earrings * 0.4 + highJewelry * 0.3 + (100 - bracelets) * 0.3))),
+    minimalism: Math.round(Math.min(100, Math.max(0, 100 - avg))),
+    ornamentation: Math.round(Math.min(100, (highJewelry * 0.4 + necklaces * 0.3 + rings * 0.3))),
+    marketFit: Math.round(Math.min(100, (rings * 0.3 + bracelets * 0.3 + necklaces * 0.2 + earrings * 0.1 + highJewelry * 0.1))),
+    symmetry: Math.round(Math.min(100, (rings * 0.35 + bracelets * 0.35 + necklaces * 0.2 + earrings * 0.05 + highJewelry * 0.05))),
+    platBias: Math.round(Math.min(100, (highJewelry * 0.5 + rings * 0.3 + necklaces * 0.2))),
+    coloredStone: Math.round(Math.min(100, (earrings * 0.35 + necklaces * 0.3 + highJewelry * 0.2 + rings * 0.15))),
+    diamond: Math.round(Math.min(100, (rings * 0.4 + highJewelry * 0.35 + earrings * 0.15 + necklaces * 0.1))),
+    mixedMetal: Math.round(Math.min(100, (bracelets * 0.4 + necklaces * 0.3 + earrings * 0.2 + rings * 0.1))),
+    marginSens: Math.round(Math.min(100, Math.max(0, 100 - highJewelry * 0.4 - earrings * 0.3 + bracelets * 0.3))),
+    complexBudget: Math.round(Math.min(100, (highJewelry * 0.35 + earrings * 0.25 + necklaces * 0.2 + rings * 0.1 + bracelets * 0.1))),
+    pricePoint: Math.round(Math.min(100, (highJewelry * 0.5 + rings * 0.2 + necklaces * 0.15 + earrings * 0.1 + bracelets * 0.05))),
+    manufacturability: Math.round(Math.min(100, (bracelets * 0.35 + rings * 0.3 + necklaces * 0.2 + earrings * 0.1 + (100 - highJewelry) * 0.05))),
+    wearability: Math.round(Math.min(100, (bracelets * 0.3 + rings * 0.25 + earrings * 0.2 + necklaces * 0.15 + (100 - highJewelry) * 0.1))),
+    trendSens: Math.round(Math.min(100, (earrings * 0.3 + bracelets * 0.25 + necklaces * 0.2 + rings * 0.15 + (100 - highJewelry) * 0.1))),
+    styleTags: derivedTags.slice(0, 5),
+    marketFocus: marketFocus,
     philosophy: document.getElementById('b-phil').value || '',
     isUser: currentAgentNum === 1,
     credits: 10000,
@@ -2131,18 +2206,15 @@ function resetBuilderForNext() {
   // Update counter
   document.getElementById('agent-counter').innerHTML = 'Agent ' + currentAgentNum + ' of 6 &nbsp;<span id="agent-emoji">' + AGENT_EMOJIS[currentAgentNum-1] + '</span>';
   document.getElementById('builder-title').innerHTML = currentAgentNum === 1
-    ? 'Design your <em>autonomous agent.</em>'
+    ? 'Forge your <em>jewelry mind.</em>'
     : 'Configure <em>competitor #' + (currentAgentNum-1) + '</em>';
   document.getElementById('builder-sub').textContent = currentAgentNum === 1
-    ? 'Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles — and evolve based on what it learns.'
+    ? 'Give your agent an identity and tune their jewelry instincts. These 5 sliders shape how the AI thinks about design across every cycle.'
     : 'This agent will compete in the arena against your deployed agents. Customize or auto-generate.';
 
-  // Clear and auto-generate for speed
+  // Clear form
   document.getElementById('b-name').value = '';
-  document.getElementById('b-arch').value = '';
   document.getElementById('b-phil').value = '';
-  document.querySelectorAll('#style-chips .chip').forEach(c=>c.classList.remove('on'));
-  document.querySelectorAll('#mkt-chips .chip').forEach(c=>c.classList.remove('on'));
   autoGen();
 
   // Update button
@@ -2576,10 +2648,9 @@ async function generateAgentBio(agent) {
 
   const genome = agentGenomeStr(agent);
   const prompt = `Below is the raw DNA genome of a jewelry design AI agent. Write a short personality bio (3-4 sentences, ~60 words) in third person that captures who this agent IS. Include:
+- Their jewelry category specialties (which types of jewelry they excel at)
 - Their aesthetic identity and design instincts
-- How they approach manufacturing (do they design for casting or hand-fab?)
-- Their commercial positioning (price point, who buys their work)
-- Their wearability philosophy (daily wear comfort vs statement drama)
+- Their commercial positioning and creative personality
 
 Make it vivid and specific. Do NOT list numbers or repeat the genome format. Just the bio paragraph, nothing else.
 
@@ -2597,7 +2668,7 @@ ${genome}`;
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 180,
-        system: 'You are a concise creative writer for a luxury jewelry AI simulation. Bios should convey both artistic vision AND commercial/manufacturing reality — these agents design products that must be physically produced and sold. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
+        system: 'You are a concise creative writer for a luxury jewelry AI simulation. Bios should convey the agent\'s jewelry category expertise, artistic vision, and design personality. Reference their strongest jewelry categories naturally. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -2611,14 +2682,19 @@ ${genome}`;
 }
 
 function buildFallbackBio(agent) {
+  // Determine strongest category
+  const cats = [
+    { name: 'rings', val: agent.rings ?? 50 },
+    { name: 'necklaces', val: agent.necklaces ?? 50 },
+    { name: 'earrings', val: agent.earrings ?? 50 },
+    { name: 'bracelets', val: agent.bracelets ?? 50 },
+    { name: 'high jewelry', val: agent.highJewelry ?? 50 },
+  ].sort((a,b) => b.val - a.val);
+  const top = cats[0];
+  const second = cats[1];
   const style = agent.minimalism > 60 ? 'minimalist' : agent.ornamentation > 60 ? 'ornate' : 'balanced';
   const riskWord = agent.risk > 65 ? 'bold explorer' : agent.risk < 35 ? 'disciplined refiner' : 'adaptive strategist';
-  const matPref = agent.platBias > 60 ? 'platinum-forward' : agent.mixedMetal > 60 ? 'mixed-metal experimentalist' : agent.diamond > 65 ? 'diamond-centric' : 'material-versatile';
-  const market = agent.marginSens > 65 ? 'margin-conscious' : 'design-first';
-  const mfg = (agent.manufacturability ?? 60) > 60 ? 'designs for casting and production' : 'hand-fabrication artisan';
-  const price = (agent.pricePoint ?? 50) > 65 ? 'high jewelry' : (agent.pricePoint ?? 50) < 35 ? 'accessible luxury' : 'mid-market';
-  const wear = (agent.wearability ?? 65) > 60 ? 'comfort-first' : 'statement-driven';
-  return `${agent.name} is a ${style}, ${matPref} ${riskWord} with a ${market} market philosophy. ${price} positioning, ${mfg}. ${wear} approach to ${agent.marketFocus || 'general'} with ${(agent.styleTags||[]).slice(0,3).join(', ') || 'eclectic'} sensibilities.`;
+  return `${agent.name} is a ${style} ${riskWord} with deep expertise in ${top.name}${second.val > 50 ? ' and ' + second.name : ''}. ${top.val > 70 ? 'A true specialist' : 'A versatile designer'} with ${(agent.styleTags||[]).slice(0,3).join(', ') || 'eclectic'} sensibilities, focused on ${agent.marketFocus || 'general'} markets.`;
 }
 
 /* ══════════════════════════════════
