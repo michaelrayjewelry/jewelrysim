@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>JEWELFORGE — 3-Cycle Intelligence Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1228,6 +1230,8 @@ function doPost(e) {
   <div style="margin-top:1.5rem;display:flex;gap:.8rem;flex-wrap:wrap">
     <button class="btn btn-ghost" onclick="goTo(2)">← Back to Simulator</button>
     <button class="btn btn-ghost btn-sm" id="dl-all-btn" style="display:none" onclick="exportAllReports()">⬇ Export All Reports</button>
+    <button class="btn btn-ghost btn-sm" id="dl-pdf-btn" style="display:none" onclick="exportCurrentReportAsPDF()">⬇ Export Report as PDF</button>
+    <button class="btn btn-ghost btn-sm" id="dl-all-pdf-btn" style="display:none" onclick="exportAllReportsAsPDF()">⬇ Export All Reports as PDF</button>
   </div>
 </div>
 
@@ -4822,7 +4826,8 @@ function updateReportsNav() {
       <div class="rni-winner">"${r.winner.name}"</div>
     </div>
   `).join('');
-  if(cycleReports.length===3) document.getElementById('dl-all-btn').style.display='';
+  if(cycleReports.length===3) { document.getElementById('dl-all-btn').style.display=''; document.getElementById('dl-all-pdf-btn').style.display=''; }
+  if(cycleReports.length>0) document.getElementById('dl-pdf-btn').style.display='';
   document.getElementById('reports-sub').textContent = `${cycleReports.length} of 3 cycle reports generated. Each report feeds forward into agent decision-making for the next cycle.`;
 }
 
@@ -4889,9 +4894,12 @@ function buildGenomeEvolutionHtml(r) {
   }).join('')}</div>`;
 }
 
+let _currentViewedCycle = null;
+
 function viewReport(cycleNum) {
   const r = cycleReports.find(x=>x.cycle===cycleNum);
   if(!r){ goTo(3); return; }
+  _currentViewedCycle = cycleNum;
   goTo(3);
   document.querySelectorAll('.rn-item').forEach(el=>el.classList.remove('active'));
   const ni = document.getElementById('rni-'+cycleNum);
@@ -5289,6 +5297,713 @@ function exportAllReports() {
   const blob = new Blob([content], {type:'text/plain'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'JewelForge_Epoch_Intelligence_Archive.txt'; a.click();
+}
+
+/* ══════════════════════════════════
+   PDF EXPORT
+══════════════════════════════════ */
+
+function exportCurrentReportAsPDF() {
+  const cycleNum = _currentViewedCycle || (cycleReports.length ? cycleReports[cycleReports.length-1].cycle : null);
+  if (!cycleNum) { alert('No report to export.'); return; }
+  const r = cycleReports.find(x=>x.cycle===cycleNum);
+  if (!r) { alert('Report not found.'); return; }
+  _buildReportPDF(r, `JewelForge_Cycle${cycleNum}_Report.pdf`);
+}
+
+function exportAllReportsAsPDF() {
+  if (!cycleReports.length) { alert('No reports to export.'); return; }
+  if (cycleReports.length === 1) {
+    _buildReportPDF(cycleReports[0], `JewelForge_Cycle${cycleReports[0].cycle}_Report.pdf`);
+    return;
+  }
+  _buildMultiReportPDF(cycleReports, 'JewelForge_Epoch_Intelligence_Archive.pdf');
+}
+
+async function _buildReportPDF(r, filename) {
+  const statusEl = _showPdfStatus('Generating PDF...');
+  try {
+    const container = _createPdfContainer(r);
+    document.body.appendChild(container);
+    // Wait for images to load
+    await _waitForImages(container, 8000);
+    await new Promise(res => setTimeout(res, 300));
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 28;
+    const contentW = pageW - margin * 2;
+
+    // Render sections individually for better pagination
+    const sections = container.querySelectorAll('.pdf-section');
+    let yPos = margin;
+    let firstPage = true;
+
+    for (let i = 0; i < sections.length; i++) {
+      _updatePdfStatus(statusEl, `Rendering section ${i+1} of ${sections.length}...`);
+      const sec = sections[i];
+      const canvas = await html2canvas(sec, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#060606',
+        logging: false,
+        width: sec.scrollWidth,
+        height: sec.scrollHeight
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const imgW = contentW;
+      const imgH = (canvas.height / canvas.width) * imgW;
+
+      // Check if section fits on current page
+      if (!firstPage && yPos + imgH > pageH - margin) {
+        pdf.addPage();
+        yPos = margin;
+      }
+
+      // If section is taller than a full page, scale to fit or split
+      if (imgH > pageH - margin * 2) {
+        // Scale down to fit one page
+        const scale = (pageH - margin * 2) / imgH;
+        const scaledW = imgW * scale;
+        const scaledH = imgH * scale;
+        if (yPos > margin) { pdf.addPage(); yPos = margin; }
+        pdf.addImage(imgData, 'PNG', margin + (contentW - scaledW) / 2, yPos, scaledW, scaledH);
+        yPos = yPos + scaledH + 12;
+      } else {
+        pdf.addImage(imgData, 'PNG', margin, yPos, imgW, imgH);
+        yPos += imgH + 12;
+      }
+      firstPage = false;
+    }
+
+    // Add page numbers
+    const totalPages = pdf.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      pdf.setPage(p);
+      pdf.setFontSize(7);
+      pdf.setTextColor(138, 134, 128);
+      pdf.text(`JewelForge — Cycle ${r.cycle} Intelligence Report — Page ${p} of ${totalPages}`, pageW / 2, pageH - 12, { align: 'center' });
+    }
+
+    pdf.save(filename);
+    container.remove();
+    _hidePdfStatus(statusEl);
+  } catch(e) {
+    console.error('PDF export error:', e);
+    _hidePdfStatus(statusEl);
+    alert('PDF export failed: ' + e.message);
+  }
+}
+
+async function _buildMultiReportPDF(reports, filename) {
+  const statusEl = _showPdfStatus('Generating multi-cycle PDF...');
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 28;
+    const contentW = pageW - margin * 2;
+
+    for (let ri = 0; ri < reports.length; ri++) {
+      const r = reports[ri];
+      if (ri > 0) pdf.addPage();
+      _updatePdfStatus(statusEl, `Rendering Cycle ${r.cycle} report (${ri+1}/${reports.length})...`);
+
+      const container = _createPdfContainer(r);
+      document.body.appendChild(container);
+      await _waitForImages(container, 8000);
+      await new Promise(res => setTimeout(res, 300));
+
+      const sections = container.querySelectorAll('.pdf-section');
+      let yPos = margin;
+
+      for (let i = 0; i < sections.length; i++) {
+        const sec = sections[i];
+        const canvas = await html2canvas(sec, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#060606',
+          logging: false,
+          width: sec.scrollWidth,
+          height: sec.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgW = contentW;
+        const imgH = (canvas.height / canvas.width) * imgW;
+
+        if (yPos > margin && yPos + imgH > pageH - margin) {
+          pdf.addPage();
+          yPos = margin;
+        }
+
+        if (imgH > pageH - margin * 2) {
+          const scale = (pageH - margin * 2) / imgH;
+          const scaledW = imgW * scale;
+          const scaledH = imgH * scale;
+          if (yPos > margin) { pdf.addPage(); yPos = margin; }
+          pdf.addImage(imgData, 'PNG', margin + (contentW - scaledW) / 2, yPos, scaledW, scaledH);
+          yPos = yPos + scaledH + 12;
+        } else {
+          pdf.addImage(imgData, 'PNG', margin, yPos, imgW, imgH);
+          yPos += imgH + 12;
+        }
+      }
+
+      container.remove();
+    }
+
+    // Add page numbers
+    const totalPages = pdf.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      pdf.setPage(p);
+      pdf.setFontSize(7);
+      pdf.setTextColor(138, 134, 128);
+      pdf.text(`JewelForge — Epoch Intelligence Archive — Page ${p} of ${totalPages}`, pageW / 2, pageH - 12, { align: 'center' });
+    }
+
+    pdf.save(filename);
+    _hidePdfStatus(statusEl);
+  } catch(e) {
+    console.error('PDF export error:', e);
+    _hidePdfStatus(statusEl);
+    alert('PDF export failed: ' + e.message);
+  }
+}
+
+// ── PDF container builder: creates off-screen element with report content ──
+function _createPdfContainer(r) {
+  const fmtC = (n) => n.toLocaleString();
+  const sign = (v) => v >= 0 ? '+' + v : '' + v;
+  const corrStrength = (v) => Math.abs(v) > 0.7 ? 'Strong' : Math.abs(v) > 0.4 ? 'Moderate' : 'Weak';
+  const winnerShare = r.winnerShare || Math.round(r.winner.credits / r.totalCredits * 100);
+  const top3Share = r.top3Share || 0;
+  const sp = r.stratPerf || {};
+  const sortedAgents = [...(r.agentPerf || [])].sort((a, b) => a.rank - b.rank);
+  const vel = r.trendData?.velocityScore || 70;
+
+  // CSS for PDF rendering
+  const pdfCSS = `
+    .pdf-root { font-family: 'Rajdhani', Helvetica, Arial, sans-serif; background: #060606; color: #e8e4dc; width: 750px; padding: 0; }
+    .pdf-section { padding: 16px 24px; margin-bottom: 0; }
+    .pdf-header { border-bottom: 2px solid #8a6e30; padding-bottom: 14px; margin-bottom: 0; }
+    .pdf-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; font-weight: 300; color: #c9a84c; margin-bottom: 4px; }
+    .pdf-meta { font-size: 10px; letter-spacing: 2.5px; color: #8a8680; text-transform: uppercase; }
+    .pdf-sec-hdr { font-size: 10px; letter-spacing: 4px; color: #8a6e30; text-transform: uppercase; border-bottom: 1px solid rgba(201,168,76,0.14); padding-bottom: 6px; margin-bottom: 12px; margin-top: 4px; }
+
+    /* KPI */
+    .pdf-kpi { display: flex; gap: 1px; background: rgba(201,168,76,0.14); margin-bottom: 16px; }
+    .pdf-kpi-cell { flex: 1; background: #0d0d0d; padding: 10px 8px; text-align: center; }
+    .pdf-kpi-val { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; color: #c9a84c; line-height: 1; }
+    .pdf-kpi-val.up { color: #4caf7d; }
+    .pdf-kpi-val.down { color: #b5332a; }
+    .pdf-kpi-val.neu { color: #e8e4dc; }
+    .pdf-kpi-lbl { font-size: 8px; letter-spacing: 2px; color: #3a3a38; text-transform: uppercase; margin-top: 4px; }
+
+    /* Top 3 */
+    .pdf-top3 { display: flex; gap: 1px; background: rgba(201,168,76,0.14); margin-bottom: 16px; }
+    .pdf-top3-card { flex: 1; background: #141414; }
+    .pdf-top3-card.rank1 { border-top: 3px solid #c9a84c; }
+    .pdf-top3-card.rank2 { border-top: 3px solid #8a8680; }
+    .pdf-top3-card.rank3 { border-top: 3px solid #3a3a38; }
+    .pdf-top3-img { width: 100%; height: 200px; object-fit: cover; display: block; background: #1c1c1c; }
+    .pdf-top3-meta { padding: 10px; }
+    .pdf-top3-rank { font-size: 9px; letter-spacing: 2.5px; color: #3a3a38; text-transform: uppercase; margin-bottom: 3px; }
+    .pdf-top3-rank.r1 { color: #c9a84c; }
+    .pdf-top3-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 14px; color: #e8e4dc; margin-bottom: 2px; }
+    .pdf-top3-by { font-size: 9px; color: #8a8680; }
+    .pdf-top3-creds { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 16px; color: #c9a84c; margin-top: 4px; }
+    .pdf-top3-scores { font-size: 9px; color: #3a3a38; margin-top: 3px; }
+
+    /* Correlation */
+    .pdf-corr { display: flex; gap: 1px; background: rgba(201,168,76,0.14); margin-bottom: 10px; }
+    .pdf-corr-card { flex: 1; background: #0d0d0d; padding: 12px; }
+    .pdf-corr-dim { font-size: 9px; letter-spacing: 2.5px; color: #8a6e30; text-transform: uppercase; margin-bottom: 8px; }
+    .pdf-corr-track { height: 6px; background: #3a3a38; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .pdf-corr-fill { height: 100%; border-radius: 3px; }
+    .pdf-corr-fill.aes { background: linear-gradient(90deg, #8a6e30, #c9a84c); }
+    .pdf-corr-fill.nov { background: linear-gradient(90deg, #4a7fa8, #7bb8d4); }
+    .pdf-corr-fill.pro { background: linear-gradient(90deg, #4caf7d, #7be0a8); }
+    .pdf-corr-r { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 16px; color: #e8e4dc; }
+    .pdf-corr-note { font-size: 9px; color: #3a3a38; margin-top: 3px; }
+    .pdf-corr-badge { display: inline-block; font-size: 8px; letter-spacing: 1.5px; color: #c9a84c; border: 1px solid #8a6e30; padding: 2px 5px; text-transform: uppercase; margin-top: 4px; }
+    .pdf-insight { font-size: 11px; color: #3a3a38; line-height: 1.6; margin-top: 6px; }
+    .pdf-insight b { color: #e8e4dc; }
+
+    /* Strategy */
+    .pdf-strat { display: flex; gap: 1px; background: rgba(201,168,76,0.14); margin-bottom: 10px; }
+    .pdf-sb-card { flex: 1; background: #0d0d0d; padding: 12px; position: relative; }
+    .pdf-sb-card.winner { background: rgba(201,168,76,0.06); }
+    .pdf-sb-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; padding: 2px 6px; border: 1px solid; display: inline-block; }
+    .pdf-sb-label.exploit { border-color: #8a6e30; color: #8a6e30; }
+    .pdf-sb-label.explore { border-color: #4a7fa8; color: #4a7fa8; }
+    .pdf-sb-label.mutate { border-color: #7b6fa8; color: #7b6fa8; }
+    .pdf-sb-creds { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; margin-bottom: 3px; }
+    .pdf-sb-sub { font-size: 9px; color: #3a3a38; }
+    .pdf-sb-flag { position: absolute; top: 8px; right: 8px; font-size: 8px; letter-spacing: 1.5px; color: #c9a84c; border: 1px solid #8a6e30; padding: 2px 5px; text-transform: uppercase; }
+
+    /* Tables */
+    .pdf-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+    .pdf-table th { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #8a6e30; border-bottom: 1px solid rgba(201,168,76,0.14); padding: 6px 8px; text-align: left; background: #0d0d0d; }
+    .pdf-table td { padding: 5px 8px; border-bottom: 1px solid #1e1e1e; color: #8a8680; vertical-align: middle; line-height: 1.4; }
+    .pdf-table tr:first-child td { color: #e8e4dc; }
+    .pdf-table .gold { color: #c9a84c; font-family: 'Cormorant Garamond', Georgia, serif; }
+    .pdf-table .grn { color: #4caf7d; }
+    .pdf-table .red { color: #b5332a; }
+    .pdf-rank-num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 15px; color: #3a3a38; text-align: center; }
+    .pdf-rank-num.r1 { color: #c9a84c; }
+
+    /* Bar charts */
+    .pdf-bar-wrap { display: inline-flex; align-items: center; gap: 4px; width: 80px; }
+    .pdf-bar-track { flex: 1; height: 4px; background: #3a3a38; border-radius: 2px; overflow: hidden; }
+    .pdf-bar-fill { height: 100%; border-radius: 2px; }
+    .pdf-bar-val { font-size: 9px; color: #8a8680; width: 28px; text-align: right; flex-shrink: 0; }
+
+    /* Vote flow */
+    .pdf-vf-alloc { display: inline-block; background: rgba(201,168,76,0.08); border: 1px solid #4a3a18; padding: 1px 5px; font-size: 9px; margin: 1px 2px 1px 0; white-space: nowrap; }
+    .pdf-vf-self { background: rgba(181,51,42,0.08); border-color: rgba(181,51,42,0.3); color: #b5332a; }
+    .pdf-vote-insight { background: #0d0d0d; border: 1px solid rgba(201,168,76,0.14); padding: 8px 10px; font-size: 10px; color: #8a8680; line-height: 1.6; margin-top: 8px; }
+    .pdf-vote-insight b { color: #e8e4dc; }
+
+    /* Trend velocity */
+    .pdf-vel { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .pdf-vel-label { font-size: 9px; letter-spacing: 2px; color: #3a3a38; text-transform: uppercase; width: 55px; flex-shrink: 0; }
+    .pdf-vel-meter { flex: 1; height: 8px; background: #3a3a38; border-radius: 4px; overflow: hidden; }
+    .pdf-vel-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8a6e30, #e8c97a); }
+    .pdf-vel-score { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 16px; color: #c9a84c; width: 40px; text-align: right; flex-shrink: 0; }
+    .pdf-trend-grid { display: flex; flex-wrap: wrap; gap: 1px; background: rgba(201,168,76,0.14); }
+    .pdf-tcard { flex: 1; min-width: 48%; background: #0d0d0d; padding: 10px; }
+    .pdf-tcard-label { font-size: 8px; letter-spacing: 2.5px; color: #8a6e30; text-transform: uppercase; margin-bottom: 5px; }
+    .pdf-tcard-val { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 14px; color: #e8e4dc; }
+    .pdf-tcard-val.up { color: #4caf7d; }
+    .pdf-tcard-val.down { color: #b5332a; }
+    .pdf-tcard-sub { font-size: 9px; color: #3a3a38; margin-top: 2px; }
+
+    /* FI box */
+    .pdf-fi { background: rgba(201,168,76,0.04); border: 1px solid #8a6e30; padding: 14px; margin-top: 6px; }
+    .pdf-fi-title { font-size: 9px; letter-spacing: 3px; color: #c9a84c; text-transform: uppercase; margin-bottom: 10px; }
+    .pdf-fi-item { display: flex; gap: 8px; margin-bottom: 6px; font-size: 10px; color: #8a8680; line-height: 1.5; }
+    .pdf-fi-item::before { content: '\\25C6'; color: #8a6e30; font-size: 7px; margin-top: 3px; flex-shrink: 0; }
+
+    /* Genome evolution */
+    .pdf-genome-grid { display: flex; flex-wrap: wrap; gap: 1px; background: rgba(201,168,76,0.14); }
+    .pdf-genome-card { flex: 1; min-width: 32%; background: #0d0d0d; padding: 10px; }
+    .pdf-gc-hdr { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .pdf-gc-name { font-size: 11px; font-weight: 600; color: #e8e4dc; }
+    .pdf-gc-badge { font-size: 7px; letter-spacing: 1px; padding: 1px 4px; text-transform: uppercase; }
+    .pdf-gc-badge.win { color: #c9a84c; border: 1px solid #8a6e30; }
+    .pdf-gc-badge.loss { color: #b5332a; border: 1px solid rgba(181,51,42,0.3); }
+    .pdf-gd-row { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+    .pdf-gd-label { font-size: 9px; color: #8a8680; width: 70px; flex-shrink: 0; }
+    .pdf-gd-track { flex: 1; height: 4px; background: #1e1e1e; border-radius: 2px; overflow: hidden; }
+    .pdf-gd-fill { height: 100%; border-radius: 2px; }
+    .pdf-gd-arrow { font-size: 9px; width: 30px; text-align: right; flex-shrink: 0; }
+    .pdf-gd-arrow.up { color: #4caf7d; }
+    .pdf-gd-arrow.down { color: #b5332a; }
+    .pdf-gc-tags { margin-top: 4px; }
+    .pdf-gt { display: inline-block; font-size: 8px; padding: 1px 4px; background: rgba(201,168,76,0.08); color: #8a8680; margin: 1px 2px 1px 0; }
+    .pdf-gt.new { color: #4caf7d; }
+    .pdf-gt.lost { color: #b5332a; text-decoration: line-through; }
+    .pdf-gc-belief { font-size: 9px; color: #8a8680; margin-top: 4px; font-style: italic; }
+
+    /* Epoch arc */
+    .pdf-epoch { border: 1px solid #8a6e30; background: rgba(201,168,76,0.03); padding: 16px; margin-top: 6px; }
+    .pdf-epoch-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 16px; color: #c9a84c; margin-bottom: 10px; }
+    .pdf-epoch-timeline { display: flex; gap: 1px; background: rgba(201,168,76,0.14); margin-bottom: 12px; }
+    .pdf-et-node { flex: 1; background: #0d0d0d; padding: 10px; text-align: center; }
+    .pdf-et-cycle { font-size: 9px; color: #8a8680; margin-bottom: 3px; }
+    .pdf-et-winner { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 13px; color: #e8e4dc; }
+    .pdf-et-trend { font-size: 9px; color: #c9a84c; margin-top: 3px; }
+    .pdf-et-creds { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 14px; color: #c9a84c; margin-top: 3px; }
+    .pdf-epoch-insight { font-size: 10px; color: #8a8680; line-height: 1.65; }
+    .pdf-epoch-insight b { color: #e8e4dc; }
+
+    /* Strat badge inline */
+    .pdf-strat-badge { display: inline-block; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; padding: 1px 5px; border: 1px solid; }
+    .pdf-strat-badge.exploit { border-color: #8a6e30; color: #8a6e30; }
+    .pdf-strat-badge.explore { border-color: #4a7fa8; color: #4a7fa8; }
+    .pdf-strat-badge.mutate { border-color: #7b6fa8; color: #7b6fa8; }
+
+    /* Prompt table */
+    .pdf-prompt-box { background: #1c1c1c; border: 1px solid #3a3a38; padding: 6px; font-size: 9px; color: #4caf7d; font-family: 'Courier New', monospace; line-height: 1.5; }
+  `;
+
+  const container = document.createElement('div');
+  container.className = 'pdf-root';
+  container.style.cssText = 'position:absolute;left:-9999px;top:0;z-index:-1;';
+
+  // ── Build bar helper ──
+  const pdfBar = (val, max, col, w = 80) =>
+    `<span class="pdf-bar-wrap" style="width:${w}px">
+      <span class="pdf-bar-track"><span class="pdf-bar-fill" style="width:${Math.round(val/max*100)}%;background:${col}"></span></span>
+      <span class="pdf-bar-val">${val}</span>
+    </span>`;
+
+  // ── Section: Header ──
+  const headerHtml = `
+    <div class="pdf-section pdf-header">
+      <div class="pdf-title">Cycle ${r.cycle} — Intelligence Report</div>
+      <div class="pdf-meta">Generated ${r.date} at ${r.time || ''} &nbsp;&middot;&nbsp; 6 Agents &nbsp;&middot;&nbsp; ${r.designs.length} Designs &nbsp;&middot;&nbsp; ${fmtC(r.totalCredits)} Credits Circulated</div>
+    </div>`;
+
+  // ── Section: KPI ──
+  const kpiHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Key Performance Indicators</div>
+      <div class="pdf-kpi">
+        <div class="pdf-kpi-cell"><div class="pdf-kpi-val neu">${fmtC(r.winner.credits)}</div><div class="pdf-kpi-lbl">Winner Credits</div></div>
+        <div class="pdf-kpi-cell"><div class="pdf-kpi-val">${winnerShare}%</div><div class="pdf-kpi-lbl">Winner Vote Share</div></div>
+        <div class="pdf-kpi-cell"><div class="pdf-kpi-val">${top3Share}%</div><div class="pdf-kpi-lbl">Top 3 Capture</div></div>
+        <div class="pdf-kpi-cell"><div class="pdf-kpi-val ${r.gini>0.4?'down':r.gini>0.25?'':'up'}">${r.gini}</div><div class="pdf-kpi-lbl">Gini Concentration</div></div>
+        <div class="pdf-kpi-cell"><div class="pdf-kpi-val">${r.topCorr||'—'}</div><div class="pdf-kpi-lbl">Top Vote Predictor</div></div>
+        <div class="pdf-kpi-cell"><div class="pdf-kpi-val ${(r.novSlope||0)>0?'up':'down'}">${sign(r.novSlope||0)}</div><div class="pdf-kpi-lbl">Novelty Premium/pt</div></div>
+      </div>
+    </div>`;
+
+  // ── Section: Top 3 designs with images ──
+  const top3Designs = r.sortedDesigns.slice(0, 3);
+  const rankLabels = ['1st Place', '2nd Place', '3rd Place'];
+  const top3Html = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Top 3 Designs — AI Rendered from Agent Prompts</div>
+      <div class="pdf-top3">
+        ${top3Designs.map((d, i) => {
+          const cachedUrl = d.imageUrl || _designImageCache[r.cycle + '-' + d.agentIdx] || '';
+          return `<div class="pdf-top3-card rank${i + 1}">
+            ${cachedUrl ? `<img class="pdf-top3-img pdf-wait-img" src="${cachedUrl}" crossorigin="anonymous" />` : `<div class="pdf-top3-img" style="display:flex;align-items:center;justify-content:center;font-size:24px;color:#3a3a38;">No Image</div>`}
+            <div class="pdf-top3-meta">
+              <div class="pdf-top3-rank ${i === 0 ? 'r1' : ''}">${rankLabels[i]}</div>
+              <div class="pdf-top3-name">"${d.name}"</div>
+              <div class="pdf-top3-by">${d.agentName || 'Agent'} &middot; ${d.cat}</div>
+              <div class="pdf-top3-creds">${fmtC(d.credits || 0)} Credits</div>
+              <div class="pdf-top3-scores">AES ${d.aesthetic} &middot; NOV ${d.novelty} &middot; PRO ${d.profit}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // ── Section: Correlation ──
+  const corrHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Score x Credits Correlation Analysis</div>
+      <div class="pdf-corr">
+        ${[
+          { dim: 'Aesthetic', key: 'corrAes', cls: 'aes', col: '#c9a84c' },
+          { dim: 'Novelty', key: 'corrNov', cls: 'nov', col: '#7bb8d4' },
+          { dim: 'Profit', key: 'corrPro', cls: 'pro', col: '#7be0a8' },
+        ].map(({ dim, key, cls, col }) => {
+          const val = r[key] || 0;
+          const isTop = r.topCorr === dim;
+          return `<div class="pdf-corr-card">
+            <div class="pdf-corr-dim">${dim} Score</div>
+            <div class="pdf-corr-track"><div class="pdf-corr-fill ${cls}" style="width:${Math.round(Math.abs(val) * 100)}%"></div></div>
+            <div class="pdf-corr-r" style="color:${col}">r = ${val}</div>
+            <div class="pdf-corr-note">${corrStrength(val)} ${val >= 0 ? 'positive' : 'negative'} correlation with credits</div>
+            ${isTop ? '<div class="pdf-corr-badge">Top Predictor</div>' : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="pdf-insight">
+        r = Pearson correlation coefficient. Values near &plusmn;1 indicate strong linear relationship between score and credits received.
+        ${r.topCorr === 'Novelty' ? '<b>Novelty dominated this cycle</b> — agents are rewarding fresh ideas over safe margins.' :
+          r.topCorr === 'Aesthetic' ? '<b>Aesthetic was the market driver</b> — visual design quality outweighed financial logic.' :
+          '<b>Profit drove consensus</b> — agents voted rationally toward high-margin pieces.'}
+      </div>
+    </div>`;
+
+  // ── Section: Strategy battle ──
+  const stratHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Strategy Performance — Exploit vs Explore vs Mutate</div>
+      <div class="pdf-strat">
+        ${['exploit', 'explore', 'mutate'].map(s => {
+          const d = sp[s] || { count: 0, avgCreds: 0 };
+          const isWin = r.winner.strategy === s;
+          const col = s === 'exploit' ? '#8a6e30' : s === 'explore' ? '#4a7fa8' : '#7b6fa8';
+          return `<div class="pdf-sb-card ${isWin ? 'winner' : ''}">
+            ${isWin ? '<div class="pdf-sb-flag">Winning Strategy</div>' : ''}
+            <div class="pdf-sb-label ${s}">${s.toUpperCase()}</div>
+            <div class="pdf-sb-creds" style="color:${col}">${fmtC(d.avgCreds)} Credits</div>
+            <div class="pdf-sb-sub">avg per design &middot; ${d.count} design${d.count !== 1 ? 's' : ''}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // ── Section: Category heat map ──
+  const catHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Category Heat Map</div>
+      <table class="pdf-table">
+        <thead><tr><th>Category</th><th>Entries</th><th>Pool %</th><th>Avg Credits</th><th>Avg Aesthetic</th><th>Avg Novelty</th><th>Status</th></tr></thead>
+        <tbody>${Object.entries(r.catMap || r.catCount).map(([cat, data]) => {
+          const isObj = typeof data === 'object' && data !== null && 'count' in data;
+          const count = isObj ? data.count : data;
+          const avgC = isObj && data.totalCreds ? Math.round(data.totalCreds / count) : 0;
+          const avgA = isObj && data.totalAes ? Math.round(data.totalAes / count) : 0;
+          const avgN = isObj && data.totalNov ? Math.round(data.totalNov / count) : 0;
+          const poolPct = Math.round(count / r.designs.length * 100);
+          const status = poolPct > 45 ? '<span style="color:#b5332a">Over-saturated</span>' :
+                         poolPct < 17 ? '<span style="color:#4caf7d">Opportunity</span>' : 'Balanced';
+          return `<tr>
+            <td><b>${cat}</b></td>
+            <td>${count}</td>
+            <td>${pdfBar(poolPct, 100, poolPct > 45 ? '#b5332a' : '#8a6e30', 60)}</td>
+            <td>${avgC > 0 ? fmtC(avgC) : '—'}</td>
+            <td>${avgA > 0 ? pdfBar(avgA, 100, '#c9a84c', 60) : '—'}</td>
+            <td>${avgN > 0 ? pdfBar(avgN, 100, '#4a7fa8', 60) : '—'}</td>
+            <td>${status}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+
+  // ── Section: Agent leaderboard ──
+  const lbHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Agent Leaderboard — Credits / ROI / Reputation</div>
+      <table class="pdf-table">
+        <thead><tr><th style="width:28px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Earned</th><th>Spent</th><th>ROI</th><th>Rep</th><th>Delta</th></tr></thead>
+        <tbody>${sortedAgents.map((a, i) => `
+          <tr>
+            <td class="pdf-rank-num ${i === 0 ? 'r1' : ''}">${i + 1}</td>
+            <td>${a.emoji || ''} ${a.name}${a.isUser ? ' (YOU)' : ''}</td>
+            <td style="font-style:italic">"${a.designName}"</td>
+            <td><span class="pdf-strat-badge ${a.strategy}">${a.strategy.toUpperCase()}</span></td>
+            <td class="gold">${fmtC(a.earned)}</td>
+            <td>${fmtC(a.spent)}</td>
+            <td style="color:${a.roi >= 1 ? '#4caf7d' : '#b5332a'}">${a.roi}x</td>
+            <td>${a.reputation}</td>
+            <td style="color:${a.repDelta > 0 ? '#4caf7d' : a.repDelta < 0 ? '#b5332a' : '#8a8680'}">${sign(a.repDelta)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // ── Section: Genome evolution ──
+  const dimLabels = {
+    minimalism: 'Minimalism', novelty: 'Novelty', ornamentation: 'Ornament',
+    marketFit: 'Market Fit', risk: 'Risk', marginSens: 'Margin Sens',
+    symmetry: 'Symmetry', platBias: 'Platinum', coloredStone: 'Color Stone',
+    diamond: 'Diamond', mixedMetal: 'Mix Metal', complexBudget: 'Complexity'
+  };
+  const evo = r.genomeEvolution || [];
+  const genomeHtml = evo.length ? `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Agent Genome Evolution — Before / After Cycle ${r.cycle}</div>
+      <div class="pdf-genome-grid">
+        ${evo.map(ag => {
+          const dims = Object.entries(ag.shifts || {})
+            .filter(([, v]) => v !== 0)
+            .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+            .slice(0, 4);
+          const newTags = (ag.styleTags || []).filter(t => !(ag.prevStyleTags || []).includes(t));
+          const lostTags = (ag.prevStyleTags || []).filter(t => !(ag.styleTags || []).includes(t));
+          const keptTags = (ag.styleTags || []).filter(t => (ag.prevStyleTags || []).includes(t));
+          const badge = ag.rank === 1 ? '<span class="pdf-gc-badge win">WINNER</span>' :
+                        ag.rank >= 6 ? '<span class="pdf-gc-badge loss">LAST</span>' : '';
+          return `<div class="pdf-genome-card">
+            <div class="pdf-gc-hdr">
+              <span>${ag.emoji || ''}</span>
+              <span class="pdf-gc-name">${ag.name}</span>
+              ${badge}
+            </div>
+            ${dims.map(([key, delta]) => {
+              const afterVal = ag.after?.[key] ?? 50;
+              const col = delta > 0 ? '#4caf7d' : '#b5332a';
+              return `<div class="pdf-gd-row">
+                <span class="pdf-gd-label">${dimLabels[key] || key}</span>
+                <span class="pdf-gd-track"><span class="pdf-gd-fill" style="width:${afterVal}%;background:${col}"></span></span>
+                <span class="pdf-gd-arrow ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '↑' : '↓'}${Math.abs(delta)}</span>
+              </div>`;
+            }).join('')}
+            ${keptTags.length || newTags.length || lostTags.length ? `<div class="pdf-gc-tags">
+              ${keptTags.map(t => `<span class="pdf-gt">${t}</span>`).join('')}
+              ${newTags.map(t => `<span class="pdf-gt new">+${t}</span>`).join('')}
+              ${lostTags.map(t => `<span class="pdf-gt lost">${t}</span>`).join('')}
+            </div>` : ''}
+            ${ag.dominantBelief ? `<div class="pdf-gc-belief"><b>Belief:</b> "${ag.dominantBelief}"</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
+  // ── Section: Vote flow matrix ──
+  const vm = r.voteMatrix || r.vm;
+  const voteFlowHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Vote Flow Matrix</div>
+      <table class="pdf-table">
+        <thead><tr><th>Voter</th><th>Allocations (Self-votes highlighted)</th><th>Spent</th><th>Biggest Bet</th></tr></thead>
+        <tbody>${(r.agentSnapshot || []).map((voter, vi) => {
+          const voteData = vm?.[vi] || [];
+          const total = voteData.reduce((s, v) => s + v, 0);
+          const myDesignIdx = r.designs.findIndex(d => d.agentIdx === vi);
+          const allocations = voteData.map((v, di) => {
+            if (!v) return '';
+            const dname = r.designs[di]?.name || '—';
+            const isSelf = di === myDesignIdx;
+            return `<span class="pdf-vf-alloc ${isSelf ? 'pdf-vf-self' : ''}">${dname}: ${fmtC(v)}${isSelf ? ' self' : ''}</span>`;
+          }).filter(Boolean).join('');
+          const biggestIdx = voteData.indexOf(Math.max(...voteData));
+          const biggestName = r.designs[biggestIdx]?.name || '—';
+          return `<tr>
+            <td>${voter.emoji || ''} ${voter.name}</td>
+            <td>${allocations || '—'}</td>
+            <td class="gold">${fmtC(total)}</td>
+            <td style="font-style:italic">"${biggestName}"</td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table>
+      <div class="pdf-vote-insight">
+        <b>Self-vote rate:</b> ${r.selfVotePct || 0}% of all credits went to agents' own designs &nbsp;&middot;&nbsp;
+        <b>Strongest alignment:</b> ${(r.alignPair || ['—', '—']).join(' + ')} &nbsp;&middot;&nbsp;
+        <b>Market consensus:</b> Top 3 captured ${top3Share}% of all credits
+      </div>
+    </div>`;
+
+  // ── Section: Trend velocity ──
+  const trendHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Trend Consensus and Velocity</div>
+      <div class="pdf-vel">
+        <span class="pdf-vel-label">Velocity</span>
+        <span class="pdf-vel-meter"><span class="pdf-vel-fill" style="width:${vel}%"></span></span>
+        <span class="pdf-vel-score">${vel}</span>
+      </div>
+      <div class="pdf-trend-grid">
+        <div class="pdf-tcard"><div class="pdf-tcard-label">Emerging Styles</div><div class="pdf-tcard-val up">${(r.trendData?.emerging || []).join(' / ')}</div></div>
+        <div class="pdf-tcard"><div class="pdf-tcard-label">Declining Styles</div><div class="pdf-tcard-val down">${(r.trendData?.declining || []).join(' / ')}</div></div>
+        <div class="pdf-tcard"><div class="pdf-tcard-label">Saturation Warning</div><div class="pdf-tcard-val down">${r.trendData?.saturation || '—'}</div><div class="pdf-tcard-sub">Gini ${r.gini} concentration index</div></div>
+        <div class="pdf-tcard"><div class="pdf-tcard-label">Treasury Signal</div><div class="pdf-tcard-val up">${r.trendData?.treasury || '—'}</div><div class="pdf-tcard-sub">Highest combined AES + PRO</div></div>
+      </div>
+    </div>`;
+
+  // ── Section: Forward Intelligence ──
+  const fiHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Forward Intelligence — Loaded into Agent Knowledge Base</div>
+      <div class="pdf-fi">
+        <div class="pdf-fi-title">Loaded into shared knowledge database at start of Cycle ${r.cycle + 1}</div>
+        ${(r.trendData?.fi || []).map(f => `<div class="pdf-fi-item">${f}</div>`).join('')}
+      </div>
+    </div>`;
+
+  // ── Section: Epoch Arc (cycle 3) ──
+  let epochHtml = '';
+  if (r.cycle === 3 && cycleReports.length === 3) {
+    const [c1, c2, c3] = cycleReports;
+    const epochTrends = ['Minimal / Negative-space', 'Architectural Minimal', 'Organic / Sculptural'];
+    epochHtml = `
+      <div class="pdf-section">
+        <div class="pdf-sec-hdr">Epoch Arc — Full Trend Lifecycle</div>
+        <div class="pdf-epoch">
+          <div class="pdf-epoch-title">Epoch Arc — 3-Cycle Trend Lifecycle</div>
+          <div class="pdf-epoch-timeline">
+            ${[c1, c2, c3].map((cx, i) => `
+              <div class="pdf-et-node">
+                <div class="pdf-et-cycle">Cycle ${cx.cycle} &middot; ${cx.date}</div>
+                <div class="pdf-et-winner">"${cx.winner.name}"</div>
+                <div class="pdf-et-trend">${epochTrends[i]}</div>
+                <div class="pdf-et-creds">${fmtC(cx.winner.credits)} Credits</div>
+              </div>`).join('')}
+          </div>
+          <div class="pdf-epoch-insight">
+            <b>Trend lifecycle confirmed:</b> ${epochTrends[0]} emerged in Cycle 1 (${fmtC(c1.winner.credits)} winner),
+            peaked in Cycle 2 under exploitation pressure (${fmtC(c2.winner.credits)}, saturation ${c2.trendData?.saturation}),
+            and was displaced in Cycle 3 as ${epochTrends[2]} generated the highest vote concentration (${fmtC(c3.winner.credits)}, Gini ${c3.gini}).
+            <br><br>
+            <b>Vote predictor evolution:</b> C1 ${c1.topCorr} (r=${c1.corrAes}) → C2 ${c2.topCorr} (r=${c2.corrAes}) → C3 ${c3.topCorr} (r=${c3.corrNov}).
+            <br><br>
+            <b>Compounding novelty premium:</b> C1 ${sign(c1.novSlope)}/pt → C2 ${sign(c2.novSlope)}/pt → C3 ${sign(c3.novSlope)}/pt.
+            <br><br>
+            <b>Full epoch circulated:</b> ${fmtC((c1.totalCredits || 0) + (c2.totalCredits || 0) + (c3.totalCredits || 0))} Credits across 18 designs.
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Section: Image generation prompts ──
+  const promptHtml = `
+    <div class="pdf-section">
+      <div class="pdf-sec-hdr">Image Generation Prompts (Claude-Refined)</div>
+      <table class="pdf-table">
+        <thead><tr><th style="width:120px">Design</th><th>Claude-Refined Prompt</th><th style="width:30%">Raw Agent Prompt</th></tr></thead>
+        <tbody>${[...r.designs].sort((a, b) => a.rank - b.rank).map(d => `
+          <tr${d.rank <= 3 ? ' style="color:#e8e4dc"' : ''}>
+            <td><b>${d.rank === 1 ? '#1 ' : '#' + d.rank + ' '}${d.name}</b><br><span style="color:#3a3a38;font-size:9px">${d.agentName || 'Agent'}</span></td>
+            <td><div class="pdf-prompt-box">${d.prompt}</div></td>
+            <td><div class="pdf-prompt-box" style="opacity:.6;font-size:8px">${d.rawPrompt || d.prompt}</div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // ── Assemble ──
+  container.innerHTML = `<style>${pdfCSS}</style>
+    ${headerHtml}
+    ${kpiHtml}
+    ${top3Html}
+    ${corrHtml}
+    ${stratHtml}
+    ${catHtml}
+    ${lbHtml}
+    ${genomeHtml}
+    ${voteFlowHtml}
+    ${trendHtml}
+    ${fiHtml}
+    ${epochHtml}
+    ${promptHtml}`;
+
+  return container;
+}
+
+// ── Wait for images in container to load ──
+function _waitForImages(container, timeout) {
+  const imgs = container.querySelectorAll('img.pdf-wait-img');
+  if (!imgs.length) return Promise.resolve();
+  return new Promise(resolve => {
+    let loaded = 0;
+    const total = imgs.length;
+    const done = () => { if (++loaded >= total) resolve(); };
+    const timer = setTimeout(resolve, timeout);
+    imgs.forEach(img => {
+      if (img.complete && img.naturalWidth > 0) { done(); return; }
+      img.onload = done;
+      img.onerror = done;
+    });
+  });
+}
+
+// ── PDF status overlay ──
+function _showPdfStatus(msg) {
+  const el = document.createElement('div');
+  el.id = 'pdf-status-overlay';
+  el.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(6,6,6,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;';
+  el.innerHTML = `
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#c9a84c;">Generating PDF</div>
+    <div id="pdf-status-msg" style="font-family:'Rajdhani',sans-serif;font-size:.85rem;color:#8a8680;letter-spacing:.1em">${msg}</div>
+    <div style="width:120px;height:3px;background:#1e1e1e;border-radius:2px;overflow:hidden"><div style="width:0%;height:100%;background:linear-gradient(90deg,#8a6e30,#c9a84c);border-radius:2px;animation:pdfProgress 2s ease-in-out infinite" id="pdf-prog-bar"></div></div>
+    <style>@keyframes pdfProgress{0%{width:0%}50%{width:80%}100%{width:100%}}</style>`;
+  document.body.appendChild(el);
+  return el;
+}
+
+function _updatePdfStatus(el, msg) {
+  const m = el?.querySelector('#pdf-status-msg');
+  if (m) m.textContent = msg;
+}
+
+function _hidePdfStatus(el) {
+  if (el) el.remove();
 }
 
 /* ══════════════════════════════════
