@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>JEWELFORGE — 3-Cycle Intelligence Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -5366,6 +5366,35 @@ function exportAllReports() {
    PDF EXPORT
 ══════════════════════════════════ */
 
+async function _ensureJsPDF() {
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  // Attempt dynamic reload if CDN script failed on initial page load
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
+    s.crossOrigin = 'anonymous';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Failed to load jsPDF library. Check your network connection or ad-blocker settings.'));
+    document.head.appendChild(s);
+  });
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  throw new Error('jsPDF library loaded but window.jspdf is not available.');
+}
+
+async function _ensureHtml2Canvas() {
+  if (typeof html2canvas === 'function') return html2canvas;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.crossOrigin = 'anonymous';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Failed to load html2canvas library. Check your network connection or ad-blocker settings.'));
+    document.head.appendChild(s);
+  });
+  if (typeof html2canvas === 'function') return html2canvas;
+  throw new Error('html2canvas library loaded but is not available.');
+}
+
 function exportCurrentReportAsPDF() {
   const cycleNum = _currentViewedCycle || (cycleReports.length ? cycleReports[cycleReports.length-1].cycle : null);
   if (!cycleNum) { alert('No report to export.'); return; }
@@ -5394,7 +5423,8 @@ async function _buildReportPDF(r, filename, opts) {
     await _waitForImages(container, 8000);
     await new Promise(res => setTimeout(res, 300));
 
-    const { jsPDF } = window.jspdf;
+    const jsPDF = await _ensureJsPDF();
+    await _ensureHtml2Canvas();
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
@@ -5474,7 +5504,8 @@ async function _buildMultiReportPDF(reports, filename, opts) {
   const showOverlay = opts?.showOverlay !== false;
   const statusEl = showOverlay ? _showPdfStatus('Generating multi-cycle PDF...') : null;
   try {
-    const { jsPDF } = window.jspdf;
+    const jsPDF = await _ensureJsPDF();
+    await _ensureHtml2Canvas();
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
