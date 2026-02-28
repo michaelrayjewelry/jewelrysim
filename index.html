@@ -6,7 +6,9 @@
 <title>JEWELFORGE — 3-Cycle Intelligence Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js" crossorigin="anonymous"></script>
+<script>window.jspdf||document.write('<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" crossorigin="anonymous"><\/script>')</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+<script>window.html2canvas||document.write('<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" crossorigin="anonymous"><\/script>')</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -5366,31 +5368,39 @@ function exportAllReports() {
    PDF EXPORT
 ══════════════════════════════════ */
 
+async function _loadScript(urls) {
+  for (const url of urls) {
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.crossOrigin = 'anonymous';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Load failed: ' + url));
+        document.head.appendChild(s);
+      });
+      return; // success
+    } catch (_) { /* try next CDN */ }
+  }
+  throw new Error('All CDN sources failed. Check your network connection or ad-blocker settings.');
+}
+
 async function _ensureJsPDF() {
   if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
-  // Attempt dynamic reload if CDN script failed on initial page load
-  await new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
-    s.crossOrigin = 'anonymous';
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Failed to load jsPDF library. Check your network connection or ad-blocker settings.'));
-    document.head.appendChild(s);
-  });
+  await _loadScript([
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+    'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js'
+  ]);
   if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
   throw new Error('jsPDF library loaded but window.jspdf is not available.');
 }
 
 async function _ensureHtml2Canvas() {
   if (typeof html2canvas === 'function') return html2canvas;
-  await new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.crossOrigin = 'anonymous';
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Failed to load html2canvas library. Check your network connection or ad-blocker settings.'));
-    document.head.appendChild(s);
-  });
+  await _loadScript([
+    'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+  ]);
   if (typeof html2canvas === 'function') return html2canvas;
   throw new Error('html2canvas library loaded but is not available.');
 }
