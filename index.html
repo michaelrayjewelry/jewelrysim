@@ -935,33 +935,49 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         <div class="gdrive-step-body">
           <div class="gdrive-step-title">Paste this script</div>
           <div class="gdrive-step-desc">Delete the default code and paste (replace <b>YOUR_FOLDER_ID_HERE</b> with your Drive folder ID):</div>
-          <div class="gdrive-code" id="gdrive-script-code"><pre style="margin:0;white-space:pre-wrap;word-break:break-all">function doPost(e) {
-  var data = JSON.parse(e.postData.contents);
-  var folder = DriveApp.getFolderById("YOUR_FOLDER_ID_HERE");
-  var file;
-  if (data.textContent) {
-    file = folder.createFile(
-      data.filename || "jewelforge-data.json",
-      data.textContent,
-      data.mimeType || "application/json"
-    );
-  } else if (data.imageUrl) {
-    var resp = UrlFetchApp.fetch(data.imageUrl);
-    var blob = resp.getBlob().setName(
-      data.filename || "jewelforge-image.png"
-    );
-    file = folder.createFile(blob);
-  } else {
-    var blob = Utilities.newBlob(
-      Utilities.base64Decode(data.image),
-      data.mimeType || "image/png",
-      data.filename || "jewelforge-image.png"
-    );
-    file = folder.createFile(blob);
-  }
+          <div class="gdrive-code" id="gdrive-script-code"><pre style="margin:0;white-space:pre-wrap;word-break:break-all">function doGet(e) {
   return ContentService.createTextOutput(
-    JSON.stringify({success:true, id:file.getId(), name:file.getName()})
+    JSON.stringify({status:"ok"})
   ).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var folder = DriveApp.getFolderById("YOUR_FOLDER_ID_HERE");
+    var file;
+    if (data.textContent) {
+      file = folder.createFile(
+        data.filename || "jewelforge-data.json",
+        data.textContent,
+        data.mimeType || "application/json"
+      );
+    } else if (data.imageUrl) {
+      var resp = UrlFetchApp.fetch(data.imageUrl);
+      var blob = resp.getBlob().setName(
+        data.filename || "jewelforge-image.png"
+      );
+      file = folder.createFile(blob);
+    } else if (data.image) {
+      var blob = Utilities.newBlob(
+        Utilities.base64Decode(data.image),
+        data.mimeType || "image/png",
+        data.filename || "jewelforge-image.png"
+      );
+      file = folder.createFile(blob);
+    } else {
+      return ContentService.createTextOutput(
+        JSON.stringify({success:false, error:"No file data"})
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput(
+      JSON.stringify({success:true, id:file.getId(), name:file.getName()})
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(
+      JSON.stringify({success:false, error:err.message})
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
 }</pre>
           <button class="gdrive-copy-btn" onclick="copyScriptCode()">📋 Copy Script</button>
           </div>
@@ -1797,7 +1813,7 @@ let gdriveState = {
 };
 
 function copyScriptCode() {
-  const code = `function doPost(e) {\n  var data = JSON.parse(e.postData.contents);\n  var folder = DriveApp.getFolderById("YOUR_FOLDER_ID_HERE");\n  var file;\n  if (data.textContent) {\n    file = folder.createFile(\n      data.filename || "jewelforge-data.json",\n      data.textContent,\n      data.mimeType || "application/json"\n    );\n  } else if (data.imageUrl) {\n    var resp = UrlFetchApp.fetch(data.imageUrl);\n    var blob = resp.getBlob().setName(\n      data.filename || "jewelforge-image.png"\n    );\n    file = folder.createFile(blob);\n  } else {\n    var blob = Utilities.newBlob(\n      Utilities.base64Decode(data.image),\n      data.mimeType || "image/png",\n      data.filename || "jewelforge-image.png"\n    );\n    file = folder.createFile(blob);\n  }\n  return ContentService.createTextOutput(\n    JSON.stringify({success:true, id:file.getId(), name:file.getName()})\n  ).setMimeType(ContentService.MimeType.JSON);\n}`;
+  const code = `function doGet(e) {\n  return ContentService.createTextOutput(\n    JSON.stringify({status:"ok"})\n  ).setMimeType(ContentService.MimeType.JSON);\n}\n\nfunction doPost(e) {\n  try {\n    var data = JSON.parse(e.postData.contents);\n    var folder = DriveApp.getFolderById("YOUR_FOLDER_ID_HERE");\n    var file;\n    if (data.textContent) {\n      file = folder.createFile(\n        data.filename || "jewelforge-data.json",\n        data.textContent,\n        data.mimeType || "application/json"\n      );\n    } else if (data.imageUrl) {\n      var resp = UrlFetchApp.fetch(data.imageUrl);\n      var blob = resp.getBlob().setName(\n        data.filename || "jewelforge-image.png"\n      );\n      file = folder.createFile(blob);\n    } else if (data.image) {\n      var blob = Utilities.newBlob(\n        Utilities.base64Decode(data.image),\n        data.mimeType || "image/png",\n        data.filename || "jewelforge-image.png"\n      );\n      file = folder.createFile(blob);\n    } else {\n      return ContentService.createTextOutput(\n        JSON.stringify({success:false, error:"No file data"})\n      ).setMimeType(ContentService.MimeType.JSON);\n    }\n    return ContentService.createTextOutput(\n      JSON.stringify({success:true, id:file.getId(), name:file.getName()})\n    ).setMimeType(ContentService.MimeType.JSON);\n  } catch(err) {\n    return ContentService.createTextOutput(\n      JSON.stringify({success:false, error:err.message})\n    ).setMimeType(ContentService.MimeType.JSON);\n  }\n}`;
   navigator.clipboard.writeText(code).then(() => {
     const btn = document.querySelector('.gdrive-copy-btn');
     if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy Script'; }, 2000); }
@@ -1815,6 +1831,37 @@ function updateGDriveStatus() {
   if (btn) btn.disabled = !url || !url.startsWith('https://script.google.com/');
 }
 
+// Helper: POST to Apps Script and validate the JSON response
+async function gdrivePost(payload) {
+  const resp = await fetch(gdriveState.webAppUrl, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  });
+  let result;
+  try {
+    result = await resp.json();
+  } catch(e) {
+    throw new Error('Invalid response — update & re-deploy your Apps Script');
+  }
+  if (!result.success) {
+    throw new Error(result.error || 'Upload rejected by Apps Script');
+  }
+  return result;
+}
+
+// Helper: increment upload counter and update UI
+function gdriveCountUpload(filename) {
+  gdriveState.uploadCount++;
+  gdriveState.failCount = 0;
+  showGDriveRetryBtn(false);
+  const counterEl = document.getElementById('gdrive-upload-count');
+  if (counterEl) counterEl.textContent = gdriveState.uploadCount;
+  setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
+  console.log(`📁 Saved to Drive: ${filename}`);
+}
+
 async function connectGoogleDrive() {
   const url = gdriveState.webAppUrl;
   if (!url) return;
@@ -1824,16 +1871,21 @@ async function connectGoogleDrive() {
   setGDriveStatus(false, 'Testing connection…');
 
   try {
-    // Send a tiny test image (1x1 transparent PNG) to verify the endpoint works
-    const testPng = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-    const resp = await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ image: testPng, filename: '_jewelforge_connection_test.png', mimeType: 'image/png' })
-    });
+    // Test with a GET request first — verifies script is deployed and folder ID is valid
+    const resp = await fetch(url, { method: 'GET', redirect: 'follow' });
+    let data;
+    try { data = await resp.json(); } catch(e) { data = {}; }
 
-    // With no-cors we can't read the response, but if fetch didn't throw, endpoint is reachable
+    if (data.status === 'ok') {
+      // Script has doGet() — verified working
+    } else if (data.error) {
+      throw new Error(data.error);
+    } else {
+      // Older script without doGet() — try a POST test upload
+      const testPng = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      await gdrivePost({ image: testPng, filename: '_jewelforge_connection_test.png', mimeType: 'image/png' });
+    }
+
     gdriveState.connected = true;
     gdriveState.failCount = 0;
     setGDriveStatus(true, 'Connected — files will auto-save to Drive');
@@ -1852,7 +1904,14 @@ async function connectGoogleDrive() {
     uploadCachedImages();
   } catch(e) {
     console.warn('Drive connection test failed:', e);
-    setGDriveStatus(false, 'Connection failed — check your Apps Script URL');
+    const msg = e.message || 'Unknown error';
+    if (msg.includes('Folder not found') || msg.includes('getFolderById')) {
+      setGDriveStatus(false, 'Failed — wrong folder ID in your Apps Script');
+    } else if (msg.includes('update') || msg.includes('Invalid response')) {
+      setGDriveStatus(false, 'Failed — update your Apps Script code & re-deploy');
+    } else {
+      setGDriveStatus(false, `Connection failed — ${msg}`);
+    }
     if (btn) { btn.disabled = false; btn.innerHTML = '<span class="g-logo">📁</span> Enable Auto-Save'; }
   }
 }
@@ -1939,45 +1998,27 @@ async function uploadImageToDrive(imageUrlOrBase64, filename) {
   try {
     if (isBase64) {
       // Primary: send actual image data — most reliable, no server-side fetch needed
-      await fetch(gdriveState.webAppUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ image: imageUrlOrBase64, filename: safeName, mimeType: 'image/png' })
-      });
+      await gdrivePost({ image: imageUrlOrBase64, filename: safeName, mimeType: 'image/png' });
     } else {
       // Have a URL — try converting to base64 via canvas first
       let sent = false;
       try {
         const base64 = await imageUrlToBase64(imageUrlOrBase64);
-        await fetch(gdriveState.webAppUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ image: base64, filename: safeName, mimeType: 'image/png' })
-        });
+        await gdrivePost({ image: base64, filename: safeName, mimeType: 'image/png' });
         sent = true;
       } catch(convErr) {
+        if (convErr.message && !convErr.message.includes('Failed to load image')) {
+          throw convErr;  // Re-throw server errors, only retry on canvas conversion failures
+        }
         console.warn('Base64 conversion failed, falling back to URL:', convErr.message);
       }
       if (!sent) {
         // Fallback: send the URL and let Apps Script fetch it server-side
-        await fetch(gdriveState.webAppUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ imageUrl: imageUrlOrBase64, filename: safeName })
-        });
+        await gdrivePost({ imageUrl: imageUrlOrBase64, filename: safeName });
       }
     }
 
-    gdriveState.uploadCount++;
-    gdriveState.failCount = 0;
-    showGDriveRetryBtn(false);
-    const counterEl = document.getElementById('gdrive-upload-count');
-    if (counterEl) counterEl.textContent = gdriveState.uploadCount;
-    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
-    console.log(`📁 Sent to Drive: ${safeName}`);
+    gdriveCountUpload(safeName);
   } catch(e) {
     console.warn('Drive upload failed:', e.message);
     gdriveState.uploadedUrls.delete(imageUrlOrBase64);
@@ -2053,25 +2094,19 @@ async function uploadReportToDrive(report, cycleNum) {
   delete payload.agentSnapshot;
 
   try {
-    await fetch(gdriveState.webAppUrl, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        textContent: JSON.stringify(payload, null, 2),
-        filename: safeName,
-        mimeType: 'application/json'
-      })
+    await gdrivePost({
+      textContent: JSON.stringify(payload, null, 2),
+      filename: safeName,
+      mimeType: 'application/json'
     });
-    gdriveState.uploadCount++;
-    gdriveState.failCount = 0;
-    const counterEl = document.getElementById('gdrive-upload-count');
-    if (counterEl) counterEl.textContent = gdriveState.uploadCount;
-    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
-    console.log(`📁 Report saved to Drive: ${safeName}`);
+    gdriveCountUpload(safeName);
   } catch(e) {
     console.warn('Drive report upload failed:', e.message);
     gdriveState.failCount++;
+    if (gdriveState.failCount >= 5) {
+      setGDriveStatus(false, 'Paused — upload errors. Check Apps Script deployment.');
+      showGDriveRetryBtn(true);
+    }
   }
 }
 
@@ -2091,23 +2126,19 @@ async function uploadEpochArchiveToDrive() {
   };
 
   try {
-    await fetch(gdriveState.webAppUrl, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        textContent: JSON.stringify(archive, null, 2),
-        filename: 'JewelForge_Epoch_Archive.json',
-        mimeType: 'application/json'
-      })
+    await gdrivePost({
+      textContent: JSON.stringify(archive, null, 2),
+      filename: 'JewelForge_Epoch_Archive.json',
+      mimeType: 'application/json'
     });
-    gdriveState.uploadCount++;
-    const counterEl = document.getElementById('gdrive-upload-count');
-    if (counterEl) counterEl.textContent = gdriveState.uploadCount;
-    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
-    console.log('📁 Epoch archive saved to Drive');
+    gdriveCountUpload('JewelForge_Epoch_Archive.json');
   } catch(e) {
     console.warn('Drive epoch archive upload failed:', e.message);
+    gdriveState.failCount++;
+    if (gdriveState.failCount >= 5) {
+      setGDriveStatus(false, 'Paused — upload errors. Check Apps Script deployment.');
+      showGDriveRetryBtn(true);
+    }
   }
 }
 
@@ -2118,17 +2149,14 @@ function restoreGDriveConfig() {
     const el = document.getElementById('gdrive-webapp-url');
     if (el) el.value = savedUrl;
     gdriveState.webAppUrl = savedUrl;
-    // Auto-reconnect
-    gdriveState.connected = true;
-    setGDriveStatus(true, 'Connected — files will auto-save to Drive');
+    // Show reconnecting state while we verify
+    setGDriveStatus(false, 'Reconnecting…');
     const btn = document.getElementById('gdrive-connect-btn');
-    if (btn) { btn.innerHTML = '<span class="g-logo">✓</span> Auto-Save Enabled'; btn.disabled = true; }
-    const discBtn = document.getElementById('gdrive-disconnect-btn');
-    if (discBtn) discBtn.style.display = '';
-    const counter = document.getElementById('gdrive-counter');
-    if (counter) counter.style.display = '';
+    if (btn) { btn.innerHTML = '<span class="g-logo">⏳</span> Verifying…'; btn.disabled = true; }
     const steps = document.getElementById('gdrive-setup-steps');
     if (steps) steps.style.display = 'none';
+    // Verify the saved URL actually works before marking connected
+    connectGoogleDrive();
   }
   updateGDriveStatus();
 }
