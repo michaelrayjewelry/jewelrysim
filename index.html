@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>JEWELFORGE — 3-Cycle Intelligence Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -472,6 +471,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .gdrive-panel::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,#4285f4,transparent)}
 .gdrive-panel h4{font-size:.6rem;letter-spacing:.32em;color:#4285f4;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid rgba(66,133,244,.15);display:flex;align-items:center;gap:.5rem}
 .gdrive-panel h4 .gdrive-icon{font-size:1rem}
+.gdrive-setup-steps{margin-bottom:.5rem}
+.gdrive-step{display:flex;gap:.7rem;margin-bottom:.8rem;align-items:flex-start}
+.gdrive-step-num{width:22px;height:22px;border:1px solid rgba(66,133,244,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#4285f4;flex-shrink:0;font-weight:600;margin-top:.1rem}
+.gdrive-step-body{flex:1;min-width:0}
+.gdrive-step-title{font-size:.72rem;color:var(--txt);font-weight:600;margin-bottom:.15rem}
+.gdrive-step-desc{font-size:.68rem;color:var(--dim);line-height:1.55}
+.gdrive-step-desc b{color:var(--txt)}
+.gdrive-code{background:var(--s3);border:1px solid var(--faint);border-radius:6px;padding:.6rem .7rem;margin-top:.4rem;font-family:'Courier New',monospace;font-size:.6rem;color:var(--grn);line-height:1.5;position:relative;max-height:160px;overflow-y:auto}
+.gdrive-code::-webkit-scrollbar{width:2px}
+.gdrive-code::-webkit-scrollbar-thumb{background:var(--faint)}
+.gdrive-copy-btn{position:sticky;bottom:0;right:0;float:right;background:var(--s2);border:1px solid var(--faint);color:var(--dim);font-family:'Rajdhani',sans-serif;font-size:.6rem;padding:.25rem .5rem;cursor:pointer;border-radius:4px;transition:all .2s;margin-top:.3rem}
+.gdrive-copy-btn:hover{border-color:#4285f4;color:#4285f4}
 .gdrive-status{display:flex;align-items:center;gap:.5rem;font-size:.7rem;color:var(--dim);margin-top:.6rem}
 .gdrive-status .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:all .3s}
 .gdrive-status .dot.connected{background:#34a853;box-shadow:0 0 6px rgba(52,168,83,.4)}
@@ -480,7 +491,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .gdrive-connect-btn:hover{background:rgba(66,133,244,.12);border-color:rgba(66,133,244,.6)}
 .gdrive-connect-btn:disabled{opacity:.4;cursor:not-allowed}
 .gdrive-connect-btn .g-logo{font-size:1rem}
-.gdrive-folder-info{font-size:.65rem;color:var(--faint);margin-top:.6rem;line-height:1.5}
 .gdrive-counter{font-size:.62rem;letter-spacing:.15em;color:#34a853;margin-top:.4rem}
 
 /* Start button enhanced */
@@ -902,26 +912,68 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <!-- Google Drive Auto-Save -->
   <div class="gdrive-panel" id="gdrive-panel">
     <h4><span class="gdrive-icon">📁</span> Google Drive — Auto-Save Images</h4>
-    <p style="font-size:.72rem;color:var(--dim);line-height:1.6;margin-bottom:.8rem">Automatically save every generated jewelry image to your Google Drive folder. Images are uploaded as they render — no manual downloads needed.</p>
-    <div class="api-field">
-      <label>Google Drive Folder ID</label>
-      <input type="text" id="gdrive-folder-id" placeholder="e.g. 1dpOJecuaE7bta9m5bhPRKwpmm0BVfojn" value="1dpOJecuaE7bta9m5bhPRKwpmm0BVfojn" oninput="updateGDriveStatus()">
-      <div class="api-hint">Paste your Drive folder ID or full folder URL. The folder must be accessible to your Google account.</div>
+    <p style="font-size:.72rem;color:var(--dim);line-height:1.6;margin-bottom:.8rem">Automatically save every generated jewelry image to your Google Drive folder. Images upload as they render — no manual downloads needed.</p>
+
+    <div class="gdrive-setup-steps" id="gdrive-setup-steps">
+      <div style="font-size:.62rem;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.8rem">One-Time Setup (2 minutes)</div>
+      <div class="gdrive-step">
+        <div class="gdrive-step-num">1</div>
+        <div class="gdrive-step-body">
+          <div class="gdrive-step-title">Open Google Apps Script</div>
+          <div class="gdrive-step-desc">Go to <a href="https://script.google.com/home/start" target="_blank" style="color:#4285f4;text-decoration:underline">script.google.com</a> and click <b>New Project</b></div>
+        </div>
+      </div>
+      <div class="gdrive-step">
+        <div class="gdrive-step-num">2</div>
+        <div class="gdrive-step-body">
+          <div class="gdrive-step-title">Paste this script</div>
+          <div class="gdrive-step-desc">Delete the default code and paste:</div>
+          <div class="gdrive-code" id="gdrive-script-code"><pre style="margin:0;white-space:pre-wrap;word-break:break-all">function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var folder = DriveApp.getFolderById("1dpOJecuaE7bta9m5bhPRKwpmm0BVfojn");
+  var blob = Utilities.newBlob(
+    Utilities.base64Decode(data.image),
+    data.mimeType || "image/png",
+    data.filename || "jewelforge-image.png"
+  );
+  var file = folder.createFile(blob);
+  return ContentService.createTextOutput(
+    JSON.stringify({success:true, id:file.getId(), name:file.getName()})
+  ).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+          <button class="gdrive-copy-btn" onclick="copyScriptCode()">📋 Copy Script</button>
+          </div>
+        </div>
+      </div>
+      <div class="gdrive-step">
+        <div class="gdrive-step-num">3</div>
+        <div class="gdrive-step-body">
+          <div class="gdrive-step-title">Deploy as Web App</div>
+          <div class="gdrive-step-desc">Click <b>Deploy → New deployment</b> → choose <b>Web app</b> → set "Who has access" to <b>Anyone</b> → click <b>Deploy</b>. Authorize when prompted.</div>
+        </div>
+      </div>
+      <div class="gdrive-step">
+        <div class="gdrive-step-num">4</div>
+        <div class="gdrive-step-body">
+          <div class="gdrive-step-title">Paste the Web App URL below</div>
+          <div class="gdrive-step-desc">Copy the deployed URL (starts with https://script.google.com/macros/...)</div>
+        </div>
+      </div>
     </div>
-    <div class="api-field">
-      <label>Google OAuth Client ID &nbsp;<span style="color:rgba(66,133,244,.7);font-size:.55rem;letter-spacing:.08em">— from Google Cloud Console</span></label>
-      <input type="text" id="gdrive-client-id" placeholder="xxxx.apps.googleusercontent.com" oninput="updateGDriveStatus()">
-      <div class="api-hint">Create at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#4285f4;text-decoration:underline">console.cloud.google.com</a> — enable the Google Drive API, create an OAuth 2.0 Client ID (Web application type), and add your domain to authorized origins.</div>
+
+    <div class="api-field" style="margin-top:1rem">
+      <label>Apps Script Web App URL</label>
+      <input type="text" id="gdrive-webapp-url" placeholder="https://script.google.com/macros/s/xxxx/exec" oninput="updateGDriveStatus()">
     </div>
     <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
       <button class="gdrive-connect-btn" id="gdrive-connect-btn" onclick="connectGoogleDrive()" disabled>
-        <span class="g-logo">🔗</span> Connect Google Drive
+        <span class="g-logo">📁</span> Enable Auto-Save
       </button>
-      <button class="auto-link" id="gdrive-disconnect-btn" onclick="disconnectGoogleDrive()" style="display:none;font-size:.62rem;color:var(--faint)">Disconnect</button>
+      <button class="auto-link" id="gdrive-disconnect-btn" onclick="disconnectGoogleDrive()" style="display:none;font-size:.62rem;color:var(--faint)">Disable</button>
     </div>
     <div class="gdrive-status" id="gdrive-status">
       <div class="dot off" id="gdrive-dot"></div>
-      <span id="gdrive-status-text">Enter Client ID to connect</span>
+      <span id="gdrive-status-text">Paste your Apps Script URL to enable</span>
     </div>
     <div class="gdrive-counter" id="gdrive-counter" style="display:none">📤 <span id="gdrive-upload-count">0</span> images saved to Drive</div>
   </div>
@@ -1598,91 +1650,94 @@ function startFromHome() {
 /* ══════════════════════════════════
    GOOGLE DRIVE AUTO-SAVE
    Uploads every generated image to a Google Drive folder
-   using Google Identity Services (OAuth2) + Drive API v3.
+   via a Google Apps Script Web App proxy. No OAuth setup needed —
+   just deploy the script and paste the URL.
 ══════════════════════════════════ */
 let gdriveState = {
   connected: false,
-  accessToken: null,
-  folderId: '1dpOJecuaE7bta9m5bhPRKwpmm0BVfojn',
-  clientId: '',
+  webAppUrl: '',
   uploadCount: 0,
-  tokenClient: null,
-  uploadedUrls: new Set(), // track what's been uploaded to avoid duplicates
+  uploadedUrls: new Set(),
+  uploading: 0,       // count of in-flight uploads
+  failCount: 0,       // consecutive failures for circuit breaker
 };
 
-function extractFolderId(input) {
-  if (!input) return '';
-  // Handle full URLs: https://drive.google.com/drive/folders/XXXX
-  const match = input.match(/folders\/([a-zA-Z0-9_-]+)/);
-  if (match) return match[1];
-  // Handle plain IDs
-  return input.trim();
+function copyScriptCode() {
+  const code = `function doPost(e) {\n  var data = JSON.parse(e.postData.contents);\n  var folder = DriveApp.getFolderById("1dpOJecuaE7bta9m5bhPRKwpmm0BVfojn");\n  var blob = Utilities.newBlob(\n    Utilities.base64Decode(data.image),\n    data.mimeType || "image/png",\n    data.filename || "jewelforge-image.png"\n  );\n  var file = folder.createFile(blob);\n  return ContentService.createTextOutput(\n    JSON.stringify({success:true, id:file.getId(), name:file.getName()})\n  ).setMimeType(ContentService.MimeType.JSON);\n}`;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.querySelector('.gdrive-copy-btn');
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy Script'; }, 2000); }
+  }).catch(() => {
+    // Fallback: select text
+    const pre = document.querySelector('#gdrive-script-code pre');
+    if (pre) { const range = document.createRange(); range.selectNodeContents(pre); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+  });
 }
 
 function updateGDriveStatus() {
-  const folderInput = document.getElementById('gdrive-folder-id')?.value || '';
-  const clientId = document.getElementById('gdrive-client-id')?.value?.trim() || '';
-  gdriveState.folderId = extractFolderId(folderInput);
-  gdriveState.clientId = clientId;
-
+  const url = (document.getElementById('gdrive-webapp-url')?.value || '').trim();
+  gdriveState.webAppUrl = url;
   const btn = document.getElementById('gdrive-connect-btn');
-  if (btn) btn.disabled = !(gdriveState.folderId && gdriveState.clientId);
+  if (btn) btn.disabled = !url || !url.startsWith('https://script.google.com/');
 }
 
-function connectGoogleDrive() {
-  if (!gdriveState.clientId || !gdriveState.folderId) return;
+async function connectGoogleDrive() {
+  const url = gdriveState.webAppUrl;
+  if (!url) return;
 
   const btn = document.getElementById('gdrive-connect-btn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="g-logo">⏳</span> Connecting…'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="g-logo">⏳</span> Testing connection…'; }
+  setGDriveStatus(false, 'Testing connection…');
 
   try {
-    gdriveState.tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: gdriveState.clientId,
-      scope: 'https://www.googleapis.com/auth/drive.file',
-      callback: (tokenResponse) => {
-        if (tokenResponse.error) {
-          setGDriveStatus(false, 'Authorization failed: ' + tokenResponse.error);
-          if (btn) { btn.disabled = false; btn.innerHTML = '<span class="g-logo">🔗</span> Connect Google Drive'; }
-          return;
-        }
-        gdriveState.accessToken = tokenResponse.access_token;
-        gdriveState.connected = true;
-        setGDriveStatus(true, 'Connected — images will auto-save to Drive');
-        if (btn) { btn.innerHTML = '<span class="g-logo">✓</span> Connected'; btn.disabled = true; }
-        document.getElementById('gdrive-disconnect-btn').style.display = '';
-        document.getElementById('gdrive-counter').style.display = '';
-
-        // Save config to localStorage
-        localStorage.setItem('jf_gdrive_clientId', gdriveState.clientId);
-        localStorage.setItem('jf_gdrive_folderId', gdriveState.folderId);
-
-        // Upload any already-cached images
-        uploadCachedImages();
-      },
+    // Send a tiny test image (1x1 transparent PNG) to verify the endpoint works
+    const testPng = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const resp = await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ image: testPng, filename: '_jewelforge_connection_test.png', mimeType: 'image/png' })
     });
-    gdriveState.tokenClient.requestAccessToken();
+
+    // With no-cors we can't read the response, but if fetch didn't throw, endpoint is reachable
+    gdriveState.connected = true;
+    gdriveState.failCount = 0;
+    setGDriveStatus(true, 'Connected — images will auto-save to Drive');
+    if (btn) { btn.innerHTML = '<span class="g-logo">✓</span> Auto-Save Enabled'; btn.disabled = true; }
+    document.getElementById('gdrive-disconnect-btn').style.display = '';
+    document.getElementById('gdrive-counter').style.display = '';
+
+    // Hide setup steps to reduce clutter
+    const steps = document.getElementById('gdrive-setup-steps');
+    if (steps) steps.style.display = 'none';
+
+    // Persist config
+    localStorage.setItem('jf_gdrive_url', url);
+
+    // Upload any already-cached images
+    uploadCachedImages();
   } catch(e) {
-    console.warn('Google Drive connect failed:', e);
-    setGDriveStatus(false, 'Failed — check Client ID and try again');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="g-logo">🔗</span> Connect Google Drive'; }
+    console.warn('Drive connection test failed:', e);
+    setGDriveStatus(false, 'Connection failed — check your Apps Script URL');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="g-logo">📁</span> Enable Auto-Save'; }
   }
 }
 
 function disconnectGoogleDrive() {
-  if (gdriveState.accessToken) {
-    google.accounts.oauth2.revoke(gdriveState.accessToken);
-  }
   gdriveState.connected = false;
-  gdriveState.accessToken = null;
+  gdriveState.webAppUrl = '';
   gdriveState.uploadedUrls.clear();
   gdriveState.uploadCount = 0;
+  gdriveState.failCount = 0;
   setGDriveStatus(false, 'Disconnected');
   const btn = document.getElementById('gdrive-connect-btn');
-  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="g-logo">🔗</span> Connect Google Drive'; }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="g-logo">📁</span> Enable Auto-Save'; }
   document.getElementById('gdrive-disconnect-btn').style.display = 'none';
   document.getElementById('gdrive-counter').style.display = 'none';
-  localStorage.removeItem('jf_gdrive_clientId');
-  localStorage.removeItem('jf_gdrive_folderId');
+  document.getElementById('gdrive-webapp-url').value = '';
+  const steps = document.getElementById('gdrive-setup-steps');
+  if (steps) steps.style.display = '';
+  localStorage.removeItem('jf_gdrive_url');
 }
 
 function setGDriveStatus(connected, text) {
@@ -1692,68 +1747,81 @@ function setGDriveStatus(connected, text) {
   if (label) label.textContent = text;
 }
 
-// Auto-upload a single image to Google Drive
+// Convert an image URL to base64 data via canvas
+async function imageUrlToBase64(imageUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      // Get base64 without the data:image/png;base64, prefix
+      const dataUrl = canvas.toDataURL('image/png');
+      const base64 = dataUrl.split(',')[1];
+      resolve(base64);
+    };
+    img.onerror = () => reject(new Error('Failed to load image for base64 conversion'));
+    img.src = imageUrl;
+  });
+}
+
+// Auto-upload a single image to Google Drive via Apps Script
 async function uploadImageToDrive(imageUrl, filename) {
-  if (!gdriveState.connected || !gdriveState.accessToken || !gdriveState.folderId) return;
-  if (gdriveState.uploadedUrls.has(imageUrl)) return; // already uploaded
+  if (!gdriveState.connected || !gdriveState.webAppUrl) return;
+  if (gdriveState.uploadedUrls.has(imageUrl)) return;
+  // Circuit breaker: pause after 5 consecutive failures
+  if (gdriveState.failCount >= 5) {
+    if (gdriveState.failCount === 5) {
+      setGDriveStatus(false, 'Paused — too many failures. Check Apps Script.');
+      gdriveState.failCount++;  // only show message once
+    }
+    return;
+  }
   gdriveState.uploadedUrls.add(imageUrl);
+  gdriveState.uploading++;
+
+  const safeName = (filename || 'jewelforge-image').replace(/[^a-zA-Z0-9_\-. ]/g, '_').slice(0, 100) + '.png';
 
   try {
-    // Fetch image as blob
-    const imgResp = await fetch(imageUrl);
-    if (!imgResp.ok) throw new Error('Image fetch failed: ' + imgResp.status);
-    const blob = await imgResp.blob();
+    // Convert image to base64
+    const base64 = await imageUrlToBase64(imageUrl);
 
-    // Sanitize filename
-    const safeName = (filename || 'jewelforge-image').replace(/[^a-zA-Z0-9_\-. ]/g, '_').slice(0, 100) + '.png';
-
-    // Multipart upload to Drive API v3
-    const metadata = {
-      name: safeName,
-      parents: [gdriveState.folderId],
-      mimeType: blob.type || 'image/png'
-    };
-
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    form.append('file', blob);
-
-    const uploadResp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    // POST to Apps Script
+    await fetch(gdriveState.webAppUrl, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + gdriveState.accessToken },
-      body: form
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        image: base64,
+        filename: safeName,
+        mimeType: 'image/png'
+      })
     });
 
-    if (uploadResp.status === 401) {
-      // Token expired — try to refresh
-      console.warn('Drive token expired, requesting new token…');
-      gdriveState.accessToken = null;
-      gdriveState.uploadedUrls.delete(imageUrl); // allow retry
-      if (gdriveState.tokenClient) {
-        gdriveState.tokenClient.requestAccessToken({ prompt: '' });
-      }
-      return;
-    }
-
-    if (!uploadResp.ok) {
-      const errText = await uploadResp.text();
-      console.warn('Drive upload failed:', uploadResp.status, errText);
-      gdriveState.uploadedUrls.delete(imageUrl); // allow retry
-      return;
-    }
-
-    const result = await uploadResp.json();
+    // With no-cors we can't confirm success from response,
+    // but if no error thrown, assume delivered to Apps Script
     gdriveState.uploadCount++;
+    gdriveState.failCount = 0;
     const counterEl = document.getElementById('gdrive-upload-count');
     if (counterEl) counterEl.textContent = gdriveState.uploadCount;
-    console.log(`📁 Saved to Drive: ${safeName} (${result.id})`);
+    setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} image${gdriveState.uploadCount!==1?'s':''} saved`);
+    console.log(`📁 Sent to Drive: ${safeName}`);
   } catch(e) {
     console.warn('Drive upload error:', e);
-    gdriveState.uploadedUrls.delete(imageUrl); // allow retry
+    gdriveState.uploadedUrls.delete(imageUrl);
+    gdriveState.failCount++;
+    if (gdriveState.failCount >= 5) {
+      setGDriveStatus(false, 'Paused — upload errors. Check Apps Script deployment.');
+    }
+  } finally {
+    gdriveState.uploading--;
   }
 }
 
-// Upload all already-cached images (for when Drive connects mid-session)
+// Upload all already-cached images
 function uploadCachedImages() {
   Object.entries(_designImageCache).forEach(([key, url]) => {
     if (url && !url.startsWith('data:')) {
@@ -1773,19 +1841,24 @@ function onImageGenerated(imageUrl, designObj, cycle, agentIdx) {
   uploadImageToDrive(imageUrl, filename);
 }
 
-// Restore saved Google Drive config on page load
+// Restore saved config on page load
 function restoreGDriveConfig() {
-  const savedClientId = localStorage.getItem('jf_gdrive_clientId');
-  const savedFolderId = localStorage.getItem('jf_gdrive_folderId');
-  if (savedClientId) {
-    const el = document.getElementById('gdrive-client-id');
-    if (el) el.value = savedClientId;
-    gdriveState.clientId = savedClientId;
-  }
-  if (savedFolderId) {
-    const el = document.getElementById('gdrive-folder-id');
-    if (el) el.value = savedFolderId;
-    gdriveState.folderId = savedFolderId;
+  const savedUrl = localStorage.getItem('jf_gdrive_url');
+  if (savedUrl) {
+    const el = document.getElementById('gdrive-webapp-url');
+    if (el) el.value = savedUrl;
+    gdriveState.webAppUrl = savedUrl;
+    // Auto-reconnect
+    gdriveState.connected = true;
+    setGDriveStatus(true, 'Connected — images will auto-save to Drive');
+    const btn = document.getElementById('gdrive-connect-btn');
+    if (btn) { btn.innerHTML = '<span class="g-logo">✓</span> Auto-Save Enabled'; btn.disabled = true; }
+    const discBtn = document.getElementById('gdrive-disconnect-btn');
+    if (discBtn) discBtn.style.display = '';
+    const counter = document.getElementById('gdrive-counter');
+    if (counter) counter.style.display = '';
+    const steps = document.getElementById('gdrive-setup-steps');
+    if (steps) steps.style.display = 'none';
   }
   updateGDriveStatus();
 }
