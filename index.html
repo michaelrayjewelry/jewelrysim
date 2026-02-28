@@ -2146,6 +2146,65 @@ async function uploadEpochArchiveToDrive() {
   }
 }
 
+// Auto-upload per-cycle PDF report to Google Drive
+async function uploadPdfReportToDrive(report, cycleNum) {
+  if (!gdriveState.connected || !gdriveState.webAppUrl) return;
+  if (gdriveState.failCount >= 5) return;
+  if (!window.jspdf || !window.html2canvas) return; // libs not loaded
+
+  const filename = `JewelForge_Cycle${cycleNum}_Report.pdf`;
+
+  try {
+    setGDriveStatus(true, `Generating Cycle ${cycleNum} PDF for Drive…`);
+    const base64 = await _buildReportPDF(report, filename, { skipDownload: true, showOverlay: false });
+    if (!base64) throw new Error('PDF generation returned empty');
+
+    await gdrivePost({
+      image: base64,
+      filename: filename,
+      mimeType: 'application/pdf'
+    });
+    gdriveCountUpload(filename);
+  } catch(e) {
+    console.warn('Drive PDF upload failed:', e.message);
+    gdriveState.failCount++;
+    if (gdriveState.failCount >= 5) {
+      setGDriveStatus(false, 'Paused — upload errors. Check Apps Script deployment.');
+      showGDriveRetryBtn(true);
+    }
+  }
+}
+
+// Auto-upload full epoch PDF archive to Google Drive (all 3 cycles)
+async function uploadPdfEpochArchiveToDrive() {
+  if (!gdriveState.connected || !gdriveState.webAppUrl) return;
+  if (cycleReports.length < 3) return;
+  if (gdriveState.failCount >= 5) return;
+  if (!window.jspdf || !window.html2canvas) return;
+
+  const filename = 'JewelForge_Epoch_Intelligence_Archive.pdf';
+
+  try {
+    setGDriveStatus(true, 'Generating Epoch PDF archive for Drive…');
+    const base64 = await _buildMultiReportPDF(cycleReports, filename, { skipDownload: true, showOverlay: false });
+    if (!base64) throw new Error('PDF generation returned empty');
+
+    await gdrivePost({
+      image: base64,
+      filename: filename,
+      mimeType: 'application/pdf'
+    });
+    gdriveCountUpload(filename);
+  } catch(e) {
+    console.warn('Drive epoch PDF upload failed:', e.message);
+    gdriveState.failCount++;
+    if (gdriveState.failCount >= 5) {
+      setGDriveStatus(false, 'Paused — upload errors. Check Apps Script deployment.');
+      showGDriveRetryBtn(true);
+    }
+  }
+}
+
 // Restore saved config on page load
 function restoreGDriveConfig() {
   const savedUrl = localStorage.getItem('jf_gdrive_url');
@@ -4726,9 +4785,13 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
 
   cycleReports.push(report);
 
-  // Auto-save report to Google Drive
+  // Auto-save report to Google Drive (JSON + PDF)
   uploadReportToDrive(report, cycleNum);
-  if (cycleNum === 3) uploadEpochArchiveToDrive();
+  uploadPdfReportToDrive(report, cycleNum);
+  if (cycleNum === 3) {
+    uploadEpochArchiveToDrive();
+    uploadPdfEpochArchiveToDrive();
+  }
 
   // ── Claude-Flow Post-Cycle Updates (zero API cost) ──
 
@@ -5320,8 +5383,10 @@ function exportAllReportsAsPDF() {
   _buildMultiReportPDF(cycleReports, 'JewelForge_Epoch_Intelligence_Archive.pdf');
 }
 
-async function _buildReportPDF(r, filename) {
-  const statusEl = _showPdfStatus('Generating PDF...');
+async function _buildReportPDF(r, filename, opts) {
+  const skipDownload = opts?.skipDownload || false;
+  const showOverlay = opts?.showOverlay !== false;
+  const statusEl = showOverlay ? _showPdfStatus('Generating PDF...') : null;
   try {
     const container = _createPdfContainer(r);
     document.body.appendChild(container);
@@ -5342,7 +5407,7 @@ async function _buildReportPDF(r, filename) {
     let firstPage = true;
 
     for (let i = 0; i < sections.length; i++) {
-      _updatePdfStatus(statusEl, `Rendering section ${i+1} of ${sections.length}...`);
+      if (statusEl) _updatePdfStatus(statusEl, `Rendering section ${i+1} of ${sections.length}...`);
       const sec = sections[i];
       const canvas = await html2canvas(sec, {
         scale: 2,
@@ -5389,18 +5454,25 @@ async function _buildReportPDF(r, filename) {
       pdf.text(`JewelForge — Cycle ${r.cycle} Intelligence Report — Page ${p} of ${totalPages}`, pageW / 2, pageH - 12, { align: 'center' });
     }
 
-    pdf.save(filename);
+    if (!skipDownload) pdf.save(filename);
     container.remove();
-    _hidePdfStatus(statusEl);
+    if (statusEl) _hidePdfStatus(statusEl);
+
+    // Return base64 PDF data for upload
+    const base64 = pdf.output('datauristring').split(',')[1];
+    return base64;
   } catch(e) {
     console.error('PDF export error:', e);
-    _hidePdfStatus(statusEl);
-    alert('PDF export failed: ' + e.message);
+    if (statusEl) _hidePdfStatus(statusEl);
+    if (!skipDownload) alert('PDF export failed: ' + e.message);
+    return null;
   }
 }
 
-async function _buildMultiReportPDF(reports, filename) {
-  const statusEl = _showPdfStatus('Generating multi-cycle PDF...');
+async function _buildMultiReportPDF(reports, filename, opts) {
+  const skipDownload = opts?.skipDownload || false;
+  const showOverlay = opts?.showOverlay !== false;
+  const statusEl = showOverlay ? _showPdfStatus('Generating multi-cycle PDF...') : null;
   try {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
@@ -5412,7 +5484,7 @@ async function _buildMultiReportPDF(reports, filename) {
     for (let ri = 0; ri < reports.length; ri++) {
       const r = reports[ri];
       if (ri > 0) pdf.addPage();
-      _updatePdfStatus(statusEl, `Rendering Cycle ${r.cycle} report (${ri+1}/${reports.length})...`);
+      if (statusEl) _updatePdfStatus(statusEl, `Rendering Cycle ${r.cycle} report (${ri+1}/${reports.length})...`);
 
       const container = _createPdfContainer(r);
       document.body.appendChild(container);
@@ -5468,12 +5540,17 @@ async function _buildMultiReportPDF(reports, filename) {
       pdf.text(`JewelForge — Epoch Intelligence Archive — Page ${p} of ${totalPages}`, pageW / 2, pageH - 12, { align: 'center' });
     }
 
-    pdf.save(filename);
-    _hidePdfStatus(statusEl);
+    if (!skipDownload) pdf.save(filename);
+    if (statusEl) _hidePdfStatus(statusEl);
+
+    // Return base64 PDF data for upload
+    const base64 = pdf.output('datauristring').split(',')[1];
+    return base64;
   } catch(e) {
     console.error('PDF export error:', e);
-    _hidePdfStatus(statusEl);
-    alert('PDF export failed: ' + e.message);
+    if (statusEl) _hidePdfStatus(statusEl);
+    if (!skipDownload) alert('PDF export failed: ' + e.message);
+    return null;
   }
 }
 
