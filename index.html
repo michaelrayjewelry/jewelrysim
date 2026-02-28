@@ -1916,9 +1916,9 @@ async function imageUrlToBase64(imageUrl) {
 }
 
 // Auto-upload a single image to Google Drive via Apps Script
-async function uploadImageToDrive(imageUrl, filename) {
+async function uploadImageToDrive(imageUrlOrBase64, filename) {
   if (!gdriveState.connected || !gdriveState.webAppUrl) return;
-  if (gdriveState.uploadedUrls.has(imageUrl)) return;
+  if (gdriveState.uploadedUrls.has(imageUrlOrBase64)) return;
   // Circuit breaker: pause after 5 consecutive failures
   if (gdriveState.failCount >= 5) {
     if (gdriveState.failCount === 5) {
@@ -1928,26 +1928,49 @@ async function uploadImageToDrive(imageUrl, filename) {
     }
     return;
   }
-  gdriveState.uploadedUrls.add(imageUrl);
+  gdriveState.uploadedUrls.add(imageUrlOrBase64);
   gdriveState.uploading++;
 
   const safeName = (filename || 'jewelforge-image').replace(/[^a-zA-Z0-9_\-. ]/g, '_').slice(0, 100) + '.png';
 
-  try {
-    // Primary: send the image URL and let Apps Script fetch it server-side
-    // This avoids CORS issues entirely since UrlFetchApp has no browser restrictions
-    await fetch(gdriveState.webAppUrl, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        imageUrl: imageUrl,
-        filename: safeName
-      })
-    });
+  // Determine if we already have base64 data (from _designBase64Cache)
+  const isBase64 = imageUrlOrBase64.length > 500 && !imageUrlOrBase64.startsWith('http');
 
-    // With no-cors we can't confirm success from response,
-    // but if no error thrown, assume delivered to Apps Script
+  try {
+    if (isBase64) {
+      // Primary: send actual image data — most reliable, no server-side fetch needed
+      await fetch(gdriveState.webAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ image: imageUrlOrBase64, filename: safeName, mimeType: 'image/png' })
+      });
+    } else {
+      // Have a URL — try converting to base64 via canvas first
+      let sent = false;
+      try {
+        const base64 = await imageUrlToBase64(imageUrlOrBase64);
+        await fetch(gdriveState.webAppUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ image: base64, filename: safeName, mimeType: 'image/png' })
+        });
+        sent = true;
+      } catch(convErr) {
+        console.warn('Base64 conversion failed, falling back to URL:', convErr.message);
+      }
+      if (!sent) {
+        // Fallback: send the URL and let Apps Script fetch it server-side
+        await fetch(gdriveState.webAppUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ imageUrl: imageUrlOrBase64, filename: safeName })
+        });
+      }
+    }
+
     gdriveState.uploadCount++;
     gdriveState.failCount = 0;
     showGDriveRetryBtn(false);
@@ -1956,34 +1979,34 @@ async function uploadImageToDrive(imageUrl, filename) {
     setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
     console.log(`📁 Sent to Drive: ${safeName}`);
   } catch(e) {
-    console.warn('Drive upload failed (URL mode):', e.message);
-    // Fallback: try base64 conversion via canvas
-    try {
-      const base64 = await imageUrlToBase64(imageUrl);
-      await fetch(gdriveState.webAppUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ image: base64, filename: safeName, mimeType: 'image/png' })
-      });
-      gdriveState.uploadCount++;
-      gdriveState.failCount = 0;
-      showGDriveRetryBtn(false);
-      const counterEl = document.getElementById('gdrive-upload-count');
-      if (counterEl) counterEl.textContent = gdriveState.uploadCount;
-      setGDriveStatus(true, `Connected — ${gdriveState.uploadCount} file${gdriveState.uploadCount!==1?'s':''} saved`);
-      console.log(`📁 Sent to Drive (base64 fallback): ${safeName}`);
-    } catch(e2) {
-      console.warn('Drive upload failed (base64 fallback):', e2.message);
-      gdriveState.uploadedUrls.delete(imageUrl);
-      gdriveState.failCount++;
-      if (gdriveState.failCount >= 5) {
-        setGDriveStatus(false, 'Paused — upload errors. Check Apps Script deployment.');
-        showGDriveRetryBtn(true);
-      }
+    console.warn('Drive upload failed:', e.message);
+    gdriveState.uploadedUrls.delete(imageUrlOrBase64);
+    gdriveState.failCount++;
+    if (gdriveState.failCount >= 5) {
+      setGDriveStatus(false, 'Paused — upload errors. Check Apps Script deployment.');
+      showGDriveRetryBtn(true);
     }
   } finally {
     gdriveState.uploading--;
+  }
+}
+
+// Cache for base64-encoded image data, keyed same as _designImageCache
+const _designBase64Cache = {};
+
+// Convert a loaded img element to base64 via canvas
+function imgElementToBase64(imgEl) {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = imgEl.naturalWidth || 512;
+    canvas.height = imgEl.naturalHeight || 512;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgEl, 0, 0);
+    const dataUrl = canvas.toDataURL('image/png');
+    return dataUrl.split(',')[1];
+  } catch(e) {
+    // Canvas tainted by cross-origin image — can't extract data
+    return null;
   }
 }
 
@@ -1993,18 +2016,29 @@ function uploadCachedImages() {
     if (url && !url.startsWith('data:')) {
       const parts = key.split('-');
       const filename = `JewelForge_Cycle${parts[0]}_Agent${parts[1]}_design`;
-      uploadImageToDrive(url, filename);
+      // Prefer cached base64 data over URL
+      const base64 = _designBase64Cache[key];
+      uploadImageToDrive(base64 || url, filename);
     }
   });
 }
 
 // Central hook: call this whenever an image successfully loads
-function onImageGenerated(imageUrl, designObj, cycle, agentIdx) {
+function onImageGenerated(imageUrl, designObj, cycle, agentIdx, imgElement) {
   if (!imageUrl || imageUrl.startsWith('data:')) return;
   const name = designObj?.name || 'design';
   const agent = designObj?.agentName || 'Agent' + agentIdx;
   const filename = `JewelForge_C${cycle}_${agent}_${name}`.replace(/\s+/g, '_');
-  uploadImageToDrive(imageUrl, filename);
+  const cacheKey = cycle + '-' + agentIdx;
+
+  // Try to capture base64 from the loaded img element for reliable upload
+  let base64 = _designBase64Cache[cacheKey];
+  if (!base64 && imgElement) {
+    base64 = imgElementToBase64(imgElement);
+    if (base64) _designBase64Cache[cacheKey] = base64;
+  }
+
+  uploadImageToDrive(base64 || imageUrl, filename);
 }
 
 // Auto-upload a cycle report JSON to Google Drive
@@ -4062,7 +4096,7 @@ function renderDesignCard(d, i) {
         <div class="di-gem" id="${pctId}-gem"></div>
         <div class="di-pct" id="${pctId}">0%</div>
       </div>
-      <img class="dcard-img" id="${imgId}" alt="${d.name}" />
+      <img class="dcard-img" id="${imgId}" alt="${d.name}" crossorigin="anonymous" />
     </div>
     <div class="dcard-body">
       <div class="dname">${d.name}</div>
@@ -4135,7 +4169,7 @@ function renderDesignCard(d, i) {
     if (activeDesigns[i]) activeDesigns[i].imageUrl = img.src;
     _designImageCache[cacheKey] = img.src;
     // Auto-save to Google Drive
-    onImageGenerated(img.src, d, currentCycle, d.agentIdx);
+    onImageGenerated(img.src, d, currentCycle, d.agentIdx, img);
   };
   img.onerror = retryOnce;
 
@@ -4278,7 +4312,7 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
           <div class="lbl">Rendering</div>
           <div class="pct" id="pct-${containerId}-${i}">0%</div>
         </div>
-        <img class="top3-img" id="img-${containerId}-${i}" alt="${d.name}" />
+        <img class="top3-img" id="img-${containerId}-${i}" alt="${d.name}" crossorigin="anonymous" />
       </div>
       <div class="top3-meta">
         <div class="top3-rank ${rankClass[i]}">${ranks[i]}</div>
@@ -4336,7 +4370,7 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
         _designImageCache[currentCycle + '-' + d.agentIdx] = img.src;
         checkAllImagesLoaded(containerId);
         // Auto-save to Google Drive
-        onImageGenerated(img.src, d, currentCycle, d.agentIdx);
+        onImageGenerated(img.src, d, currentCycle, d.agentIdx, img);
       };
       img.onerror = () => {
         if (!retried) {
@@ -4876,7 +4910,7 @@ function viewReport(cycleNum) {
         return `<div class="rdoc-imgcard rank${i+1}">
           <div class="rdoc-img-wrap">
             <div class="rdoc-img-placeholder" id="rph-${r.cycle}-${i}"></div>
-            <img class="rdoc-img" id="rimg-${r.cycle}-${i}" alt="${d.name}" />
+            <img class="rdoc-img" id="rimg-${r.cycle}-${i}" alt="${d.name}" crossorigin="anonymous" />
           </div>
           <div class="rdoc-card-meta">
             <div class="rdoc-rank-badge ${rankCls[i]}">${rankLabels[i]}</div>
@@ -5182,7 +5216,7 @@ function viewReport(cycleNum) {
         d.imageUrl = imgEl.src;
         _designImageCache[r.cycle + '-' + d.agentIdx] = imgEl.src;
         // Auto-save to Google Drive
-        onImageGenerated(imgEl.src, d, r.cycle, d.agentIdx);
+        onImageGenerated(imgEl.src, d, r.cycle, d.agentIdx, imgEl);
       };
       imgEl.onerror = () => {
         if (!retried) {
