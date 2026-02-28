@@ -496,10 +496,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .gdrive-retry-btn:hover{background:rgba(234,67,53,.15);border-color:rgba(234,67,53,.6)}
 
 /* Start button enhanced */
-.home-start-wrap{text-align:center;padding:1rem 0 2rem}
+.home-start-wrap{text-align:center;padding:1rem 0 2rem;display:flex;flex-direction:column;align-items:center;gap:.7rem}
 .home-start-wrap .btn-primary{padding:.85rem 2.2rem;font-size:.78rem;letter-spacing:.25em;position:relative;overflow:hidden}
 .home-start-wrap .btn-primary::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);transition:left .5s}
 .home-start-wrap .btn-primary:hover::after{left:120%}
+.autopilot-btn{border-color:var(--purp)!important;color:var(--purp)!important;font-size:.68rem!important;letter-spacing:.18em;padding:.55rem 1.4rem!important}
+.autopilot-btn:hover{background:rgba(123,111,168,.12)!important;border-color:#9b8fd0!important;color:#b8aee0!important}
+.autopilot-btn:disabled{opacity:.35;border-color:var(--faint)!important;color:var(--faint)!important}
+.autopilot-btn.running{animation:autopilot-pulse 1.5s ease-in-out infinite;border-color:var(--grn)!important;color:var(--grn)!important}
+@keyframes autopilot-pulse{0%,100%{box-shadow:0 0 4px rgba(76,175,125,.2)}50%{box-shadow:0 0 16px rgba(76,175,125,.4)}}
 
 /* Version badge */
 .home-version{text-align:center;font-size:.55rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;margin-top:1.5rem}
@@ -998,6 +1003,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
   <div class="home-start-wrap">
     <button class="btn btn-primary" id="home-start-btn" onclick="startFromHome()">Begin Agent Configuration →</button>
+    <button class="btn btn-ghost autopilot-btn" id="autopilot-btn" onclick="runAutopilot()" disabled>⚡ Autopilot — Generate All & Run</button>
   </div>
   <div class="home-version">JewelForge <span>v2.0</span> — 3-Cycle Intelligence Engine</div>
 </div>
@@ -1579,6 +1585,7 @@ function checkApiKeys() {
   const dot = document.getElementById('api-dot');
   const txt = document.getElementById('api-status-text');
   const startBtn = document.getElementById('home-start-btn');
+  const apBtn = document.getElementById('autopilot-btn');
   const submitBtn = document.getElementById('api-submit-btn');
   const hasAnt = antVal.length > 0;
   const hasHf = hfVal.length > 0;
@@ -1587,14 +1594,17 @@ function checkApiKeys() {
     if (dot) dot.className = 'dot ok';
     if (txt) txt.textContent = 'API keys committed ✓' + (apiKeys.higgsfield ? ' — Claude + Higgsfield active' : ' — Claude active (images: free tier)');
     if (startBtn) startBtn.disabled = false;
+    if (apBtn) apBtn.disabled = false;
   } else if (hasAnt) {
     if (dot) dot.className = 'dot warn';
     if (txt) txt.textContent = 'Claude key entered' + (hasHf ? ' + Higgsfield key entered' : '') + ' — press Submit to lock in';
     if (startBtn) startBtn.disabled = true;
+    if (apBtn) apBtn.disabled = true;
   } else {
     if (dot) dot.className = 'dot warn';
     if (txt) txt.textContent = 'Enter your Anthropic (Claude) API key — required for all agent decisions';
     if (startBtn) startBtn.disabled = true;
+    if (apBtn) apBtn.disabled = true;
   }
 }
 
@@ -1663,6 +1673,112 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAgentMo
 
 function startFromHome() {
   goTo(1);
+}
+
+/* ══════════════════════════════════
+   AUTOPILOT — Generate All Agents & Run All Cycles
+══════════════════════════════════ */
+let autopilotRunning = false;
+
+async function runAutopilot() {
+  if (autopilotRunning) return;
+  if (!apiKeysCommitted) return;
+  autopilotRunning = true;
+
+  const btn = document.getElementById('autopilot-btn');
+  const startBtn = document.getElementById('home-start-btn');
+  if (btn) { btn.classList.add('running'); btn.textContent = '⚡ Autopilot Running…'; btn.disabled = true; }
+  if (startBtn) startBtn.disabled = true;
+
+  // Set speed to 5x for faster autopilot
+  speed = 5;
+
+  try {
+    // Phase 1: Navigate to builder and auto-generate + deploy all 6 agents
+    goTo(1);
+    currentAgentNum = 1;
+    configuredAgents = [];
+
+    for (let i = 0; i < 6; i++) {
+      if (btn) btn.textContent = `⚡ Generating Agent ${i + 1}/6…`;
+      await autoGen();
+      await deployCurrentAgent();
+      // Small delay between agents to let UI update
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    // startSimulation() was called by deployCurrentAgent when agent 6 was deployed
+    // Now we're on screen 2 (simulator). Run all 3 cycles.
+
+    for (let cycle = 1; cycle <= 3; cycle++) {
+      if (btn) btn.textContent = `⚡ Cycle ${cycle} — Running Phases…`;
+
+      // Run all 5 phases for this cycle
+      for (let phase = 0; phase < 5; phase++) {
+        if (btn) btn.textContent = `⚡ Cycle ${cycle} — Phase ${phase + 1}/5…`;
+
+        // nextPhase() increments currentPhase internally and runs the phase script
+        // It uses setTimeout for the UI delay — we need to wait for that to complete
+        await runNextPhaseAutopilot();
+      }
+
+      // After phase 4 (index 4), showCycleComplete() is called
+      // Wait a brief moment for the cycle complete panel to render
+      await new Promise(r => setTimeout(r, 500));
+
+      // Advance to next cycle or finish
+      if (cycle < 3) {
+        currentCycle++;
+        resetSim();
+        const ccPanel = document.getElementById('cc-panel');
+        if (ccPanel) ccPanel.className = 'cycle-complete';
+        document.getElementById('phase-btn').style.display = '';
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+
+    // All 3 cycles complete — go to reports
+    if (btn) btn.textContent = '⚡ Autopilot Complete ✓';
+    await new Promise(r => setTimeout(r, 500));
+    goTo(3);
+    viewReport(3);
+
+  } catch (e) {
+    console.error('Autopilot error:', e);
+    if (btn) btn.textContent = '⚡ Autopilot Failed — ' + e.message;
+  } finally {
+    autopilotRunning = false;
+    if (btn) { btn.classList.remove('running'); btn.disabled = false; }
+    if (startBtn) startBtn.disabled = false;
+    speed = 1;
+  }
+}
+
+// Helper: runs nextPhase() and waits for its setTimeout callback to complete
+function runNextPhaseAutopilot() {
+  return new Promise(async (resolve) => {
+    currentPhase++;
+    if (currentPhase >= 5) { resolve(); return; }
+    setPhaseActive(currentPhase);
+    document.getElementById('phase-btn').disabled = true;
+    document.getElementById('phase-btn').textContent = '⏳ Running phase…';
+
+    const scripts = PHASE_SCRIPTS[currentCycle - 1] || PHASE_SCRIPTS[0];
+    const script = scripts[currentPhase];
+    const finishDelay = await script();
+
+    setTimeout(() => {
+      document.getElementById('phase-btn').disabled = false;
+      if (currentPhase === 4) {
+        document.getElementById('phase-btn').style.display = 'none';
+        showCycleComplete();
+      } else {
+        const labels = ['▶ Proceed to Synthesis','▶ Generate Designs','▶ Begin Agent Voting','▶ Apply Evolution'];
+        document.getElementById('phase-btn').textContent = labels[currentPhase] || '▶ Next Phase';
+      }
+      resolve();
+    }, finishDelay / speed);
+  });
 }
 
 /* ══════════════════════════════════
