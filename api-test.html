@@ -321,7 +321,7 @@ async function testClaude() {
         max_tokens: 256,
         messages: [{
           role: 'user',
-          content: 'In one sentence, describe a unique piece of fine jewelry suitable for a luxury auction catalog. Be specific about metals, stones, and design elements.'
+          content: 'In one sentence, describe a piece of jewelry designed to sell well in mass retail markets. Be specific about metals, stones, and design elements. Focus on broad consumer appeal, wearability, and commercial viability.'
         }]
       })
     });
@@ -439,7 +439,7 @@ async function testHiggsfield() {
     return;
   }
 
-  const testPrompt = 'A simple gold engagement ring, fine jewelry photograph, studio lighting, black velvet background, photorealistic';
+  const testPrompt = 'A simple 14k gold engagement ring with round diamond solitaire, white background, soft even lighting, commercial jewelry product photo';
 
   // Reset & open modal
   hideModalError();
@@ -560,7 +560,7 @@ async function testHarmony() {
         max_tokens: 300,
         messages: [{
           role: 'user',
-          content: `You are a luxury jewelry photographer's AI assistant. Given a jewelry description, output ONLY a concise image-generation prompt (max 180 characters) optimized for an AI image model. Focus on the piece, materials, lighting, and background. No explanation, just the prompt.\n\nJewelry: ${description}`
+          content: `You are an AI assistant for a mass-market jewelry brand. Given a jewelry description, output ONLY a concise image-generation prompt (max 180 characters) optimized for commercial product photography. Use simple, clear language. White or neutral background, soft even lighting. Focus on the piece, metals, stones. No artsy or editorial terms. No explanation, just the prompt.\n\nJewelry: ${description}`
         }]
       })
     });

@@ -599,45 +599,45 @@ const BASE_AGENTS = [
 const CYCLE_DESIGNS = [
   [ // CYCLE 1
     { name:'Void Solitaire',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
-      prompt:'Platinum solitaire ring, 2.0ct oval diamond bezel-set, open negative-space band, architectural silhouette, studio photography, neutral gray background, soft diffuse lighting, 4K render' },
+      prompt:'Platinum solitaire ring, oval diamond bezel setting, open band with negative space, modern architectural design, neutral gray background, soft studio lighting, jewelry product photo' },
     { name:'Orbit Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:74,
-      prompt:'Platinum drop earrings, floating geometric circles, minimal negative-space composition, rose-cut diamond accents, contemporary jewelry photography, gray gradient background, precise studio lighting, photorealistic' },
+      prompt:'Platinum drop earrings, floating geometric circles, minimal open design, rose-cut diamond accents, light gray background, clean studio lighting, jewelry product photo' },
     { name:'Cascade Pavé',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:79, novelty:52, profit:72,
-      prompt:'18k rose gold pendant, sapphire and diamond cascade, micro-pavé halo surround, floral motif, high jewelry editorial, dark velvet background, dramatic highlight lighting, photorealistic render' },
+      prompt:'18k rose gold pendant necklace, blue sapphire center with small diamond accents, floral design, white background, soft studio lighting, commercial jewelry photo' },
     { name:'Hex Frame',       cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:67, novelty:90, profit:50,
-      prompt:'Titanium and 18k yellow gold bracelet, hexagonal geometric links, industrial mixed-metal design, asymmetric barrel clasp, technical product photography, white background, sharp precision lighting' },
+      prompt:'Titanium and 18k yellow gold bracelet, hexagonal geometric links, industrial mixed-metal design, bold modern style, white background, clean studio lighting' },
     { name:'Silk Halo',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:77, novelty:40, profit:88,
-      prompt:'14k white gold engagement ring, 1.8ct round brilliant center stone, classic micro-pavé halo, cathedral shank, bridal photography, pure white seamless background, soft glamour lighting, commercial grade' },
+      prompt:'14k white gold engagement ring, round brilliant diamond, classic halo setting, clean simple band, white background, soft even lighting, commercial jewelry photo' },
     { name:'Thorn Band',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
-      prompt:'18k blackened gold ring, sculptural thorn motif band, avant-garde wearable art, matte finish with high-polish accent edges, editorial photography, deep charcoal background, single dramatic light source' },
+      prompt:'18k blackened gold ring, sculptural thorn vine motif band, matte and polished contrast, artistic jewelry, dark gray background, moody lighting' },
   ],
   [ // CYCLE 2 — agents reference C1 report, minimal trend exploited
     { name:'Cathedral Void',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
-      prompt:'Platinum ring, 2.2ct marquise diamond, architectural cathedral negative-space arch setting, open structural band, blueprint-aesthetic engineering, neutral gray background, technical precision lighting, 4K product photography' },
+      prompt:'Platinum ring, marquise diamond, architectural cathedral setting with open arches, modern structural band, neutral gray background, clean studio lighting, jewelry product photo' },
     { name:'Phase Ring',      cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:82, novelty:68, profit:77,
-      prompt:'Platinum minimal ring, bezel-set 1.4ct round brilliant, flush band with precise groove detail, intentional negative-space composition, minimalist product photography, pure gray background, diffuse even lighting' },
+      prompt:'Platinum ring, bezel-set round diamond, clean flush band with groove detail, minimal modern design, light gray background, soft even lighting, product photo' },
     { name:'Sapphire Canopy', cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:81, novelty:54, profit:76,
-      prompt:'18k yellow gold pendant, cushion-cut blue sapphire canopy setting, pavé diamond surround, organic draping form, luxury jewelry campaign, black velvet background, dramatic highlight rim lighting' },
+      prompt:'18k yellow gold pendant, cushion-cut blue sapphire, small diamond halo, elegant simple chain, white background, soft studio lighting, commercial jewelry photo' },
     { name:'Arc Shard',       cat:'Ring',     emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:74, novelty:88, profit:55,
-      prompt:'Platinum and titanium ring, circular bezel diamond, industrial-minimal hybrid design, integrated negative-space arc, structural asymmetry, contemporary jewelry photography, steel-gray gradient background' },
+      prompt:'Platinum and titanium ring, bezel-set diamond, industrial-minimal hybrid design, open arc detail, modern style, steel-gray background, clean studio lighting' },
     { name:'Market Arch',     cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:80, novelty:52, profit:91,
-      prompt:'14k white gold ring, 1.5ct oval diamond, architectural open-shank channel setting, market-optimized proportions, bridal editorial photography, white seamless background, soft box lighting, commercial clarity' },
+      prompt:'14k white gold ring, oval diamond, clean open shank setting, classic bridal proportions, white background, soft box lighting, commercial jewelry product photo' },
     { name:'Bone Structure',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
-      prompt:'Sterling silver sculptural bracelet, bone-form organic link structure, oxidized blackened detail in recesses, avant-garde wearable sculpture, editorial fashion photography, high-contrast dark background, fashion lighting' },
+      prompt:'Sterling silver sculptural bracelet, organic bone-shaped links, oxidized dark accents, modern statement piece, neutral gray background, clean studio lighting' },
   ],
   [ // CYCLE 3 — minimal saturation detected, organic breakout emerges
     { name:'Negative Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
-      prompt:'Platinum ring, 2.4ct emerald-cut diamond, extreme negative-space double-cathedral arch, structural statement piece, luxury editorial photography, dark studio background, dramatic single-point lighting, fine jewelry' },
+      prompt:'Platinum ring, emerald-cut diamond, double cathedral arch setting, open structural design, neutral gray background, soft studio lighting, jewelry product photo' },
     { name:'Arc Minimal',     cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:80, novelty:74, profit:72,
-      prompt:'Platinum arc pendant, single floating 0.8ct diamond point, dramatic negative-space composition, architectural jewelry design, precise product photography, soft gray gradient background, technical rim lighting' },
+      prompt:'Platinum arc pendant, single floating diamond, clean minimal design, delicate chain, light gray background, soft even lighting, jewelry product photo' },
     { name:'Bloom Fragment',  cat:'Pendant',  emoji:'🌸', agentIdx:2, strategy:'explore', aesthetic:83, novelty:76, profit:73,
-      prompt:'18k yellow gold organic pendant, irregular champagne pearl and diamond cluster, sculptural flowing natural form, wearable art, high jewelry campaign, dark forest-green velvet background, natural diffuse lighting' },
+      prompt:'18k yellow gold pendant, champagne pearl center with small diamond accents, organic floral cluster shape, delicate chain, cream background, soft natural lighting, jewelry product photo' },
     { name:'Forge Shard',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
-      prompt:'Mixed metal ring, 18k yellow gold organic shard set into platinum band, irregular natural geometry, textured hammer surfaces, art jewelry photography, raw concrete background, natural side lighting' },
+      prompt:'Mixed metal ring, 18k yellow gold organic shard set into platinum band, irregular natural texture, hammered finish, neutral gray background, soft studio lighting' },
     { name:'Root Form',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
-      prompt:'18k yellow gold sculptural bracelet, root and branch organic form, champagne diamond accents at nodes, wearable sculpture, luxury editorial photography, warm earth-tone linen background, natural window light, fine jewelry' },
+      prompt:'18k yellow gold bracelet, organic root and branch form, small champagne diamond accents, sculptural modern design, warm linen background, natural soft lighting, jewelry product photo' },
     { name:'Consensus Cut',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
-      prompt:'14k white gold ring, perfectly proportioned 1.8ct cushion diamond, clean minimalist shank, commercial jewelry photography, white background, ring perfectly in focus, soft box lighting, market-optimized render' },
+      prompt:'14k white gold ring, cushion diamond, clean simple band, classic proportions, white background, soft box lighting, commercial jewelry product photo' },
   ],
 ];
 
@@ -1327,7 +1327,7 @@ function renderDesignCard(d, i) {
   const loader = document.getElementById(loaderId);
 
   const seed = (d.agentIdx * 997 + currentCycle * 113 + i * 31 + 7) | 0;
-  const imgUrl = makeImgUrl(d.prompt, seed);
+  const imgUrl = makeImgUrl(d.prompt, seed, d.massMarket);
 
   const showError = () => {
     if (loader) {
@@ -1378,10 +1378,41 @@ function cardImgProgress(pctId, loaderId) {
 /* ══════════════════════════════════
    IMAGE GENERATION
 ══════════════════════════════════ */
-function makeImgUrl(prompt, seed) {
+
+// Simplify prompts for mass-market designs — strip artsy/editorial language, keep it clean and commercial
+function massMarketPrompt(prompt, mktScore) {
+  let p = prompt;
+  if (mktScore >= 65) {
+    // High MKT: strip artsy descriptors, replace with clean commercial language
+    const artsyTerms = [
+      /avant[- ]garde\s*/gi, /wearable\s*(art|sculpture)\s*/gi, /editorial\s*(fashion\s*)?photography\s*/gi,
+      /dramatic\s*(single[- ]point\s*)?light(ing|source)\s*/gi, /high[- ]contrast\s*(dark\s*)?background\s*/gi,
+      /fashion\s*lighting\s*/gi, /deep\s*charcoal\s*background\s*/gi, /raw\s*concrete\s*background\s*/gi,
+      /art\s*jewelry\s*photography\s*/gi, /blueprint[- ]aesthetic\s*engineering\s*/gi,
+      /technical\s*precision\s*lighting\s*/gi, /oxidized\s*blackened\s*detail\s*in\s*recesses\s*/gi,
+      /natural\s*side\s*lighting\s*/gi, /extreme\s*/gi, /structural\s*statement\s*piece\s*/gi
+    ];
+    artsyTerms.forEach(term => { p = p.replace(term, ''); });
+    // Clean up double spaces/commas
+    p = p.replace(/,\s*,/g, ',').replace(/\s{2,}/g, ' ').replace(/,\s*$/,'').trim();
+  }
+  if (mktScore >= 75) {
+    // Very high MKT: add explicit commercial photography terms
+    if (!p.toLowerCase().includes('commercial')) p += ', commercial product photography';
+    if (!p.toLowerCase().includes('white background') && !p.toLowerCase().includes('clean background'))
+      p = p.replace(/dark\s+\w+\s+background/gi, 'clean white background')
+           .replace(/charcoal\s+background/gi, 'clean white background')
+           .replace(/gray\s+gradient\s+background/gi, 'white seamless background');
+  }
+  return p;
+}
+
+function makeImgUrl(prompt, seed, mktScore) {
+  // Apply mass-market simplification if MKT score available
+  const simplified = mktScore != null ? massMarketPrompt(prompt, mktScore) : prompt;
   // Keep prompt short — long URLs get rejected by pollinations
-  const base = prompt.slice(0, 200);
-  const full = `fine jewelry, ${base}, studio lighting, photorealistic`;
+  const base = simplified.slice(0, 200);
+  const full = `jewelry product photo, ${base}, clean lighting, photorealistic`;
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=400&height=400&nologo=true&seed=${seed}&model=flux&enhance=false`;
 }
 
@@ -1438,7 +1469,7 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
       };
       img.onerror = showFallback;
       setTimeout(showFallback, 35000); // timeout fallback
-      img.src = makeImgUrl(d.prompt, seed);
+      img.src = makeImgUrl(d.prompt, seed, d.massMarket || computeMassMarketScore(d));
     }
 
     animateProgress(containerId, i);
@@ -1556,37 +1587,78 @@ function pct(v, tot) { return tot ? Math.round(v/tot*100) : 0; }
 /* ══════════════════════════════════
    MASS MARKET SCORING ENGINE
 ══════════════════════════════════ */
+
+// Extract style keywords from a design prompt or agent tags
+function extractStyleKeywords(design) {
+  const keywords = new Set();
+  // From agent style tags
+  const agent = agentStates[design.agentIdx];
+  if (agent?.styleTags) agent.styleTags.forEach(t => keywords.add(t.toLowerCase()));
+  // From prompt text — match known style terms
+  if (design.prompt) {
+    const p = design.prompt.toLowerCase();
+    Object.keys(MASS_MARKET_MODEL.styleAccess).forEach(style => {
+      if (p.includes(style)) keywords.add(style);
+    });
+    // Additional keyword mappings from prompt descriptors
+    if (p.includes('clean') || p.includes('simple') || p.includes('classic')) keywords.add('minimal');
+    if (p.includes('flower') || p.includes('bloom') || p.includes('petal')) keywords.add('floral');
+    if (p.includes('vine') || p.includes('root') || p.includes('branch') || p.includes('natural')) keywords.add('organic');
+    if (p.includes('retro') || p.includes('deco') || p.includes('antique')) keywords.add('vintage');
+    if (p.includes('bold') || p.includes('heavy') || p.includes('thick')) keywords.add('maximalist');
+    if (p.includes('commercial') || p.includes('market') || p.includes('bridal')) keywords.add('market-fit');
+  }
+  return [...keywords];
+}
+
+// Compute average style accessibility score for a design's style keywords
+function computeStyleAccessibility(design) {
+  const styles = extractStyleKeywords(design);
+  if (!styles.length) return 0.5; // neutral if no style info
+  const mm = MASS_MARKET_MODEL.styleAccess;
+  const scores = styles.map(s => mm[s] || 0.4);
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
+}
+
 // Compute how well a design would sell in mass retail markets (0–100)
 function computeMassMarketScore(design) {
   const mm = MASS_MARKET_MODEL;
   let score = 0;
 
-  // 1. Profit/margin accessibility (25%) — mass market needs healthy margins
+  // 1. Profit/margin accessibility (20%) — mass market needs healthy margins
   const marginScore = Math.min(100, (design.profit / mm.minMarginTarget) * 100);
-  score += marginScore * mm.priceWeight;
+  score += marginScore * 0.20;
 
-  // 2. Category demand alignment (15%) — rings sell most, bracelets least
+  // 2. Category demand alignment (10%) — rings sell most, bracelets least
   const catDemand = mm.categoryDemand[design.cat] || 0.15;
-  score += (catDemand / 0.42) * 100 * 0.15;
+  score += (catDemand / 0.42) * 100 * 0.10;
 
-  // 3. Novelty sweet spot (20%) — mass market wants moderate novelty
+  // 3. Novelty sweet spot (15%) — mass market wants moderate novelty
   let novScore = 100;
   if (design.novelty < mm.noveltySweetMin) novScore -= (mm.noveltySweetMin - design.novelty) * 2;
   if (design.novelty > mm.noveltySweetMax) novScore -= (design.novelty - mm.noveltySweetMax) * 2;
   novScore = Math.max(0, Math.min(100, novScore));
-  score += novScore * 0.20;
+  score += novScore * 0.15;
 
-  // 4. Aesthetic quality (20%) — consumers still want beauty
+  // 4. Aesthetic quality (15%) — consumers still want beauty
   const aesScore = Math.min(100, (design.aesthetic / mm.aestheticFloor) * 100);
-  score += aesScore * 0.20;
+  score += aesScore * 0.15;
 
-  // 5. Consumer segment fit (20%) — how many buying populations want this
+  // 5. Style accessibility (20%) — how broadly the design style sells at retail
+  const styleScore = computeStyleAccessibility(design) * 100;
+  score += styleScore * 0.20;
+
+  // 6. Consumer segment fit (20%) — how many buying populations want this
   let segFit = 0;
   CONSUMER_SEGMENTS.forEach(seg => {
     let fit = 0;
-    fit += (seg.catPref[design.cat] || 0.05) * 40;
-    if (design.novelty >= seg.novRange[0] && design.novelty <= seg.novRange[1]) fit += 30;
-    if (design.profit >= seg.marginMin) fit += 30;
+    fit += (seg.catPref[design.cat] || 0.05) * 30;
+    if (design.novelty >= seg.novRange[0] && design.novelty <= seg.novRange[1]) fit += 25;
+    if (design.profit >= seg.marginMin) fit += 25;
+    // Style preference match — does this design's style align with segment taste?
+    const designStyles = extractStyleKeywords(design);
+    const styleOverlap = designStyles.filter(s => seg.stylePref.includes(s)).length;
+    fit += Math.min(20, styleOverlap * 10); // up to 20 points for style match
     segFit += fit * seg.weight;
   });
   score += segFit * 0.20;
@@ -1605,9 +1677,13 @@ function computeConsumerVotes(designs) {
 function computeSegmentFit(design) {
   return CONSUMER_SEGMENTS.map(seg => {
     let fit = 0;
-    fit += (seg.catPref[design.cat] || 0.05) * 35;
-    if (design.novelty >= seg.novRange[0] && design.novelty <= seg.novRange[1]) fit += 35;
-    if (design.profit >= seg.marginMin) fit += 30;
+    fit += (seg.catPref[design.cat] || 0.05) * 25;
+    if (design.novelty >= seg.novRange[0] && design.novelty <= seg.novRange[1]) fit += 25;
+    if (design.profit >= seg.marginMin) fit += 25;
+    // Style preference alignment
+    const designStyles = extractStyleKeywords(design);
+    const styleOverlap = designStyles.filter(s => seg.stylePref.includes(s)).length;
+    fit += Math.min(25, styleOverlap * 10); // up to 25 points for style match
     return { name: seg.name, label: seg.label, weight: seg.weight, fit: Math.round(fit) };
   });
 }
@@ -2223,7 +2299,7 @@ function viewReport(cycleNum) {
     const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
     imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
     imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
-    imgEl.src = makeImgUrl(d.prompt, seed);
+    imgEl.src = makeImgUrl(d.prompt, seed, d.massMarket || computeMassMarketScore(d));
   });
 
   // Animate velocity bar after render
