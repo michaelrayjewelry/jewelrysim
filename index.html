@@ -1842,13 +1842,25 @@ function updateGDriveStatus() {
 }
 
 // Helper: POST to Apps Script and validate the JSON response
+const GDRIVE_REQUEST_TIMEOUT = 30000; // 30s timeout for Drive uploads
 async function gdrivePost(payload) {
-  const resp = await fetch(gdriveState.webAppUrl, {
-    method: 'POST',
-    redirect: 'follow',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload)
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GDRIVE_REQUEST_TIMEOUT);
+  let resp;
+  try {
+    resp = await fetch(gdriveState.webAppUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+  } catch(e) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') throw new Error(`Drive upload timed out (>${GDRIVE_REQUEST_TIMEOUT / 1000}s)`);
+    throw e;
+  }
+  clearTimeout(timeoutId);
   let result;
   try {
     result = await resp.json();
@@ -3308,14 +3320,17 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
 // minimum spacing between request starts. This enables batching
 // independent agent calls (e.g. parallel pairs in cross-pollination,
 // parallel agent synthesis) without hammering the API.
-let _lastClaudeCallTime = 0;
+let _nextAvailableTime = 0;        // earliest time the next request may fire
 const CLAUDE_CALL_INTERVAL = 600;  // ms minimum between request starts
 const MAX_CONCURRENT = 3;          // max simultaneous in-flight requests
 let _inFlightCount = 0;
 const _llmQueue = [];              // FIFO queue for pending calls
+const LLM_REQUEST_TIMEOUT = 45000; // 45s timeout per API call
 
 function _drainLlmQueue() {
-  while (_llmQueue.length > 0 && _inFlightCount < MAX_CONCURRENT) {
+  // Release exactly one waiter per call to prevent spacing race condition.
+  // Each released waiter will call _drainLlmQueue again after completing.
+  if (_llmQueue.length > 0 && _inFlightCount < MAX_CONCURRENT) {
     const next = _llmQueue.shift();
     next();
   }
@@ -3329,13 +3344,16 @@ async function llmCall(systemPrompt, userPrompt, agent) {
     await new Promise(resolve => _llmQueue.push(resolve));
   }
 
-  // Enforce minimum spacing between request starts
+  // Eagerly reserve the next time slot to prevent race conditions.
+  // Multiple callers released from the queue will each get a unique
+  // future time slot, ensuring proper spacing even under concurrency.
   const now = Date.now();
-  const elapsed = now - _lastClaudeCallTime;
-  if (elapsed < CLAUDE_CALL_INTERVAL) {
-    await new Promise(r => setTimeout(r, CLAUDE_CALL_INTERVAL - elapsed));
+  const mySlot = Math.max(now, _nextAvailableTime);
+  _nextAvailableTime = mySlot + CLAUDE_CALL_INTERVAL;
+  const waitMs = mySlot - now;
+  if (waitMs > 0) {
+    await new Promise(r => setTimeout(r, waitMs));
   }
-  _lastClaudeCallTime = Date.now();
   _inFlightCount++;
 
   const ag = agent || agentStates[0];
@@ -3359,16 +3377,19 @@ async function llmCall(systemPrompt, userPrompt, agent) {
 
   // Retry up to 3 times with exponential backoff for rate limits / overload
   for (let attempt = 0; attempt < 3; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), LLM_REQUEST_TIMEOUT);
     try {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST', headers, body
+        method: 'POST', headers, body, signal: controller.signal
       });
+      clearTimeout(timeoutId);
       if (resp.status === 429 || resp.status === 529) {
         // Rate limited or overloaded — back off and retry
         const wait = (attempt + 1) * 2500 + Math.random() * 1000;
         console.warn(`Claude ${resp.status} for ${ag.name} — retrying in ${Math.round(wait)}ms (attempt ${attempt+1}/3)`);
         await new Promise(r => setTimeout(r, wait));
-        _lastClaudeCallTime = Date.now(); // reset pacer after backoff
+        _nextAvailableTime = Math.max(_nextAvailableTime, Date.now() + CLAUDE_CALL_INTERVAL);
         continue;
       }
       if (!resp.ok) {
@@ -3380,10 +3401,13 @@ async function llmCall(systemPrompt, userPrompt, agent) {
       _inFlightCount--; _drainLlmQueue();
       return data.content?.[0]?.text || null;
     } catch(e) {
-      console.warn(`Claude call failed for ${ag.name}:`, e);
+      clearTimeout(timeoutId);
+      const isTimeout = e.name === 'AbortError';
+      console.warn(`Claude call ${isTimeout ? 'timed out' : 'failed'} for ${ag.name}:`, isTimeout ? `(>${LLM_REQUEST_TIMEOUT}ms)` : e);
       if (attempt < 2) {
-        await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
-        _lastClaudeCallTime = Date.now();
+        const wait = (attempt + 1) * 2000 + (isTimeout ? 1000 : 0);
+        await new Promise(r => setTimeout(r, wait));
+        _nextAvailableTime = Math.max(_nextAvailableTime, Date.now() + CLAUDE_CALL_INTERVAL);
         continue;
       }
     }
@@ -3456,29 +3480,12 @@ Make it vivid and specific. Do NOT list numbers or repeat the genome format. Jus
 
 ${genome}`;
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKeys.anthropic,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 180,
-        system: 'You are a concise creative writer for a luxury jewelry AI simulation. Bios should convey the agent\'s jewelry category expertise, artistic vision, and design personality. Reference their strongest jewelry categories naturally. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await resp.json();
-    const bio = data.content?.[0]?.text?.trim();
-    agent.bio = bio || fallback;
-  } catch(e) {
-    console.warn('Bio generation failed for', agent.name, e);
-    agent.bio = fallback;
-  }
+  const bio = await llmCall(
+    'You are a concise creative writer for a luxury jewelry AI simulation. Bios should convey the agent\'s jewelry category expertise, artistic vision, and design personality. Reference their strongest jewelry categories naturally. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
+    prompt,
+    agent
+  );
+  agent.bio = bio?.trim() || fallback;
 }
 
 function buildFallbackBio(agent) {
@@ -3522,27 +3529,12 @@ async function summarizeAgentBios(displayDelay) {
 
   let summary = '';
   if (apiKeys.anthropic) {
-    try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKeys.anthropic,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 200,
-          system: 'You summarize a group of jewelry designer AI agent bios into a concise 2-3 sentence overview. Highlight the range of design philosophies, key tensions between agents, and what makes this cohort interesting. Output ONLY the summary — no labels or preamble.',
-          messages: [{ role: 'user', content: `Summarize the following ${agentStates.length} agent bios into a brief cohort overview:\n\n${biosText}` }]
-        })
-      });
-      const data = await resp.json();
-      summary = data.content?.[0]?.text?.trim() || '';
-    } catch(e) {
-      console.warn('Bio summarization failed:', e);
-    }
+    const resp = await llmCall(
+      'You summarize a group of jewelry designer AI agent bios into a concise 2-3 sentence overview. Highlight the range of design philosophies, key tensions between agents, and what makes this cohort interesting. Output ONLY the summary — no labels or preamble.',
+      `Summarize the following ${agentStates.length} agent bios into a brief cohort overview:\n\n${biosText}`,
+      agentStates[0]
+    );
+    summary = resp?.trim() || '';
   }
 
   if (!summary) {
@@ -4465,7 +4457,15 @@ function _drainImgQueue() {
   if (_imgQueue.length === 0) { _imgQueueRunning = false; return; }
   _imgQueueRunning = true;
   const job = _imgQueue.shift();
-  job();
+  try {
+    const result = job();
+    // If job returns a promise, catch async errors too
+    if (result && typeof result.catch === 'function') {
+      result.catch(e => console.warn('Image queue async job failed:', e));
+    }
+  } catch(e) {
+    console.warn('Image queue job failed:', e);
+  }
   setTimeout(_drainImgQueue, IMG_QUEUE_INTERVAL);
 }
 
@@ -4475,7 +4475,14 @@ function queueImageLoad(fn) {
     _imgQueueRunning = true;
     // Fire first immediately, then pace subsequent
     const first = _imgQueue.shift();
-    first();
+    try {
+      const result = first();
+      if (result && typeof result.catch === 'function') {
+        result.catch(e => console.warn('Image queue async job failed:', e));
+      }
+    } catch(e) {
+      console.warn('Image queue job failed:', e);
+    }
     if (_imgQueue.length > 0) setTimeout(_drainImgQueue, IMG_QUEUE_INTERVAL);
     else _imgQueueRunning = false;
   }
