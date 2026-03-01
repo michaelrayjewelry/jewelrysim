@@ -42,6 +42,28 @@ nav::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;ba
 .nav-epoch-bar{width:48px;height:3px;background:var(--xfaint);overflow:hidden;border-radius:2px}
 .nav-epoch-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:2px;transition:width .6s ease;width:0%}
 
+/* MUSIC CONTROLS */
+.music-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .7rem;font-family:'Rajdhani',sans-serif;font-size:.6rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--bdr);color:var(--faint);background:transparent;cursor:pointer;transition:all .3s;border-radius:6px;position:relative;overflow:hidden}
+.music-btn:hover{border-color:var(--gold-d);color:var(--dim)}
+.music-btn.playing{border-color:var(--gold-d);color:var(--gold)}
+.music-btn.playing .music-icon{opacity:0;width:0;margin:0;padding:0}
+.music-btn.playing .music-label{color:var(--gold)}
+.music-bars{display:flex;align-items:flex-end;gap:2px;height:14px;opacity:0;width:0;overflow:hidden;transition:all .3s}
+.music-btn.playing .music-bars{opacity:1;width:20px}
+.music-bar{width:3px;background:var(--gold);border-radius:1px;animation:none;transform-origin:bottom}
+.music-btn.playing .music-bar{animation:eqBar .8s ease-in-out infinite alternate}
+.music-btn.playing .music-bar:nth-child(1){height:6px;animation-delay:0s;animation-duration:.7s}
+.music-btn.playing .music-bar:nth-child(2){height:10px;animation-delay:.15s;animation-duration:.55s}
+.music-btn.playing .music-bar:nth-child(3){height:4px;animation-delay:.3s;animation-duration:.65s}
+.music-btn.playing .music-bar:nth-child(4){height:8px;animation-delay:.1s;animation-duration:.5s}
+@keyframes eqBar{0%{height:3px}100%{height:14px}}
+.music-icon{font-size:.85rem;transition:all .3s}
+.music-label{transition:color .3s}
+.music-vol{-webkit-appearance:none;appearance:none;width:48px;height:3px;background:var(--xfaint);border-radius:2px;outline:none;opacity:.5;transition:opacity .3s;cursor:pointer}
+.music-vol:hover{opacity:1}
+.music-vol::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:10px;height:10px;border-radius:50%;background:var(--gold);cursor:pointer;border:none}
+.music-vol::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--gold);cursor:pointer;border:none}
+
 /* SCREENS */
 main{padding-top:56px}
 .screen{display:none;min-height:calc(100vh - 56px);padding:2.5rem 2rem;max-width:1140px;margin:0 auto}
@@ -674,6 +696,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 @media(max-width:600px){
   /* Nav: compact layout */
   nav{padding:0 .8rem;gap:.3rem;height:auto;flex-wrap:wrap;padding-top:.5rem}
+  .music-btn .music-label{display:none}
+  .music-vol{width:32px}
   .nav-logo{font-size:.85rem;letter-spacing:.2em;gap:.4rem}
   .nav-logo-icon{width:22px;height:22px}
   .nav-logo-icon::before{width:7px;height:7px}
@@ -856,8 +880,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <button class="nav-tab" id="nt2" onclick="goTo(2)"><span class="nt-step">2</span> Simulate</button>
     <button class="nav-tab" id="nt3" onclick="goTo(3)"><span class="nt-step">3</span> Reports</button>
   </div>
-  <div class="nav-epoch">Epoch <span id="nav-epoch-txt">0 / 3</span> <div class="nav-epoch-bar"><div class="nav-epoch-fill" id="nav-epoch-fill"></div></div></div>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <button class="music-btn" id="music-btn" onclick="toggleMusic()" title="Toggle Music">
+      <span class="music-icon" id="music-icon">♪</span>
+      <span class="music-label" id="music-label">Music</span>
+      <div class="music-bars" id="music-bars">
+        <span class="music-bar"></span><span class="music-bar"></span><span class="music-bar"></span><span class="music-bar"></span>
+      </div>
+    </button>
+    <input type="range" class="music-vol" id="music-vol" min="0" max="100" value="40" title="Volume" oninput="setMusicVolume(this.value)" />
+    <div class="nav-epoch">Epoch <span id="nav-epoch-txt">0 / 3</span> <div class="nav-epoch-bar"><div class="nav-epoch-fill" id="nav-epoch-fill"></div></div></div>
+  </div>
 </nav>
+
+<audio id="bgm" loop preload="auto">
+  <source src="JewelForge_ Autonomous Dreams in Silicon.mp3" type="audio/mpeg" />
+</audio>
 
 <main>
 
@@ -1256,6 +1294,51 @@ let activeDesigns = [];
 let configuredAgents = [];
 let currentAgentNum = 1;
 const AGENT_EMOJIS = ['🎯','🌙','✨','🔩','💛','🌿','🔮','🪶','🌀','💠'];
+
+/* ══════════════════════════════════
+   BACKGROUND MUSIC
+══════════════════════════════════ */
+let musicPlaying = false;
+const bgm = document.getElementById('bgm');
+if (bgm) bgm.volume = 0.4;
+
+function toggleMusic() {
+  if (!bgm) return;
+  if (musicPlaying) {
+    bgm.pause();
+    musicPlaying = false;
+    document.getElementById('music-btn')?.classList.remove('playing');
+  } else {
+    bgm.play().then(() => {
+      musicPlaying = true;
+      document.getElementById('music-btn')?.classList.add('playing');
+    }).catch(() => {
+      // Autoplay blocked — will need user interaction first
+      console.warn('Music autoplay blocked by browser. Click the music button to start.');
+    });
+  }
+}
+
+function setMusicVolume(val) {
+  if (bgm) bgm.volume = val / 100;
+}
+
+function startMusicIfNotPlaying() {
+  if (!bgm || musicPlaying) return;
+  bgm.play().then(() => {
+    musicPlaying = true;
+    document.getElementById('music-btn')?.classList.add('playing');
+  }).catch(() => {});
+}
+
+// Sync button state if music ends or is paused externally
+if (bgm) {
+  bgm.addEventListener('pause', () => {
+    if (!bgm.ended) return; // loop should prevent this, but just in case
+    musicPlaying = false;
+    document.getElementById('music-btn')?.classList.remove('playing');
+  });
+}
 
 /* ══════════════════════════════════
    PIXEL ART PROFILE PICTURE GENERATOR
@@ -3032,6 +3115,8 @@ function startSimulation() {
   }
   resetSim();
   goTo(2);
+  // Start background music when simulation begins
+  startMusicIfNotPlaying();
 }
 
 function snapshotGenome(agent) {
