@@ -1,0 +1,16 @@
+{
+  "name": "jewelrysim",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test game-logic.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:41785/git/michaelrayjewelry/jewelrysim"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

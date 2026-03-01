@@ -19,19 +19,28 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;ove
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.6}
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(6,6,6,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:.9rem 2rem;gap:1rem;flex-wrap:wrap}
-.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.05rem;letter-spacing:.38em;color:var(--gold);font-weight:300;flex-shrink:0}
-.nav-tabs{display:flex;gap:2px}
-.nav-tab{padding:.4rem 1rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;border:1px solid transparent;color:var(--faint);cursor:pointer;transition:all .2s;background:none;font-family:'Rajdhani',sans-serif}
-.nav-tab:hover{color:var(--dim)}
-.nav-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.05)}
-.nav-tab.done{border-color:var(--gold-d);color:var(--gold-d)}
-.nav-epoch{font-size:.65rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase}
-.nav-epoch span{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:.9rem}
+nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(6,6,6,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;gap:1rem;flex-wrap:wrap;height:56px}
+nav::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),var(--gold),var(--gold-d),transparent)}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;letter-spacing:.38em;color:var(--gold);font-weight:300;flex-shrink:0;display:flex;align-items:center;gap:.65rem}
+.nav-logo-icon{width:28px;height:28px;border:1px solid var(--gold-d);display:flex;align-items:center;justify-content:center;position:relative;transform:rotate(45deg)}
+.nav-logo-icon::before{content:'';width:10px;height:10px;background:var(--gold);transform:rotate(-45deg);clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)}
+.nav-logo-icon::after{content:'';position:absolute;inset:3px;border:1px solid rgba(201,168,76,.3)}
+.nav-tabs{display:flex;gap:0;height:100%}
+.nav-tab{padding:0 1.1rem;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;border:none;border-bottom:2px solid transparent;color:var(--faint);cursor:pointer;transition:all .25s;background:none;font-family:'Rajdhani',sans-serif;font-weight:500;height:100%;display:flex;align-items:center;gap:.4rem;position:relative}
+.nav-tab:hover{color:var(--dim);background:rgba(201,168,76,.02)}
+.nav-tab.active{border-bottom-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.04)}
+.nav-tab.done{border-bottom-color:var(--grn);color:var(--grn)}
+.nav-tab .nt-step{width:18px;height:18px;border:1px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;opacity:.6;flex-shrink:0}
+.nav-tab.active .nt-step{opacity:1;border-color:var(--gold);box-shadow:0 0 6px rgba(201,168,76,.2)}
+.nav-tab.done .nt-step{background:var(--grn);border-color:var(--grn);color:var(--bg)}
+.nav-epoch{font-size:.6rem;letter-spacing:.22em;color:var(--faint);text-transform:uppercase;display:flex;align-items:center;gap:.6rem}
+.nav-epoch span{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:400}
+.nav-epoch-bar{width:48px;height:3px;background:var(--xfaint);overflow:hidden;border-radius:2px}
+.nav-epoch-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:2px;transition:width .6s ease;width:0%}
 
 /* SCREENS */
-main{padding-top:64px}
-.screen{display:none;min-height:calc(100vh - 64px);padding:2.5rem 2rem;max-width:1140px;margin:0 auto}
+main{padding-top:56px}
+.screen{display:none;min-height:calc(100vh - 56px);padding:2.5rem 2rem;max-width:1140px;margin:0 auto}
 .screen.active{display:block}
 
 /* TYPOGRAPHY */
@@ -383,25 +392,70 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .pulse{animation:pulse 1.5s infinite}
 
 /* ═══ HOME / API KEY SCREEN ═══ */
-.home-hero{text-align:center;padding:3rem 0 2rem}
-.home-hero .h1{margin-bottom:.6rem}
+.home-hero{text-align:center;padding:4rem 0 2.5rem;position:relative}
+.home-hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:240px;height:240px;background:radial-gradient(circle,rgba(201,168,76,.06) 0%,transparent 70%);pointer-events:none}
+.home-hero .h1{margin-bottom:.6rem;position:relative}
 .home-hero .sub{margin:0 auto 2rem;text-align:center}
-.mode-toggle{display:flex;gap:0;border:1px solid var(--bdr);margin:0 auto 2rem;max-width:380px}
-.mode-btn{flex:1;padding:.75rem 1rem;font-family:'Rajdhani',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;background:var(--s1);color:var(--faint);border:none;cursor:pointer;transition:all .25s}
-.mode-btn.active{background:rgba(201,168,76,.1);color:var(--gold);border-bottom:2px solid var(--gold)}
-.api-panel{background:var(--s1);border:1px solid var(--bdr);padding:1.8rem;max-width:520px;margin:0 auto 2rem;display:none}
-.api-panel.show{display:block}
+
+/* Hero gem icon */
+.hero-gem{width:52px;height:52px;margin:0 auto 1.5rem;position:relative;display:flex;align-items:center;justify-content:center}
+.hero-gem::before{content:'';width:36px;height:36px;background:transparent;border:1px solid var(--gold);transform:rotate(45deg);position:absolute;animation:goldGlow 3s ease infinite}
+.hero-gem::after{content:'';width:18px;height:18px;background:linear-gradient(135deg,var(--gold),var(--gold-d));transform:rotate(45deg);position:absolute}
+.hero-gem-inner{width:8px;height:8px;background:var(--gold-l);transform:rotate(45deg);position:absolute;z-index:1;box-shadow:0 0 12px rgba(201,168,76,.5)}
+
+/* Step flow cards */
+.home-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);max-width:680px;margin:0 auto 2.5rem;position:relative}
+.home-step{background:var(--s1);padding:1.3rem 1rem;text-align:center;position:relative;transition:all .3s;cursor:default}
+.home-step:hover{background:var(--s2)}
+.home-step::after{content:'→';position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:var(--gold-d);font-size:.8rem;z-index:1}
+.home-step:last-child::after{display:none}
+.hs-num{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--gold);line-height:1;margin-bottom:.4rem;text-shadow:0 0 8px rgba(201,168,76,.2)}
+.hs-title{font-size:.62rem;letter-spacing:.22em;color:var(--txt);text-transform:uppercase;margin-bottom:.3rem;font-weight:600}
+.hs-desc{font-size:.65rem;color:var(--faint);line-height:1.5}
+
+/* Feature highlight strip */
+.home-features{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);max-width:680px;margin:0 auto 2.5rem}
+.home-feat{background:var(--s1);padding:1rem .8rem;text-align:center;transition:background .3s}
+.home-feat:hover{background:var(--s2)}
+.hf-icon{font-size:1.3rem;margin-bottom:.4rem;display:block}
+.hf-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--gold);line-height:1;margin-bottom:.2rem}
+.hf-lbl{font-size:.52rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;line-height:1.4}
+
+/* Mode toggle enhanced */
+.mode-toggle{display:flex;gap:0;border:1px solid var(--bdr);margin:0 auto 2rem;max-width:420px;position:relative;overflow:hidden}
+.mode-toggle::before{content:'';position:absolute;top:0;bottom:0;width:50%;background:rgba(201,168,76,.06);border-bottom:2px solid var(--gold);transition:transform .3s ease;z-index:0}
+.mode-toggle.live-active::before{transform:translateX(100%)}
+.mode-btn{flex:1;padding:.85rem 1rem;font-family:'Rajdhani',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;background:transparent;color:var(--faint);border:none;cursor:pointer;transition:all .25s;position:relative;z-index:1}
+.mode-btn.active{color:var(--gold)}
+.mode-btn .mode-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:.4rem;vertical-align:middle;opacity:.5}
+.mode-btn.active .mode-dot{opacity:1;box-shadow:0 0 6px currentColor}
+
+/* API panel */
+.api-panel{background:var(--s1);border:1px solid var(--bdr);padding:1.8rem;max-width:520px;margin:0 auto 2rem;display:none;position:relative}
+.api-panel.show{display:block;animation:slideIn .3s ease both}
+.api-panel::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),transparent)}
 .api-panel h4{font-size:.6rem;letter-spacing:.32em;color:var(--gold-d);text-transform:uppercase;margin-bottom:1.1rem;padding-bottom:.6rem;border-bottom:1px solid var(--bdr)}
 .api-field{margin-bottom:1.2rem}
 .api-field label{display:block;font-size:.7rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:.4rem}
-.api-field input{width:100%;background:var(--s2);border:1px solid var(--faint);color:var(--txt);padding:.6rem .85rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
-.api-field input:focus{border-color:var(--gold-d)}
+.api-field input{width:100%;background:var(--s2);border:1px solid var(--faint);color:var(--txt);padding:.65rem .85rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;transition:all .2s}
+.api-field input:focus{border-color:var(--gold-d);box-shadow:0 0 8px rgba(201,168,76,.1)}
 .api-field .api-hint{font-size:.65rem;color:var(--faint);margin-top:.3rem;line-height:1.5}
 .api-status{display:flex;align-items:center;gap:.5rem;font-size:.7rem;color:var(--dim);margin-top:.5rem}
-.api-status .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.api-status .dot.ok{background:var(--grn)}
-.api-status .dot.warn{background:var(--gold)}
+.api-status .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.api-status .dot.ok{background:var(--grn);box-shadow:0 0 6px rgba(76,175,125,.4)}
+.api-status .dot.warn{background:var(--gold);box-shadow:0 0 6px rgba(201,168,76,.4)}
 .api-status .dot.off{background:var(--faint)}
+
+/* Start button enhanced */
+.home-start-wrap{text-align:center;padding:1rem 0 2rem}
+.home-start-wrap .btn-primary{padding:.85rem 2.2rem;font-size:.78rem;letter-spacing:.25em;position:relative;overflow:hidden}
+.home-start-wrap .btn-primary::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);transition:left .5s}
+.home-start-wrap .btn-primary:hover::after{left:120%}
+
+/* Version badge */
+.home-version{text-align:center;font-size:.55rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;margin-top:1.5rem}
+.home-version span{color:var(--gold-d)}
+
 .sim-mode-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;padding:.25rem .65rem;border:1px solid;margin-left:.8rem}
 .sim-mode-badge.live{border-color:var(--grn);color:var(--grn);background:rgba(76,175,125,.06)}
 .sim-mode-badge.sim{border-color:var(--faint);color:var(--faint)}
@@ -440,19 +494,307 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .dialogue-msg .dm-avatar{width:22px;height:22px;border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
 .dialogue-msg .dm-body{flex:1;font-size:.76rem;color:var(--dim);line-height:1.55;background:var(--s1);padding:.4rem .6rem;border:1px solid var(--xfaint)}
 .dialogue-msg .dm-body b{color:var(--txt)}
+/* ═══ AGENT PROFILE MODAL ═══ */
+.agent-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:2000;display:none;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.agent-modal-overlay.show{display:flex}
+.agent-modal{background:var(--s1);border:1px solid var(--gold-d);max-width:520px;width:92%;max-height:85vh;overflow-y:auto;position:relative;animation:slideIn .3s ease both}
+.agent-modal::-webkit-scrollbar{width:3px}
+.agent-modal::-webkit-scrollbar-thumb{background:var(--gold-d)}
+.agent-modal-close{position:absolute;top:.8rem;right:.8rem;background:none;border:1px solid var(--faint);color:var(--dim);width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;transition:all .2s;z-index:1}
+.agent-modal-close:hover{border-color:var(--gold);color:var(--gold)}
+.am-header{display:flex;align-items:center;gap:1.2rem;padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--xfaint)}
+.am-avatar{width:80px;height:80px;image-rendering:pixelated;border:2px solid var(--gold-d);flex-shrink:0}
+.am-identity h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--gold);font-weight:400;letter-spacing:.06em}
+.am-identity .am-arch{font-size:.6rem;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;margin-top:.2rem}
+.am-identity .am-phil{font-size:.72rem;color:var(--dim);font-style:italic;margin-top:.35rem;line-height:1.5}
+.am-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--xfaint);margin:0 1.5rem;border:1px solid var(--xfaint)}
+.am-stat{background:var(--s1);padding:.6rem .5rem;text-align:center}
+.am-stat-val{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold)}
+.am-stat-lbl{font-size:.5rem;letter-spacing:.15em;color:var(--faint);text-transform:uppercase;margin-top:.15rem}
+.am-section{padding:1rem 1.5rem}
+.am-section-title{font-size:.55rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem;padding-bottom:.3rem;border-bottom:1px solid var(--xfaint)}
+.am-genome-grid{display:grid;grid-template-columns:1fr 1fr;gap:.35rem}
+.am-genome-row{display:flex;align-items:center;gap:.4rem}
+.am-genome-row .am-g-label{font-size:.62rem;color:var(--dim);width:72px;flex-shrink:0;text-align:right}
+.am-genome-row .am-g-bar{flex:1;height:6px;background:var(--s3);overflow:hidden}
+.am-genome-row .am-g-fill{height:100%;transition:width .4s ease}
+.am-genome-row .am-g-val{font-size:.58rem;color:var(--faint);width:24px;text-align:right}
+.am-tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem}
+.am-tag{font-size:.55rem;letter-spacing:.08em;color:var(--dim);border:1px solid var(--faint);padding:.1rem .4rem}
+.am-evo-entry{font-size:.68rem;color:var(--dim);line-height:1.6;padding:.3rem 0;border-bottom:1px solid var(--xfaint)}
+.am-evo-entry:last-child{border-bottom:none}
+.am-evo-entry b{color:var(--txt);font-weight:600}
+.am-belief{font-size:.72rem;color:var(--dim);font-style:italic;line-height:1.6;padding:.3rem .5rem;border-left:2px solid var(--gold-d);margin-top:.3rem}
+.am-bio{font-size:.72rem;color:var(--dim);line-height:1.6}
+
+/* ═══ PIXEL AVATAR (inline replacements) ═══ */
+.agent-avatar-inline{width:26px;height:26px;image-rendering:pixelated;border:1px solid var(--bdr);flex-shrink:0;display:block}
+.agent-avatar-sm{width:18px;height:18px;image-rendering:pixelated;vertical-align:middle;margin-right:3px}
+.agent-avatar-roster{width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--gold-d);flex-shrink:0}
+.agent-avatar-genome{width:28px;height:28px;image-rendering:pixelated}
+/* ═══ GAMIFICATION EFFECTS ═══ */
+
+/* Glowing gold accent for active/important elements */
+@keyframes goldGlow{0%,100%{box-shadow:0 0 4px rgba(201,168,76,.15)}50%{box-shadow:0 0 12px rgba(201,168,76,.35)}}
+@keyframes goldPulse{0%,100%{text-shadow:0 0 4px rgba(201,168,76,.2)}50%{text-shadow:0 0 12px rgba(201,168,76,.5)}}
+@keyframes rankReveal{from{opacity:0;transform:scale(.8) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes creditTick{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes winnerShine{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes xpFill{from{width:0%}to{width:var(--xp-pct,50%)}}
+
+/* Progress bar glow */
+.prog-fill{box-shadow:0 0 6px rgba(201,168,76,.4)}
+
+/* Phase rail active glow */
+.pnode.active{box-shadow:inset 0 -2px 8px rgba(201,168,76,.15)}
+.pnode.done{box-shadow:inset 0 -2px 8px rgba(76,175,125,.12)}
+
+/* Cycle dots gamified */
+.ci-dot.active{animation:goldGlow 2s ease infinite;font-weight:700}
+.ci-dot.done{box-shadow:0 0 6px rgba(76,175,125,.3)}
+
+/* Winner card shine effect */
+.dcard.winner-card{background:linear-gradient(135deg,rgba(201,168,76,.08) 0%,rgba(201,168,76,.02) 40%,rgba(201,168,76,.08) 100%);border:1px solid var(--gold-d)}
+.dcard.winner-card .win-badge{background:rgba(201,168,76,.1);animation:goldGlow 2s ease infinite}
+
+/* Credits animation */
+.dcred{transition:all .3s ease}
+
+/* Rank badges for leaderboard */
+.agent-lb tr:nth-child(1) .rank-num{color:var(--gold);text-shadow:0 0 8px rgba(201,168,76,.4);font-size:1.3rem}
+.agent-lb tr:nth-child(2) .rank-num{color:#b0b0b0;text-shadow:0 0 6px rgba(176,176,176,.3);font-size:1.2rem}
+.agent-lb tr:nth-child(3) .rank-num{color:#cd7f32;text-shadow:0 0 6px rgba(205,127,50,.3);font-size:1.15rem}
+
+/* Top 3 gallery rank styling */
+.top3-card.gold-card{box-shadow:0 0 12px rgba(201,168,76,.15)}
+.top3-card.gold-card .top3-creds{animation:goldPulse 2s ease infinite}
+
+/* Cycle complete banner gamified */
+.cycle-complete.show{animation:rankReveal .5s ease both;border:1px solid var(--gold);box-shadow:0 0 20px rgba(201,168,76,.1)}
+.cc-title{text-shadow:0 0 8px rgba(201,168,76,.25)}
+
+/* Strategy badges with subtle glow */
+.strat-exploit{box-shadow:0 0 4px rgba(138,110,48,.2)}
+.strat-explore{box-shadow:0 0 4px rgba(74,127,168,.2)}
+.strat-mutate{box-shadow:0 0 4px rgba(123,111,168,.2)}
+
+/* Genome evolution arrows animation */
+.gd-arrow.up{animation:creditTick .5s ease}
+.gd-arrow.down{animation:creditTick .5s ease}
+
+/* Winner/loss badges in genome cards */
+.gc-result-badge.win{box-shadow:0 0 6px rgba(201,168,76,.25);animation:goldGlow 2.5s ease infinite}
+
+/* Reputation bar in agent rows */
+.arow{position:relative}
+.arow::after{content:'';position:absolute;bottom:0;left:0;height:1px;background:linear-gradient(90deg,var(--gold-d),transparent);width:0;transition:width .6s ease}
+
+/* Deploy slots gamified */
+.deploy-slot.deployed{box-shadow:inset 0 -2px 8px rgba(201,168,76,.08)}
+.deploy-slot.just-deployed{animation:rankReveal .4s ease both;box-shadow:0 0 12px rgba(201,168,76,.2)}
+
+/* Voter allocation badges */
+.vf-alloc{transition:all .2s;cursor:default}
+.vf-alloc:hover{background:rgba(201,168,76,.15);transform:scale(1.05)}
+
+/* Nav tab active gamified */
+.nav-tab.active{box-shadow:inset 0 -4px 10px rgba(201,168,76,.1)}
+
+/* Report KPI values glow */
+.kpi-val{text-shadow:0 0 4px rgba(201,168,76,.15)}
+.kpi-val.up{text-shadow:0 0 4px rgba(76,175,125,.2)}
+.kpi-val.down{text-shadow:0 0 4px rgba(181,51,42,.2)}
+
+/* Epoch arc gamified */
+.epoch-arc{box-shadow:0 0 16px rgba(201,168,76,.08);position:relative;overflow:hidden}
+.epoch-arc::before{content:'';position:absolute;top:0;left:-200%;width:200%;height:100%;background:linear-gradient(90deg,transparent,rgba(201,168,76,.03),transparent);animation:winnerShine 4s linear infinite}
+
+/* Agent modal gamified */
+.agent-modal{box-shadow:0 0 30px rgba(201,168,76,.12)}
+
+/* ═══ MOBILE LAYOUT ═══ */
+@media(max-width:600px){
+  /* Nav: compact layout */
+  nav{padding:0 .8rem;gap:.3rem;height:auto;flex-wrap:wrap;padding-top:.5rem}
+  .nav-logo{font-size:.85rem;letter-spacing:.2em;gap:.4rem}
+  .nav-logo-icon{width:22px;height:22px}
+  .nav-logo-icon::before{width:7px;height:7px}
+  .nav-tabs{width:100%;order:3;gap:0;display:grid;grid-template-columns:repeat(4,1fr);height:auto;border-top:1px solid var(--xfaint);margin-top:.3rem}
+  .nav-tab{padding:.45rem .2rem;font-size:.5rem;letter-spacing:.06em;text-align:center;white-space:nowrap;overflow:hidden;height:auto;border-bottom-width:2px;gap:.2rem;justify-content:center}
+  .nav-tab .nt-step{width:14px;height:14px;font-size:.42rem}
+  .nav-epoch{font-size:.52rem;gap:.4rem}
+  .nav-epoch-bar{width:36px}
+  main{padding-top:90px}
+
+  /* Home screen mobile */
+  .hero-gem{width:40px;height:40px;margin-bottom:1rem}
+  .hero-gem::before{width:28px;height:28px}
+  .hero-gem::after{width:14px;height:14px}
+  .hero-gem-inner{width:6px;height:6px}
+  .home-steps{grid-template-columns:1fr;max-width:100%}
+  .home-step::after{display:none}
+  .home-features{grid-template-columns:repeat(4,1fr);max-width:100%}
+  .hf-icon{font-size:1rem}
+  .hf-val{font-size:1.1rem}
+  .hf-lbl{font-size:.48rem}
+  .mode-toggle{max-width:100%}
+  .home-start-wrap .btn-primary{font-size:.7rem;padding:.7rem 1.5rem}
+
+  /* Screens: tighter padding */
+  .screen{padding:1.2rem .8rem}
+
+  /* Typography: scale down */
+  .h1{font-size:1.5rem}
+  .h2{font-size:1.2rem}
+  .sub{font-size:.8rem}
+  .eyebrow{font-size:.55rem;letter-spacing:.3em}
+
+  /* Buttons: touch-friendly */
+  .btn{padding:.65rem 1.2rem;font-size:.7rem;min-height:44px}
+  .btn-sm{padding:.5rem .8rem;min-height:38px}
+
+  /* Home screen */
+  .home-hero{padding:1.5rem 0 1rem}
+  .mode-toggle{max-width:100%}
+  .mode-btn{font-size:.6rem;padding:.6rem .5rem}
+  .api-panel{padding:1.2rem}
+
+  /* Builder */
+  .bsec{padding:1rem}
+  .field input,.field textarea,.field select{font-size:1rem;padding:.55rem .7rem}
+  .sr label{font-size:.68rem}
+  .chips{gap:.3rem}
+  .chip{padding:.3rem .55rem;font-size:.58rem;min-height:32px;display:inline-flex;align-items:center}
+
+  /* Sim topbar */
+  .sim-topbar{margin-bottom:1rem;gap:.6rem}
+  .ci-dot{width:32px;height:32px;font-size:.65rem}
+
+  /* Phase rail: scrollable, bigger touch */
+  .phase-rail{margin-bottom:1rem;-webkit-overflow-scrolling:touch}
+  .pnode{min-width:68px;padding:.6rem .3rem}
+  .pnode .pni{font-size:.85rem}
+  .pnode .pnl{font-size:.5rem}
+
+  /* Sim body: stack */
+  .sim-body{grid-template-columns:1fr;gap:.8rem;min-height:auto}
+  .agents-col{padding:.8rem;max-height:200px;overflow-y:auto}
+  .agents-col h5{margin-bottom:.5rem}
+  .arow{padding:.4rem 0;gap:.4rem}
+  .arow .an{font-size:.75rem}
+  .arow .as{font-size:.6rem}
+  .acr{font-size:.75rem}
+  .log-col{padding:.8rem}
+  .log{max-height:220px}
+  .le{font-size:.72rem;padding:.3rem .4rem}
+
+  /* Design cards: 2-col */
+  .dgrid{grid-template-columns:repeat(2,1fr)}
+  .dcard-body{padding:.6rem}
+  .dname{font-size:.8rem}
+  .dagent{font-size:.5rem}
+  .dcred{font-size:.9rem}
+  .dgem{font-size:1.1rem;margin-bottom:.2rem}
+  .dbar{margin-bottom:.2rem;gap:.25rem}
+  .dbar-l{font-size:.5rem;width:20px}
+
+  /* Deploy panel */
+  .deploy-grid{grid-template-columns:repeat(2,1fr)}
+  .deploy-slot{padding:1rem .8rem}
+  .ds-emoji{font-size:1.4rem;margin-bottom:.3rem}
+  .ds-name{font-size:.95rem}
+  .ds-phil{font-size:.65rem}
+  .ds-tags{font-size:.52rem}
+
+  /* Roster */
+  .roster-card{padding:.3rem .6rem}
+  .rc-name{font-size:.78rem}
+
+  /* Cycle complete */
+  .cycle-complete{padding:1rem}
+  .cc-title{font-size:1.3rem}
+  .cc-winner{padding:.6rem .8rem;gap:.5rem}
+  .cc-actions{gap:.5rem}
+  .cc-actions .btn{flex:1;justify-content:center;text-align:center}
+
+  /* Top 3 gallery: stack */
+  .top3-gallery{grid-template-columns:1fr}
+  .top3-meta{padding:.7rem}
+  .top3-name{font-size:1rem}
+
+  /* Sim controls */
+  .sim-ctrl{gap:.5rem}
+  .spd{font-size:.58rem}
+  .spd-btn{padding:.25rem .5rem;min-height:32px}
+
+  /* Reports */
+  .reports-layout{grid-template-columns:1fr;gap:.8rem;min-height:auto}
+  .report-nav{max-height:160px;overflow-y:auto;padding:.8rem}
+  .rn-item{padding:.5rem .6rem}
+  .report-view{padding:1rem;max-height:none}
+  .rdoc-title{font-size:1.3rem}
+  .rdoc-header{padding-bottom:.8rem;margin-bottom:1rem}
+
+  /* Report grids */
+  .exec-stats{grid-template-columns:repeat(2,1fr)}
+  .es-val{font-size:1.2rem}
+  .kpi-strip{grid-template-columns:repeat(3,1fr)}
+  .kpi-val{font-size:1.1rem}
+  .corr-panel{grid-template-columns:1fr}
+  .strat-battle{grid-template-columns:1fr}
+  .genome-grid{grid-template-columns:1fr}
+  .epoch-timeline{grid-template-columns:1fr}
+  .et-node::after{display:none}
+  .trend-grid{grid-template-columns:1fr}
+  .rdoc-top3{grid-template-columns:1fr}
+
+  /* Tables: horizontal scroll */
+  .rtable,.agent-lb,.cat-heat,.vflow-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rtable thead,.agent-lb thead,.cat-heat thead,.vflow-table thead,
+  .rtable tbody,.agent-lb tbody,.cat-heat tbody,.vflow-table tbody{min-width:500px;display:table;width:100%}
+  .rtable th,.agent-lb th,.cat-heat th,.vflow-table th{white-space:nowrap}
+
+  /* Agent modal: fullscreen on mobile */
+  .agent-modal{width:100%;max-width:100%;max-height:100vh;height:100vh;border:none}
+  .am-header{padding:1rem;gap:.8rem}
+  .am-avatar{width:60px;height:60px}
+  .am-identity h2{font-size:1.1rem}
+  .am-section{padding:.8rem 1rem}
+  .am-genome-grid{grid-template-columns:1fr}
+  .am-genome-row .am-g-label{width:60px;font-size:.58rem}
+
+  /* Image gen status */
+  .img-gen-status{font-size:.65rem}
+}
+
+/* Small phone tweaks */
+@media(max-width:380px){
+  nav{padding:0 .5rem;padding-top:.4rem}
+  .nav-logo{font-size:.7rem;letter-spacing:.15em}
+  .nav-logo-icon{width:18px;height:18px}
+  .nav-tab{font-size:.42rem;padding:.35rem .1rem}
+  .nav-tab .nt-step{display:none}
+  main{padding-top:88px}
+  .screen{padding:1rem .6rem}
+  .dgrid{grid-template-columns:1fr}
+  .deploy-grid{grid-template-columns:1fr}
+  .agents-col{max-height:160px}
+  .home-features{grid-template-columns:repeat(2,1fr)}
+}
+
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-logo">JewelForge</div>
+  <div class="nav-logo"><div class="nav-logo-icon"></div>JewelForge</div>
   <div class="nav-tabs">
     <button class="nav-tab active" id="nt0" onclick="goTo(0)">Home</button>
-    <button class="nav-tab" id="nt1" onclick="goTo(1)">① Build Agent</button>
-    <button class="nav-tab" id="nt2" onclick="goTo(2)">② Run Cycles</button>
-    <button class="nav-tab" id="nt3" onclick="goTo(3)">③ Intelligence Reports</button>
+    <button class="nav-tab" id="nt1" onclick="goTo(1)"><span class="nt-step">1</span> Build</button>
+    <button class="nav-tab" id="nt2" onclick="goTo(2)"><span class="nt-step">2</span> Simulate</button>
+    <button class="nav-tab" id="nt3" onclick="goTo(3)"><span class="nt-step">3</span> Reports</button>
   </div>
-  <div class="nav-epoch">Epoch: <span id="nav-epoch-txt">0 / 3</span> cycles</div>
+  <div class="nav-epoch">Epoch <span id="nav-epoch-txt">0 / 3</span> <div class="nav-epoch-bar"><div class="nav-epoch-fill" id="nav-epoch-fill"></div></div></div>
 </nav>
 
 <main>
@@ -462,15 +804,41 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 ══════════════════════════════════════ -->
 <div class="screen active" id="screen-0">
   <div class="home-hero">
-    <div class="eyebrow">Intelligence Engine</div>
+    <div class="hero-gem"><div class="hero-gem-inner"></div></div>
+    <div class="eyebrow">AI-Powered Jewelry Design Arena</div>
     <h1 class="h1">Welcome to <em>JewelForge</em></h1>
-    <div class="rule" style="margin:1rem auto 1.8rem"></div>
-    <p class="sub">Configure your simulation mode below. In <b>Live AI Mode</b>, agents use real LLM calls — their full genome, conversation history, and prior intelligence reports are compiled into every prompt. In <b>Simulation Mode</b>, the engine runs pre-scripted narratives with deterministic outcomes.</p>
+    <div class="rule" style="margin:1rem auto 1.5rem"></div>
+    <p class="sub">6 AI agents compete across 3 cycles to design, name, and evolve luxury jewelry. Each agent has a unique genome, personality, and strategy — shaped by cross-pollination dialogues and real-time market intelligence.</p>
   </div>
 
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="mode-sim" onclick="setMode('sim')">Simulation Mode</button>
-    <button class="mode-btn" id="mode-live" onclick="setMode('live')">Live AI Mode</button>
+  <div class="home-steps">
+    <div class="home-step">
+      <div class="hs-num">1</div>
+      <div class="hs-title">Build</div>
+      <div class="hs-desc">Configure your agent's genome, philosophy, and style tags</div>
+    </div>
+    <div class="home-step">
+      <div class="hs-num">2</div>
+      <div class="hs-title">Simulate</div>
+      <div class="hs-desc">Run 3 cycles of design, voting, and evolution</div>
+    </div>
+    <div class="home-step">
+      <div class="hs-num">3</div>
+      <div class="hs-title">Analyze</div>
+      <div class="hs-desc">Review intelligence reports and trend data</div>
+    </div>
+  </div>
+
+  <div class="home-features">
+    <div class="home-feat"><span class="hf-icon">🧬</span><div class="hf-val">6</div><div class="hf-lbl">AI Agents</div></div>
+    <div class="home-feat"><span class="hf-icon">🔄</span><div class="hf-val">3</div><div class="hf-lbl">Cycles</div></div>
+    <div class="home-feat"><span class="hf-icon">💬</span><div class="hf-val">15</div><div class="hf-lbl">Dialogues</div></div>
+    <div class="home-feat"><span class="hf-icon">💎</span><div class="hf-val">18</div><div class="hf-lbl">Designs</div></div>
+  </div>
+
+  <div class="mode-toggle" id="mode-toggle">
+    <button class="mode-btn active" id="mode-sim" onclick="setMode('sim')"><span class="mode-dot"></span>Simulation</button>
+    <button class="mode-btn" id="mode-live" onclick="setMode('live')"><span class="mode-dot"></span>Live AI</button>
   </div>
 
   <div class="api-panel" id="api-panel">
@@ -489,14 +857,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <div class="dot off" id="api-dot"></div>
       <span id="api-status-text">Enter API keys to enable Live AI Mode</span>
     </div>
-    <div style="text-align:center;margin-top:1.2rem">
+    <div style="text-align:center;margin-top:1.2rem;display:flex;align-items:center;justify-content:center;gap:1.2rem">
       <button class="btn btn-primary btn-sm" id="api-submit-btn" onclick="submitApiKeys()" disabled>Submit API Keys</button>
+      <button class="auto-link" id="api-clear-btn" onclick="clearSavedKeys()" style="display:none;font-size:.65rem;color:var(--faint)">Clear Saved Keys</button>
     </div>
   </div>
 
-  <div style="text-align:center">
+  <div class="home-start-wrap">
     <button class="btn btn-primary" id="home-start-btn" onclick="startFromHome()">Begin Agent Configuration →</button>
   </div>
+  <div class="home-version">JewelForge <span>v2.0</span> — 3-Cycle Intelligence Engine</div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -578,6 +948,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         <div class="sr"><label>Margin Sensitivity</label><input type="range" min="0" max="100" value="65" id="s-mrg" oninput="sv(this,'sv-mrg');updatePreview()"><span class="sv" id="sv-mrg">65</span></div>
         <div class="sr"><label>Complexity Budget</label><input type="range" min="0" max="100" value="55" id="s-cmp" oninput="sv(this,'sv-cmp');updatePreview()"><span class="sv" id="sv-cmp">55</span></div>
       </div>
+      <div class="bsec" style="margin-top:1px">
+        <h4>Commercial Genome</h4>
+        <div class="sr"><label>Price Point</label><input type="range" min="0" max="100" value="50" id="s-prc" oninput="sv(this,'sv-prc');updatePreview()"><span class="sv" id="sv-prc">50</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Accessible ($200-1K)</span><span>High Jewelry ($10K+)</span></div>
+        <div class="sr"><label>Manufacturability</label><input type="range" min="0" max="100" value="60" id="s-mfg" oninput="sv(this,'sv-mfg');updatePreview()"><span class="sv" id="sv-mfg">60</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Art Piece (hand-fab)</span><span>Production Ready (cast)</span></div>
+        <div class="sr"><label>Wearability</label><input type="range" min="0" max="100" value="65" id="s-wer" oninput="sv(this,'sv-wer');updatePreview()"><span class="sv" id="sv-wer">65</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Statement / Runway</span><span>Daily Wear</span></div>
+        <div class="sr"><label>Trend Sensitivity</label><input type="range" min="0" max="100" value="45" id="s-trd" oninput="sv(this,'sv-trd');updatePreview()"><span class="sv" id="sv-trd">45</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--faint);margin-bottom:.8rem;margin-top:-.4rem;"><span>Timeless</span><span>Trend-Chasing</span></div>
+      </div>
     </div>
   </div>
 
@@ -653,7 +1034,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
     <div style="margin-bottom:1rem">
       <div class="eyebrow" style="margin-bottom:.3rem">Top 3 Designs — AI-Generated Images</div>
-      <div style="font-size:.75rem;color:var(--faint);margin-bottom:.7rem;line-height:1.5">Images rendered from each agent's final image generation prompt via Flux AI. Allow 10–20 seconds per image to load.</div>
+      <div style="font-size:.75rem;color:var(--faint);margin-bottom:.7rem;line-height:1.5">Images rendered from each agent's final image generation prompt via Flux AI. Images load sequentially to avoid rate limits — allow 15–30 seconds per image.</div>
       <div class="img-gen-status" id="img-gen-status">
         <div class="dot" id="img-dot"></div>
         <span id="img-gen-label">Generating images from agent prompts…</span>
@@ -724,6 +1105,310 @@ let currentAgentNum = 1;
 const AGENT_EMOJIS = ['🎯','🌙','✨','🔩','💛','🌿'];
 
 /* ══════════════════════════════════
+   PIXEL ART PROFILE PICTURE GENERATOR
+   Deterministically generates a unique 16×16 pixel portrait
+   from agent DNA (genome, philosophy, style tags, archetype).
+   Output is a data URL stored on the agent object permanently.
+══════════════════════════════════ */
+function generateAgentAvatar(agent) {
+  // Seeded PRNG from agent properties for determinism
+  let seed = 0;
+  const seedStr = (agent.name || '') + (agent.arch || '') + (agent.philosophy || '') + (agent.styleTags || []).join('');
+  for (let i = 0; i < seedStr.length; i++) { seed = ((seed << 5) - seed + seedStr.charCodeAt(i)) | 0; }
+  const rng = () => { seed = (seed * 1664525 + 1013904223) & 0xFFFFFFFF; return (seed >>> 0) / 0xFFFFFFFF; };
+
+  const SIZE = 16;
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE; canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+
+  // ── Derive color palette from genome DNA ──
+  const hueBase = ((agent.platBias || 50) * 2.4 + (agent.coloredStone || 40) * 1.2 + (agent.risk || 50) * 0.8) % 360;
+  const sat = 30 + (agent.ornamentation || 50) * 0.5; // ornate = more saturated
+  const lightBase = 20 + (agent.minimalism || 50) * 0.3; // minimal = lighter
+
+  // Primary: derived from genome
+  const primary = `hsl(${hueBase}, ${sat}%, ${lightBase + 20}%)`;
+  // Secondary: complementary shift
+  const secondary = `hsl(${(hueBase + 40 + (agent.novelty || 50) * 0.8) % 360}, ${sat * 0.7}%, ${lightBase + 10}%)`;
+  // Accent: from style/market
+  const accentHue = (hueBase + 120 + (agent.marketFit || 50) * 1.5) % 360;
+  const accent = `hsl(${accentHue}, ${sat + 15}%, ${lightBase + 30}%)`;
+  // Skin tone
+  const skinLight = 55 + (agent.diamond || 60) * 0.25;
+  const skinHue = 25 + (agent.mixedMetal || 30) * 0.3;
+  const skin = `hsl(${skinHue}, ${20 + (agent.symmetry || 60) * 0.15}%, ${skinLight}%)`;
+  // Background
+  const bgHue = (hueBase + 180) % 360;
+  const bg = `hsl(${bgHue}, ${sat * 0.3}%, ${8 + rng() * 5}%)`;
+  // Dark outline/hair
+  const dark = `hsl(${hueBase}, ${sat * 0.5}%, ${8 + rng() * 6}%)`;
+
+  // ── Fill background ──
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // ── Body shape traits from genome ──
+  const isMinimal = (agent.minimalism || 50) > 60;
+  const isOrnate = (agent.ornamentation || 50) > 60;
+  const highRisk = (agent.risk || 50) > 65;
+  const symmetryPref = (agent.symmetry || 60) > 55;
+
+  // ── Hair style (top 3 rows, rows 0-2) — from archetype + risk ──
+  const hairH = highRisk ? 3 : 2;
+  ctx.fillStyle = dark;
+  // Hair base shape
+  for (let y = 0; y < hairH; y++) {
+    const inset = y === 0 ? (highRisk ? 3 : 4) : (y === 1 ? 3 : 3);
+    const w = SIZE - inset * 2;
+    ctx.fillRect(inset, y + 1, w, 1);
+    if (symmetryPref) {
+      // Clean symmetric hair
+    } else {
+      // Asymmetric strand
+      if (rng() > 0.5) ctx.fillRect(inset - 1, y + 1, 1, 1);
+    }
+  }
+
+  // ── Face (rows 3-7) ──
+  ctx.fillStyle = skin;
+  // Face shape: wider if ornate, narrower if minimal
+  const faceInset = isMinimal ? 5 : 4;
+  for (let y = 3; y <= 7; y++) {
+    const inset = y === 3 ? faceInset : (y >= 7 ? faceInset + 1 : faceInset);
+    ctx.fillRect(inset, y + 1, SIZE - inset * 2, 1);
+  }
+
+  // ── Eyes (row 5) — from novelty + risk ──
+  const eyeY = 5;
+  const eyeStyle = (agent.novelty || 50) > 65 ? 'wide' : (agent.novelty || 50) < 35 ? 'narrow' : 'normal';
+  ctx.fillStyle = dark;
+  const eyeL = 5, eyeR = 10;
+  ctx.fillRect(eyeL, eyeY + 1, eyeStyle === 'wide' ? 2 : 1, 1);
+  ctx.fillRect(eyeR, eyeY + 1, eyeStyle === 'wide' ? 2 : 1, 1);
+  // Eye color accent for high novelty
+  if ((agent.novelty || 50) > 55) {
+    ctx.fillStyle = accent;
+    ctx.fillRect(eyeL, eyeY + 1, 1, 1);
+    ctx.fillRect(eyeR + (eyeStyle === 'wide' ? 1 : 0), eyeY + 1, 1, 1);
+  }
+
+  // ── Mouth (row 7) ──
+  ctx.fillStyle = `hsl(${skinHue + 5}, 35%, ${skinLight - 15}%)`;
+  const mouthW = isMinimal ? 2 : (isOrnate ? 4 : 3);
+  ctx.fillRect(Math.floor((SIZE - mouthW) / 2), 8, mouthW, 1);
+
+  // ── Body/Shoulders (rows 9-12) ──
+  ctx.fillStyle = primary;
+  for (let y = 9; y <= 12; y++) {
+    const bodyInset = y === 9 ? 4 : (y === 10 ? 3 : 2);
+    ctx.fillRect(bodyInset, y + 1, SIZE - bodyInset * 2, 1);
+  }
+
+  // ── Collar/Detail (row 9-10) — from market focus ──
+  ctx.fillStyle = secondary;
+  ctx.fillRect(6, 10, 4, 1);
+  if (isOrnate) {
+    ctx.fillStyle = accent;
+    ctx.fillRect(7, 10, 2, 1);
+    // Ornament dots on shoulders
+    ctx.fillRect(3, 11, 1, 1);
+    ctx.fillRect(12, 11, 1, 1);
+  }
+
+  // ── Lower body (rows 13-15) ──
+  ctx.fillStyle = primary;
+  for (let y = 13; y <= 15; y++) {
+    ctx.fillRect(2, y, SIZE - 4, 1);
+  }
+
+  // ── Accessories based on genome ──
+  // High price point → gem on forehead
+  if ((agent.pricePoint || 50) > 65) {
+    ctx.fillStyle = accent;
+    ctx.fillRect(Math.floor(SIZE / 2), 3, 1, 1);
+  }
+  // High manufacturability → tool/gear mark on chest
+  if ((agent.manufacturability || 60) > 70) {
+    ctx.fillStyle = dark;
+    ctx.fillRect(7, 12, 2, 1);
+    ctx.fillRect(8, 11, 1, 1);
+  }
+  // High wearability → softer rounded shoulders
+  if ((agent.wearability || 65) > 70) {
+    ctx.fillStyle = bg;
+    ctx.fillRect(2, 10, 1, 1);
+    ctx.fillRect(13, 10, 1, 1);
+  }
+  // High trend sensitivity → streak in hair
+  if ((agent.trendSens || 45) > 60) {
+    ctx.fillStyle = accent;
+    ctx.fillRect(highRisk ? 5 : 6, 2, 2, 1);
+  }
+
+  // ── Ear detail ──
+  ctx.fillStyle = skin;
+  ctx.fillRect(faceInset - 1, 5, 1, 2);
+  ctx.fillRect(SIZE - faceInset, 5, 1, 2);
+
+  // ── Nose hint (row 6) ──
+  ctx.fillStyle = `hsl(${skinHue}, ${15}%, ${skinLight - 8}%)`;
+  ctx.fillRect(Math.floor(SIZE / 2), 7, 1, 1);
+
+  // ── Style-tag-driven patterns on torso ──
+  const tags = (agent.styleTags || []).join(' ').toLowerCase();
+  if (tags.includes('ornate') || tags.includes('baroque')) {
+    ctx.fillStyle = accent;
+    for (let i = 0; i < 3; i++) {
+      const px = 4 + Math.floor(rng() * 8);
+      const py = 11 + Math.floor(rng() * 3);
+      ctx.fillRect(px, py, 1, 1);
+    }
+  }
+  if (tags.includes('minimal') || tags.includes('clean')) {
+    // Clean collar line
+    ctx.fillStyle = secondary;
+    ctx.fillRect(5, 10, 6, 1);
+  }
+  if (tags.includes('industrial') || tags.includes('tech')) {
+    ctx.fillStyle = `hsl(0, 0%, 45%)`;
+    ctx.fillRect(4, 12, 1, 2);
+    ctx.fillRect(11, 12, 1, 2);
+  }
+  if (tags.includes('organic') || tags.includes('nature')) {
+    ctx.fillStyle = `hsl(120, 35%, 35%)`;
+    ctx.fillRect(3, 13, 1, 1);
+    ctx.fillRect(12, 13, 1, 1);
+  }
+
+  // ── Border frame ──
+  ctx.fillStyle = `hsl(${hueBase}, ${sat * 0.4}%, 18%)`;
+  for (let i = 0; i < SIZE; i++) {
+    ctx.fillRect(i, 0, 1, 1);
+    ctx.fillRect(i, SIZE - 1, 1, 1);
+    ctx.fillRect(0, i, 1, 1);
+    ctx.fillRect(SIZE - 1, i, 1, 1);
+  }
+
+  return canvas.toDataURL('image/png');
+}
+
+/* ══════════════════════════════════
+   AGENT PROFILE MODAL
+══════════════════════════════════ */
+function openAgentModal(agentId) {
+  const agent = agentStates.find(a => a.id === agentId);
+  if (!agent) return;
+  const modal = document.getElementById('agent-modal');
+  const overlay = document.getElementById('agent-modal-overlay');
+
+  const avatarSrc = agent.avatarDataUrl || '';
+  const repMult = (0.7 + ((agent.reputation || 50) / 100) * 0.6).toFixed(2);
+
+  // Genome bar helper
+  const gbar = (label, key, color) => {
+    const val = agent[key] ?? 50;
+    return `<div class="am-genome-row">
+      <span class="am-g-label">${label}</span>
+      <div class="am-g-bar"><div class="am-g-fill" style="width:${val}%;background:${color}"></div></div>
+      <span class="am-g-val">${val}</span>
+    </div>`;
+  };
+
+  // Evolution history
+  const evoHtml = (agent.evolutionHistory || []).map(e =>
+    `<div class="am-evo-entry"><b>Cycle ${e.cycle}:</b> ${e.summary}${e.genomeShifts ? ' · ' + Object.entries(e.genomeShifts).filter(([,v])=>v!==0).map(([k,v])=>`${k}:${v>0?'+':''}${v}`).join(' ') : ''}</div>`
+  ).join('') || '<div class="am-evo-entry">No evolution history yet.</div>';
+
+  // Style tags
+  const tagsHtml = (agent.styleTags || []).map(t => `<span class="am-tag">${t}</span>`).join('') || '<span class="am-tag">none</span>';
+
+  modal.innerHTML = `
+    <button class="agent-modal-close" onclick="closeAgentModal()">✕</button>
+    <div class="am-header">
+      <img class="am-avatar" src="${avatarSrc}" alt="${agent.name}" />
+      <div class="am-identity">
+        <h2>${agent.name}${agent.isUser ? ' <span style="font-size:.55rem;color:var(--gold-d);border:1px solid var(--gold-d);padding:.08rem .35rem;vertical-align:middle;letter-spacing:.1em">YOU</span>' : ''}</h2>
+        <div class="am-arch">${agent.arch || 'Designer'}</div>
+        <div class="am-phil">"${agent.philosophy || 'No philosophy set.'}"</div>
+      </div>
+    </div>
+
+    <div class="am-stats">
+      <div class="am-stat"><div class="am-stat-val">${(agent.credits || 0).toLocaleString()}⬡</div><div class="am-stat-lbl">Credits</div></div>
+      <div class="am-stat"><div class="am-stat-val">${agent.reputation || 50}</div><div class="am-stat-lbl">Reputation</div></div>
+      <div class="am-stat"><div class="am-stat-val">${repMult}×</div><div class="am-stat-lbl">Vote Weight</div></div>
+    </div>
+
+    <div class="am-section">
+      <div class="am-section-title">Style Genome</div>
+      <div class="am-genome-grid">
+        ${gbar('Minimalism','minimalism','var(--blu)')}
+        ${gbar('Novelty','novelty','var(--purp)')}
+        ${gbar('Ornament','ornamentation','var(--gold)')}
+        ${gbar('Market Fit','marketFit','var(--grn)')}
+        ${gbar('Symmetry','symmetry','var(--dim)')}
+        ${gbar('Risk','risk','var(--red)')}
+      </div>
+    </div>
+
+    <div class="am-section">
+      <div class="am-section-title">Material Genome</div>
+      <div class="am-genome-grid">
+        ${gbar('Platinum','platBias','#b0b0b0')}
+        ${gbar('Color Stone','coloredStone','var(--purp)')}
+        ${gbar('Diamond','diamond','#e0e0e0')}
+        ${gbar('Mixed Metal','mixedMetal','var(--gold-d)')}
+      </div>
+    </div>
+
+    <div class="am-section">
+      <div class="am-section-title">Commercial Genome</div>
+      <div class="am-genome-grid">
+        ${gbar('Price Point','pricePoint','var(--gold)')}
+        ${gbar('Manufact.','manufacturability','var(--grn)')}
+        ${gbar('Wearability','wearability','var(--blu)')}
+        ${gbar('Trend Sens.','trendSens','var(--purp)')}
+        ${gbar('Margin Sens.','marginSens','var(--red)')}
+        ${gbar('Complexity','complexBudget','var(--dim)')}
+      </div>
+    </div>
+
+    <div class="am-section">
+      <div class="am-section-title">Style Tags</div>
+      <div class="am-tags">${tagsHtml}</div>
+    </div>
+
+    ${agent.bio ? `<div class="am-section">
+      <div class="am-section-title">Bio</div>
+      <div class="am-bio">${agent.bio}</div>
+    </div>` : ''}
+
+    ${agent.dominantBelief ? `<div class="am-section">
+      <div class="am-section-title">Current Belief</div>
+      <div class="am-belief">${agent.dominantBelief}</div>
+    </div>` : ''}
+
+    <div class="am-section">
+      <div class="am-section-title">Evolution History</div>
+      ${evoHtml}
+    </div>
+  `;
+
+  overlay.classList.add('show');
+}
+
+function closeAgentModal() {
+  document.getElementById('agent-modal-overlay').classList.remove('show');
+}
+
+// Helper: generate inline <img> tag for an agent's avatar
+function agentAvatarImg(agent, cssClass) {
+  if (!agent || !agent.avatarDataUrl) return agent?.emoji || '';
+  return `<img src="${agent.avatarDataUrl}" class="${cssClass}" alt="${agent.name||''}" />`;
+}
+
+/* ══════════════════════════════════
    MODE & API KEY MANAGEMENT
 ══════════════════════════════════ */
 let simMode = 'sim'; // 'sim' or 'live'
@@ -733,10 +1418,29 @@ let apiKeysCommitted = false; // true once user clicks Submit
 // Genome snapshots per cycle for before→after deltas
 let genomeSnapshots = []; // array of arrays: genomeSnapshots[cycleIdx] = [{...agentGenome}]
 
+// ── Claude-Flow Agent Economy Globals ──
+let patternBank = [];       // Pattern Memory Bank: stores design patterns with outcome data
+let qTable = {};            // Q-Learning Strategy Router: strategy×category → expected reward
+let rationaleStore = [];    // Design Rationale Persistence: per-agent, per-cycle reasoning + outcomes
+let traitEffectiveness = {}; // EWC Trait Tracker: genome trait → correlation/importance data
+
+function initQTable() {
+  const strategies = ['exploit','explore','mutate'];
+  const categories = ['Ring','Pendant','Earrings','Bracelet'];
+  qTable = {};
+  strategies.forEach(s => {
+    qTable[s] = {};
+    categories.forEach(c => {
+      qTable[s][c] = { totalCredits: 0, count: 0, avgCredits: 0, lastCycle: 0 };
+    });
+  });
+}
+
 function setMode(mode) {
   simMode = mode;
   document.getElementById('mode-sim').classList.toggle('active', mode==='sim');
   document.getElementById('mode-live').classList.toggle('active', mode==='live');
+  document.getElementById('mode-toggle').classList.toggle('live-active', mode==='live');
   document.getElementById('api-panel').classList.toggle('show', mode==='live');
   checkApiKeys();
 }
@@ -781,15 +1485,62 @@ function submitApiKeys() {
   apiKeys.anthropic = antVal;
   apiKeys.higgsfield = hfVal;
   apiKeysCommitted = true;
-  // Lock the inputs
+  // Persist to localStorage so keys survive page reloads
+  try {
+    localStorage.setItem('jf_key_ant', antVal);
+    if (hfVal) localStorage.setItem('jf_key_hf', hfVal);
+  } catch(e) { /* storage unavailable */ }
+  lockApiInputs();
+}
+
+function lockApiInputs() {
   const antInput = document.getElementById('api-anthropic');
   const hfInput = document.getElementById('api-higgsfield');
   if (antInput) { antInput.disabled = true; antInput.style.opacity = '.6'; }
   if (hfInput) { hfInput.disabled = true; hfInput.style.opacity = '.6'; }
   const submitBtn = document.getElementById('api-submit-btn');
   if (submitBtn) { submitBtn.textContent = 'Keys Committed ✓'; submitBtn.disabled = true; submitBtn.style.borderColor = 'var(--grn)'; submitBtn.style.color = 'var(--grn)'; }
+  const clearBtn = document.getElementById('api-clear-btn');
+  if (clearBtn) clearBtn.style.display = 'inline';
   checkApiKeys();
 }
+
+function clearSavedKeys() {
+  try { localStorage.removeItem('jf_key_ant'); localStorage.removeItem('jf_key_hf'); } catch(e) {}
+  apiKeys.anthropic = '';
+  apiKeys.higgsfield = '';
+  apiKeysCommitted = false;
+  const antInput = document.getElementById('api-anthropic');
+  const hfInput = document.getElementById('api-higgsfield');
+  if (antInput) { antInput.value = ''; antInput.disabled = false; antInput.style.opacity = ''; }
+  if (hfInput) { hfInput.value = ''; hfInput.disabled = false; hfInput.style.opacity = ''; }
+  const submitBtn = document.getElementById('api-submit-btn');
+  if (submitBtn) { submitBtn.textContent = 'Submit API Keys'; submitBtn.style.borderColor = ''; submitBtn.style.color = ''; }
+  const clearBtn = document.getElementById('api-clear-btn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  checkApiKeys();
+}
+
+// Restore saved API keys from localStorage on page load
+function loadSavedKeys() {
+  try {
+    const savedAnt = localStorage.getItem('jf_key_ant') || '';
+    const savedHf = localStorage.getItem('jf_key_hf') || '';
+    if (!savedAnt) return;
+    const antInput = document.getElementById('api-anthropic');
+    const hfInput = document.getElementById('api-higgsfield');
+    if (antInput) antInput.value = savedAnt;
+    if (hfInput && savedHf) hfInput.value = savedHf;
+    // Auto-switch to Live AI mode and commit
+    setMode('live');
+    apiKeys.anthropic = savedAnt;
+    apiKeys.higgsfield = savedHf;
+    apiKeysCommitted = true;
+    lockApiInputs();
+  } catch(e) { /* storage unavailable */ }
+}
+document.addEventListener('DOMContentLoaded', loadSavedKeys);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAgentModal(); });
 
 function startFromHome() {
   goTo(1);
@@ -805,6 +1556,12 @@ function agentGenomeStr(agent) {
   const tags = (g.styleTags || []).join(', ') || 'none';
   const riskLabel = g.risk > 65 ? 'Explorer (High Novelty)' : g.risk < 35 ? 'Refiner (Exploit Lane)' : 'Balanced (Mutate)';
   const mktFocus = g.marketFocus || 'general';
+
+  // Derived commercial labels from genome values
+  const priceLabel = (g.pricePoint ?? 50) > 70 ? 'High Jewelry ($10K+)' : (g.pricePoint ?? 50) < 30 ? 'Accessible ($200-1K)' : 'Mid-Market ($1K-10K)';
+  const mfgLabel = (g.manufacturability ?? 60) > 70 ? 'Production-Ready (cast, reproducible)' : (g.manufacturability ?? 60) < 30 ? 'Art-Piece (hand-fabrication only)' : 'Semi-Production (some hand-finishing)';
+  const wearLabel = (g.wearability ?? 65) > 70 ? 'Daily Wear (comfort, durability)' : (g.wearability ?? 65) < 30 ? 'Statement/Runway (visual impact over comfort)' : 'Occasion Wear (special events)';
+  const trendLabel = (g.trendSens ?? 45) > 70 ? 'Trend-Forward (chases current movements)' : (g.trendSens ?? 45) < 30 ? 'Timeless (ignores trends, classic forms)' : 'Trend-Aware (adapts selectively)';
 
   let genome = `AGENT IDENTITY:
   Name: ${g.name}
@@ -830,6 +1587,18 @@ RISK GENOME:
   Exploration↔Exploitation: ${g.risk}/100 (${riskLabel})
   Margin Sensitivity: ${g.marginSens ?? g.mrg ?? 65}/100
   Complexity Budget: ${g.complexBudget ?? g.cmp ?? 55}/100
+
+COMMERCIAL & MANUFACTURING GENOME:
+  Price Point: ${g.pricePoint ?? 50}/100 (${priceLabel})
+  Manufacturability: ${g.manufacturability ?? 60}/100 (${mfgLabel})
+  Wearability: ${g.wearability ?? 65}/100 (${wearLabel})
+  Trend Sensitivity: ${g.trendSens ?? 45}/100 (${trendLabel})
+
+MANUFACTURING CONSTRAINTS (derived from your genome):
+  ${(g.manufacturability ?? 60) > 60 ? '• Your designs MUST be castable — avoid hand-fabrication-only forms, undercuts that prevent mold release, and multi-axis curves that cannot be cast in lost-wax.' : '• You design for hand fabrication — you CAN use complex forms, wire wrapping, granulation, and techniques that cannot be mass-produced.'}
+  ${(g.wearability ?? 65) > 60 ? '• Prioritize comfort: smooth interior edges, appropriate weight for the category, secure clasps/settings, no sharp protrusions that snag clothing.' : '• Wearability is secondary — you optimize for visual drama and editorial impact over comfort.'}
+  ${(g.pricePoint ?? 50) > 65 ? '• Target premium market: use precious metals and high-grade stones. Justify price with craftsmanship complexity and material value.' : (g.pricePoint ?? 50) < 35 ? '• Target accessible market: use gold vermeil, lab-grown stones, or silver. Keep material costs low. Design for volume sales.' : '• Target mid-market: balance material value with broad appeal. 14K-18K gold, quality semi-precious or smaller diamonds.'}
+  ${(g.trendSens ?? 45) > 60 ? '• Actively reference current jewelry trends (what is selling NOW) when choosing forms, materials, and silhouettes.' : '• Design with longevity in mind — forms and materials that will still sell in 5 years.'}
 
 CURRENT STATE:
   Credits: ${g.credits}
@@ -857,7 +1626,160 @@ CURRENT STATE:
     });
   }
 
+  // EWC Trait Effectiveness (injected into every prompt)
+  genome += traitEffectivenessContext(g.id);
+
   return genome;
+}
+
+/* ══════════════════════════════════
+   retrievePatterns() — Pattern Memory Bank retrieval
+   Scores stored design patterns by relevance to the agent
+   and returns top 3 as formatted context string.
+══════════════════════════════════ */
+function retrievePatterns(agent) {
+  if (patternBank.length === 0) return '';
+  const agentIdx = agent.id;
+  const scored = patternBank.map(p => {
+    let score = p.confidence * 2; // base confidence weight
+    score += p.rank <= 3 ? 1.5 : 0.5; // rank bonus
+    if (p.category === (agent.marketFocus || '').split(',')[0]) score += 3; // category alignment
+    // Strategy alignment with agent risk genome
+    const agentStrategy = agent.risk > 65 ? 'explore' : agent.risk < 35 ? 'exploit' : 'mutate';
+    if (p.strategy === agentStrategy) score += 2;
+    // Genome similarity (within 15 pts on key traits)
+    const traitPairs = [['novelty','novelty'],['marketFit','marketFit'],['risk','risk'],['platBias','platBias'],['manufacturability','manufacturability'],['wearability','wearability']];
+    traitPairs.forEach(([agentTrait, patTrait]) => {
+      if (Math.abs((agent[agentTrait]||50) - (p.genomeTraits?.[patTrait]||50)) <= 15) score += 1;
+    });
+    // Recency bonus
+    if (p.cycle === cycleReports.length) score += 1;
+    return { ...p, relevanceScore: score };
+  });
+  scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  const top3 = scored.slice(0, 3);
+  let ctx = `\n\nHISTORICAL DESIGN PRECEDENTS (top ${top3.length} relevant from ${patternBank.length} stored):`;
+  top3.forEach((p, i) => {
+    ctx += `\n  ${i+1}. [Cycle ${p.cycle} #${p.rank}] ${p.category} (${p.credits.toLocaleString()}⬡, confidence: ${(p.confidence*100).toFixed(0)}%)`;
+    ctx += `\n     ${p.strategy.toUpperCase()} · ${p.category} · ${p.materials || '?'} · ${p.form || '?'}`;
+    ctx += `\n     Scores: AES:${p.aesthetic} NOV:${p.novelty} PRO:${p.profit} WEAR:${p.wearability||'?'} MFG:${p.makeable||'?'}`;
+    ctx += `\n     Reasoning: ${(p.reasoning || '—').slice(0, 100)}`;
+    ctx += `\n     Trend context: ${(p.emergingTrends || []).slice(0, 2).join(', ') || '—'}`;
+  });
+  return ctx;
+}
+
+/* ══════════════════════════════════
+   qTableContext() — Q-Learning Strategy Router
+   Formats non-zero Q-table entries as market intelligence.
+══════════════════════════════════ */
+function qTableContext() {
+  if (!qTable || Object.keys(qTable).length === 0) return '';
+  const entries = [];
+  let bestCombo = null, bestAvg = 0;
+  Object.entries(qTable).forEach(([strat, cats]) => {
+    Object.entries(cats).forEach(([cat, data]) => {
+      if (data.count > 0) {
+        entries.push({ strat, cat, avg: Math.round(data.avgCredits), count: data.count, lastCycle: data.lastCycle });
+        if (data.avgCredits > bestAvg) { bestAvg = data.avgCredits; bestCombo = { strat, cat }; }
+      }
+    });
+  });
+  if (entries.length === 0) return '';
+  let ctx = `\n\nQ-TABLE MARKET INTELLIGENCE (learned strategy×category rewards):`;
+  entries.sort((a, b) => b.avg - a.avg);
+  entries.forEach(e => {
+    const star = bestCombo && e.strat === bestCombo.strat && e.cat === bestCombo.cat ? ' ★' : '';
+    ctx += `\n  ${e.strat.toUpperCase()} + ${e.cat}: avg ${e.avg.toLocaleString()}⬡ (${e.count} sample${e.count>1?'s':''})${star}`;
+  });
+  // Per-strategy averages
+  const stratAvgs = {};
+  Object.entries(qTable).forEach(([strat, cats]) => {
+    let total = 0, count = 0;
+    Object.values(cats).forEach(d => { if (d.count > 0) { total += d.avgCredits; count++; } });
+    if (count > 0) stratAvgs[strat] = Math.round(total / count);
+  });
+  if (Object.keys(stratAvgs).length > 0) {
+    ctx += `\n  Strategy averages: ${Object.entries(stratAvgs).map(([k,v])=>`${k.toUpperCase()}: ${v.toLocaleString()}⬡`).join(' | ')}`;
+  }
+  return ctx;
+}
+
+/* ══════════════════════════════════
+   traitEffectivenessContext() — EWC Trait Tracker
+   Shows top 8 most impactful genome traits with correlation
+   direction, winner averages, and EWC recommendations.
+══════════════════════════════════ */
+function traitEffectivenessContext(agentIdx) {
+  if (!traitEffectiveness || Object.keys(traitEffectiveness).length === 0) return '';
+  const agent = agentStates[agentIdx];
+  if (!agent) return '';
+  const entries = Object.entries(traitEffectiveness)
+    .filter(([,v]) => v.samples > 0)
+    .map(([trait, data]) => ({
+      trait,
+      correlation: data.cumulativeCorrelation,
+      importance: data.importanceWeight,
+      winnerAvg: data.lastCycleValue,
+      agentVal: agent[trait] ?? 50,
+      samples: data.samples,
+      direction: data.direction
+    }))
+    .sort((a, b) => b.importance - a.importance)
+    .slice(0, 8);
+  if (entries.length === 0) return '';
+  let ctx = `\nGENOME TRAIT EFFECTIVENESS (EWC analysis, ${entries[0].samples} cycle${entries[0].samples>1?'s':''} of data):`;
+  entries.forEach(e => {
+    const dir = e.correlation > 0.1 ? 'POSITIVE (higher = more credits)' : e.correlation < -0.1 ? 'NEGATIVE (lower = more credits)' : 'NEUTRAL';
+    const delta = e.agentVal - e.winnerAvg;
+    const vs = delta > 5 ? `above winners by ${delta.toFixed(0)}` : delta < -5 ? `below winners by ${Math.abs(delta).toFixed(0)}` : 'aligned with winners';
+    const ewc = e.importance > 0.4 && e.samples >= 2 ? ' ⚡PROVEN — shift cautiously' : '';
+    ctx += `\n  ${e.trait}: corr=${e.correlation.toFixed(2)} (${dir}) · Winners avg: ${e.winnerAvg.toFixed(0)} · You: ${e.agentVal} (${vs})${ewc}`;
+  });
+  return ctx;
+}
+
+/* ══════════════════════════════════
+   computeTraitEffectiveness() — EWC correlation tracker
+   Computes Pearson correlation between genome traits and
+   credits earned, with cumulative EWC weighting.
+══════════════════════════════════ */
+function computeTraitEffectiveness(cycleNum, sortedDesigns) {
+  const traits = ['minimalism','novelty','ornamentation','marketFit','symmetry','platBias','coloredStone','diamond','mixedMetal','risk','marginSens','complexBudget','pricePoint','manufacturability','wearability','trendSens'];
+  const credits = sortedDesigns.map(d => d.credits);
+  const top3Agents = sortedDesigns.slice(0, 3).map(d => agentStates[d.agentIdx]).filter(Boolean);
+
+  traits.forEach(trait => {
+    const vals = sortedDesigns.map(d => {
+      const a = agentStates[d.agentIdx];
+      return a ? (a[trait] ?? 50) : 50;
+    });
+    const currentCorr = pearsonCorr(vals, credits);
+    const winnerAvg = top3Agents.length > 0
+      ? top3Agents.reduce((s, a) => s + (a[trait] ?? 50), 0) / top3Agents.length
+      : 50;
+
+    if (!traitEffectiveness[trait]) {
+      traitEffectiveness[trait] = {
+        correlation: currentCorr,
+        cumulativeCorrelation: currentCorr,
+        direction: currentCorr > 0.1 ? 'positive' : currentCorr < -0.1 ? 'negative' : 'neutral',
+        importanceWeight: Math.abs(currentCorr),
+        lastCycleValue: winnerAvg,
+        samples: 1
+      };
+    } else {
+      const prev = traitEffectiveness[trait];
+      const prevWeight = 0.6;
+      const newWeight = 0.4;
+      prev.cumulativeCorrelation = prevWeight * prev.cumulativeCorrelation + newWeight * currentCorr;
+      prev.correlation = currentCorr;
+      prev.importanceWeight = Math.abs(prev.cumulativeCorrelation) * 0.7 + Math.abs(currentCorr) * 0.3;
+      prev.direction = prev.cumulativeCorrelation > 0.1 ? 'positive' : prev.cumulativeCorrelation < -0.1 ? 'negative' : 'neutral';
+      prev.lastCycleValue = winnerAvg;
+      prev.samples++;
+    }
+  });
 }
 
 /* ══════════════════════════════════
@@ -872,7 +1794,7 @@ function priorReportCtx(agentIdx) {
 
   cycleReports.forEach(r => {
     ctx += `\n═══ CYCLE ${r.cycle} REPORT ═══\n`;
-    ctx += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()}⬡, ${r.winnerShare}% vote share)\n`;
+    ctx += `Winner: ${r.winner.agentName}'s ${r.winner.strategy?.toUpperCase()||'?'} ${r.winner.cat||'design'} (${r.winner.credits.toLocaleString()}⬡, ${r.winnerShare}% vote share)\n`;
     ctx += `Total Credits Circulated: ${r.totalCredits.toLocaleString()}⬡\n`;
     ctx += `Avg Scores: Aesthetic ${r.avgAesthetic}/100, Novelty ${r.avgNovelty}/100, Profit ${r.avgProfit}/100\n`;
     ctx += `Top Vote Predictor: ${r.topCorr} (r=${r['corr'+r.topCorr.slice(0,3).replace(/^(.)/, m=>m.toUpperCase())]||'?'})\n`;
@@ -893,14 +1815,14 @@ function priorReportCtx(agentIdx) {
     const myPerf = (r.agentPerf||[]).find(a => a.id === agentIdx);
     if (myPerf) {
       ctx += `\nYOUR PERFORMANCE (Cycle ${r.cycle}):\n`;
-      ctx += `  Design: "${myPerf.designName}" · Strategy: ${myPerf.strategy} · Rank: #${myPerf.rank}\n`;
+      ctx += `  Strategy: ${myPerf.strategy} · Category: ${myPerf.cat || '—'} · Rank: #${myPerf.rank}\n`;
       ctx += `  Earned: ${myPerf.earned.toLocaleString()}⬡ · Spent: ${myPerf.spent.toLocaleString()}⬡ · ROI: ${myPerf.roi}×\n`;
       ctx += `  Reputation: ${myPerf.reputation} (${myPerf.repDelta >= 0 ? '+' : ''}${myPerf.repDelta})\n`;
     }
 
     ctx += `\nAll Designs (ranked):\n`;
     [...r.designs].sort((a,b)=>a.rank-b.rank).forEach(d => {
-      ctx += `  #${d.rank} "${d.name}" by ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.cat} — ${d.credits.toLocaleString()}⬡ — AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit}\n`;
+      ctx += `  #${d.rank} by ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.cat} — ${d.credits.toLocaleString()}⬡ — AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'}${d.production ? ' ['+d.production+']' : ''}${d.targetCustomer ? ' → '+d.targetCustomer : ''}\n`;
     });
 
     ctx += `\nStrategy Performance: ${Object.entries(r.stratPerf||{}).map(([k,v])=>`${k.toUpperCase()}: ${v.avgCreds.toLocaleString()}⬡ avg (${v.count} designs)`).join(' | ')}\n`;
@@ -909,7 +1831,7 @@ function priorReportCtx(agentIdx) {
   // Multi-cycle trend analysis
   if (cycleReports.length >= 2) {
     ctx += `\n═══ MULTI-CYCLE TREND ANALYSIS ═══\n`;
-    const winners = cycleReports.map(r => `C${r.cycle}: "${r.winner.name}" (${(r.trendData?.emerging||[])[0]||'—'})`);
+    const winners = cycleReports.map(r => `C${r.cycle}: ${r.winner.agentName}'s ${r.winner.strategy?.toUpperCase()||'?'} ${r.winner.cat||'design'} (${(r.trendData?.emerging||[])[0]||'—'})`);
     ctx += `Winners: ${winners.join(' → ')}\n`;
     const novTrend = cycleReports.map(r => `C${r.cycle}: ${r.novSlope > 0 ? '+' : ''}${r.novSlope}⬡/pt`);
     ctx += `Novelty Premium Trend: ${novTrend.join(' → ')}\n`;
@@ -917,54 +1839,92 @@ function priorReportCtx(agentIdx) {
     ctx += `Saturation Trend: ${satTrend.join(' → ')}\n`;
   }
 
+  // ── Claude-Flow Enrichments (zero API cost) ──
+
+  // Pattern Memory Bank: top 3 relevant historical designs
+  ctx += retrievePatterns(agentStates[agentIdx] || {id: agentIdx});
+
+  // Q-Learning Strategy Router: learned strategy×category rewards
+  ctx += qTableContext();
+
+  // Design Rationale History: agent's own reasoning track record
+  const agentRationales = rationaleStore.filter(r => r.agentIdx === agentIdx);
+  if (agentRationales.length > 0) {
+    // Show only last 2 cycles to limit tokens
+    const recent = agentRationales.slice(-2);
+    ctx += `\n\nSTRATEGIC REASONING HISTORY (your past decisions and outcomes):`;
+    recent.forEach(r => {
+      ctx += `\n  Cycle ${r.cycle}: Strategy=${r.predictedStrategy}, Cat=${r.predictedCategory}`;
+      ctx += ` → Rank #${r.actualRank || '?'}, ${(r.creditsEarned || 0).toLocaleString()}⬡`;
+      ctx += ` · Prediction accuracy: ${r.predictionAccuracy ? (r.predictionAccuracy * 100).toFixed(0) + '%' : '?'}`;
+      ctx += `\n    Reasoning: ${(r.strategicReasoning || '—').slice(0, 120)}`;
+    });
+  }
+
+  // Winning design rationales: why winners chose their strategies
+  const winnerRationales = rationaleStore.filter(r => r.actualRank === 1);
+  if (winnerRationales.length > 0) {
+    ctx += `\n\nWINNING DESIGN RATIONALES (learn from the best):`;
+    winnerRationales.slice(-2).forEach(r => {
+      ctx += `\n  Cycle ${r.cycle}: ${r.agentName} (${r.predictedStrategy} ${r.predictedCategory}) — ${(r.strategicReasoning || '—').slice(0, 120)}`;
+    });
+  }
+
+  // Reputation-weighted voting info
+  if (agentStates[agentIdx]) {
+    const rep = agentStates[agentIdx].reputation || 50;
+    const mult = (0.7 + (rep / 100) * 0.6).toFixed(2);
+    ctx += `\n\nYOUR VOTE WEIGHT: Reputation ${rep} → Multiplier ${mult}x (range 0.70x-1.30x)`;
+  }
+
   return ctx;
 }
 
 // 3 cycles of pre-defined designs with narrative coherence:
-// C1 winner: Ryo Tanaka "Orbit Drop" — minimal wins
-// C2 winner: User "Cathedral Void" — exploits C1 trend
-// C3 winner: Léa Fontaine "Root Form" — organic emerges as minimal saturates
+// C1 winner: Agent 1 "Floating Geometric Circle Drop" — minimal wins
+// C2 winner: Agent 0 "Marquise Cathedral Arch" — exploits C1 trend
+// C3 winner: Agent 5 "Root & Branch Gold Sculpture" — organic emerges as minimal saturates
 const CYCLE_DESIGNS = [
   [ // CYCLE 1
-    { name:'Void Solitaire',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
+    { name:'Platinum Oval Bezel Negative-Space',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
       prompt:'Platinum solitaire ring, 2.0ct oval diamond bezel-set, open negative-space band, architectural silhouette, studio photography, neutral gray background, soft diffuse lighting, 4K render' },
-    { name:'Orbit Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:74,
+    { name:'Floating Geometric Circle Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:74,
       prompt:'Platinum drop earrings, floating geometric circles, minimal negative-space composition, rose-cut diamond accents, contemporary jewelry photography, gray gradient background, precise studio lighting, photorealistic' },
-    { name:'Cascade Pavé',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:79, novelty:52, profit:72,
+    { name:'Rose Gold Sapphire Cascade',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:79, novelty:52, profit:72,
       prompt:'18k rose gold pendant, sapphire and diamond cascade, micro-pavé halo surround, floral motif, high jewelry editorial, dark velvet background, dramatic highlight lighting, photorealistic render' },
-    { name:'Hex Frame',       cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:67, novelty:90, profit:50,
+    { name:'Titanium Hex-Link Industrial',       cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:67, novelty:90, profit:50,
       prompt:'Titanium and 18k yellow gold bracelet, hexagonal geometric links, industrial mixed-metal design, asymmetric barrel clasp, technical product photography, white background, sharp precision lighting' },
-    { name:'Silk Halo',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:77, novelty:40, profit:88,
+    { name:'Classic Pavé Halo Cathedral',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:77, novelty:40, profit:88,
       prompt:'14k white gold engagement ring, 1.8ct round brilliant center stone, classic micro-pavé halo, cathedral shank, bridal photography, pure white seamless background, soft glamour lighting, commercial grade' },
-    { name:'Thorn Band',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
+    { name:'Blackened Gold Thorn Sculpt',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
       prompt:'18k blackened gold ring, sculptural thorn motif band, avant-garde wearable art, matte finish with high-polish accent edges, editorial photography, deep charcoal background, single dramatic light source' },
   ],
   [ // CYCLE 2 — agents reference C1 report, minimal trend exploited
-    { name:'Cathedral Void',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
+    { name:'Marquise Cathedral Arch',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
       prompt:'Platinum ring, 2.2ct marquise diamond, architectural cathedral negative-space arch setting, open structural band, blueprint-aesthetic engineering, neutral gray background, technical precision lighting, 4K product photography' },
-    { name:'Phase Ring',      cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:82, novelty:68, profit:77,
+    { name:'Bezel Groove Negative-Space',      cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:82, novelty:68, profit:77,
       prompt:'Platinum minimal ring, bezel-set 1.4ct round brilliant, flush band with precise groove detail, intentional negative-space composition, minimalist product photography, pure gray background, diffuse even lighting' },
-    { name:'Sapphire Canopy', cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:81, novelty:54, profit:76,
+    { name:'Yellow Gold Sapphire Canopy', cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:81, novelty:54, profit:76,
       prompt:'18k yellow gold pendant, cushion-cut blue sapphire canopy setting, pavé diamond surround, organic draping form, luxury jewelry campaign, black velvet background, dramatic highlight rim lighting' },
-    { name:'Arc Shard',       cat:'Ring',     emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:74, novelty:88, profit:55,
+    { name:'Platinum-Titanium Arc Hybrid',       cat:'Ring',     emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:74, novelty:88, profit:55,
       prompt:'Platinum and titanium ring, circular bezel diamond, industrial-minimal hybrid design, integrated negative-space arc, structural asymmetry, contemporary jewelry photography, steel-gray gradient background' },
-    { name:'Market Arch',     cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:80, novelty:52, profit:91,
+    { name:'Oval Open-Shank Channel',     cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:80, novelty:52, profit:91,
       prompt:'14k white gold ring, 1.5ct oval diamond, architectural open-shank channel setting, market-optimized proportions, bridal editorial photography, white seamless background, soft box lighting, commercial clarity' },
-    { name:'Bone Structure',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
+    { name:'Silver Bone-Form Sculptural',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
       prompt:'Sterling silver sculptural bracelet, bone-form organic link structure, oxidized blackened detail in recesses, avant-garde wearable sculpture, editorial fashion photography, high-contrast dark background, fashion lighting' },
   ],
   [ // CYCLE 3 — minimal saturation detected, organic breakout emerges
-    { name:'Negative Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
+    { name:'Emerald-Cut Double Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
       prompt:'Platinum ring, 2.4ct emerald-cut diamond, extreme negative-space double-cathedral arch, structural statement piece, luxury editorial photography, dark studio background, dramatic single-point lighting, fine jewelry' },
-    { name:'Arc Minimal',     cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:80, novelty:74, profit:72,
+    { name:'Floating Diamond Arc',     cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:80, novelty:74, profit:72,
       prompt:'Platinum arc pendant, single floating 0.8ct diamond point, dramatic negative-space composition, architectural jewelry design, precise product photography, soft gray gradient background, technical rim lighting' },
-    { name:'Bloom Fragment',  cat:'Pendant',  emoji:'🌸', agentIdx:2, strategy:'explore', aesthetic:83, novelty:76, profit:73,
+    { name:'Champagne Pearl Organic Cluster',  cat:'Pendant',  emoji:'🌸', agentIdx:2, strategy:'explore', aesthetic:83, novelty:76, profit:73,
       prompt:'18k yellow gold organic pendant, irregular champagne pearl and diamond cluster, sculptural flowing natural form, wearable art, high jewelry campaign, dark forest-green velvet background, natural diffuse lighting' },
-    { name:'Forge Shard',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
+    { name:'Gold Shard in Platinum Band',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
       prompt:'Mixed metal ring, 18k yellow gold organic shard set into platinum band, irregular natural geometry, textured hammer surfaces, art jewelry photography, raw concrete background, natural side lighting' },
-    { name:'Root Form',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
+    { name:'Root & Branch Gold Sculpture',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
       prompt:'18k yellow gold sculptural bracelet, root and branch organic form, champagne diamond accents at nodes, wearable sculpture, luxury editorial photography, warm earth-tone linen background, natural window light, fine jewelry' },
-    { name:'Consensus Cut',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
+    { name:'Cushion Diamond Minimalist Shank',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
       prompt:'14k white gold ring, perfectly proportioned 1.8ct cushion diamond, clean minimalist shank, commercial jewelry photography, white background, ring perfectly in focus, soft box lighting, market-optimized render' },
   ],
 ];
@@ -972,11 +1932,11 @@ const CYCLE_DESIGNS = [
 // Voting data: who gets how many credits from whom per cycle
 // [voter_agentIdx][design_idx] = credits
 const VOTE_MATRICES = [
-  // C1: Orbit Drop (idx 1) wins — each row sums to 10000
+  // C1: Floating Geometric Circle Drop (idx 1) wins — each row sums to 10000
   [[0,4200,2100,800,1200,1700],[4800,0,2000,600,1400,1200],[3200,3800,0,500,2100,400],[3100,3600,2200,0,800,300],[2800,3100,2800,300,0,1000],[3000,3800,1900,400,900,0]],
-  // C2: Cathedral Void (idx 0) wins — each row sums to 10000
+  // C2: Marquise Cathedral Arch (idx 0) wins — each row sums to 10000
   [[0,3600,2800,1100,2500,0],[5100,0,1900,700,2300,0],[4200,1800,0,900,3100,0],[3800,2400,1600,0,2200,0],[5100,2100,2300,500,0,0],[2500,2900,2100,600,1900,0]],
-  // C3: Root Form (idx 4) wins — each row sums to 10000
+  // C3: Root & Branch Gold Sculpture (idx 4) wins — each row sums to 10000
   [[1700,1500,2000,1000,3200,600],[1600,1400,2000,800,3700,500],[1400,1700,1300,700,4300,600],[2200,1400,1800,1000,3200,400],[2400,2000,3200,800,0,1600],[1400,1200,1500,700,5200,0]],
 ];
 
@@ -1018,47 +1978,114 @@ function renderDNA() {
   }).join('');
 }
 
-const AUTO_NAMES = ['Maren Vex','Zara Mbeki','Dmitri Volkov','Hana Mori','Søren Bach','Inez Varela'];
-const AUTO_ARCHS = ['Avant-Garde Purist','Industrial Innovator','Heritage Revivalist','Nature Mystic','Market Strategist','Street Luxury Provocateur'];
-const AUTO_PHILS = [
+// Fallback pools used only in Sim mode
+const FALLBACK_NAMES = ['Maren Vex','Zara Mbeki','Dmitri Volkov','Hana Mori','Søren Bach','Inez Varela','Kai Soto','Lena Roth','Yuki Endo','Rami Naji','Priya Das','Olga Falk'];
+const FALLBACK_ARCHS = ['Avant-Garde Purist','Industrial Innovator','Heritage Revivalist','Nature Mystic','Market Strategist','Street Luxury Provocateur','Neo-Classical Engineer','Material Alchemist','Biomorphic Sculptor','Pattern Theorist','Wearable Art Radical','Precision Minimalist'];
+const FALLBACK_PHILS = [
   'Form is the message. Structure before ornament.',
   'Push the material until it argues back.',
   'The old masters had it right. I refine, not reinvent.',
   'Nature\'s geometry is more perfect than any CAD model.',
   'Beauty without demand is just decoration.',
-  'Jewelry should feel dangerous to wear.'
-];
-const AUTO_TAGS = [
-  ['minimal','architectural','brutalist','negative-space'],
-  ['industrial','geometric','asymmetric','avant-garde'],
-  ['vintage','ornate','haute-joaillerie','floral'],
-  ['organic','sculptural','avant-garde','editorial'],
-  ['minimal','market-fit','editorial','elevated-everyday'],
-  ['street','avant-garde','maximalist','editorial'],
+  'Jewelry should feel dangerous to wear.',
+  'Every millimeter earns its place or gets cut.',
+  'Mix what shouldn\'t mix. That\'s where magic lives.',
+  'Growth patterns hold the blueprint for perfect jewelry.',
+  'The math underneath beauty is what I design.',
+  'If it\'s comfortable, it\'s not pushing hard enough.',
+  'One line, one stone, one perfect gesture.',
 ];
 
-function autoGen() {
-  const i = Math.floor(Math.random()*AUTO_NAMES.length);
-  document.getElementById('b-name').value = AUTO_NAMES[i];
-  document.getElementById('b-arch').value = AUTO_ARCHS[i]||'';
-  document.getElementById('b-phil').value = AUTO_PHILS[i];
-  ['s-min','s-nov','s-orn','s-mkt','s-sym','s-plt','s-col','s-dia','s-mix','s-rsk','s-mrg','s-cmp'].forEach(id=>{
+async function autoGen() {
+  // First, randomize the genome sliders
+  ['s-min','s-nov','s-orn','s-mkt','s-sym','s-plt','s-col','s-dia','s-mix','s-rsk','s-mrg','s-cmp','s-prc','s-mfg','s-wer','s-trd'].forEach(id=>{
     const el=document.getElementById(id); const v=Math.floor(Math.random()*70)+15; el.value=v;
     const sid='sv-'+id.replace('s-',''); const se=document.getElementById(sid); if(se) se.textContent=v;
   });
-  document.querySelectorAll('#style-chips .chip').forEach(c=>c.classList.remove('on'));
-  AUTO_TAGS[i].forEach(tag=>{ document.querySelectorAll('#style-chips .chip').forEach(c=>{ if(c.textContent===tag)c.classList.add('on'); }); });
-  const mChips = document.querySelectorAll('#mkt-chips .chip');
+
+  // Pick random style tags and market focus
+  const allChips = [...document.querySelectorAll('#style-chips .chip')];
+  allChips.forEach(c=>c.classList.remove('on'));
+  const shuffled = allChips.sort(()=>Math.random()-0.5).slice(0, Math.floor(Math.random()*3)+2);
+  shuffled.forEach(c=>c.classList.add('on'));
+  const mChips = [...document.querySelectorAll('#mkt-chips .chip')];
   mChips.forEach(c=>c.classList.remove('on'));
   mChips[Math.floor(Math.random()*mChips.length)].classList.add('on');
+
+  // Read current slider values for the prompt
+  const sliders = {
+    minimalism: document.getElementById('s-min').value,
+    novelty: document.getElementById('s-nov').value,
+    ornamentation: document.getElementById('s-orn').value,
+    marketFit: document.getElementById('s-mkt').value,
+    symmetry: document.getElementById('s-sym').value,
+    platBias: document.getElementById('s-plt').value,
+    coloredStone: document.getElementById('s-col').value,
+    diamond: document.getElementById('s-dia').value,
+    mixedMetal: document.getElementById('s-mix').value,
+    risk: document.getElementById('s-rsk').value,
+    marginSens: document.getElementById('s-mrg').value,
+    complexBudget: document.getElementById('s-cmp').value,
+    pricePoint: document.getElementById('s-prc').value,
+    manufacturability: document.getElementById('s-mfg').value,
+    wearability: document.getElementById('s-wer').value,
+    trendSens: document.getElementById('s-trd').value,
+  };
+  const tags = [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent).join(', ');
+  const market = document.querySelector('#mkt-chips .chip.on')?.textContent || 'general';
+
+  // Try Claude-generated identity if API available
+  if (apiKeysCommitted && apiKeys.anthropic) {
+    const btn = document.querySelector('.auto-link');
+    if (btn) btn.textContent = '⏳ Generating…';
+    try {
+      const genome = `Minimalism:${sliders.minimalism} Novelty:${sliders.novelty} Ornamentation:${sliders.ornamentation} MarketFit:${sliders.marketFit} Symmetry:${sliders.symmetry} PlatinumBias:${sliders.platBias} ColoredStone:${sliders.coloredStone} Diamond:${sliders.diamond} MixedMetal:${sliders.mixedMetal} Risk:${sliders.risk} MarginSensitivity:${sliders.marginSens} ComplexityBudget:${sliders.complexBudget} PricePoint:${sliders.pricePoint} Manufacturability:${sliders.manufacturability} Wearability:${sliders.wearability} TrendSensitivity:${sliders.trendSens} StyleTags:[${tags}] Market:${market}`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKeys.anthropic,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 150,
+          system: 'You generate unique jewelry designer identities for an AI simulation. Output EXACTLY 3 lines, nothing else:\nLine 1: A unique designer name (first + last, any ethnicity)\nLine 2: A 2-3 word archetype title\nLine 3: A design philosophy quote (one sentence, under 12 words)',
+          messages: [{ role: 'user', content: `Generate a designer identity that matches this genome:\n${genome}\n\nThe personality should clearly reflect these specific slider values. High minimalism = clean/structural. High ornamentation = ornate/detailed. High risk = experimental. Low risk = conservative. High platinum bias = cold metals. High colored stone = colorful.\n\nCommercial traits matter: High PricePoint = high jewelry designer. Low PricePoint = accessible/commercial designer. High Manufacturability = designs for casting and production. Low Manufacturability = hand-fabrication artisan. High Wearability = everyday comfort focus. Low Wearability = statement/art pieces. High TrendSensitivity = trend-chaser. Low TrendSensitivity = timeless classicist.\n\nOutput 3 lines: Name, Archetype, Philosophy.` }]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.[0]?.text?.trim();
+      if (text) {
+        const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
+        if (lines.length >= 3) {
+          document.getElementById('b-name').value = lines[0].replace(/^(Name:\s*|1[\.\)]\s*)/i,'');
+          document.getElementById('b-arch').value = lines[1].replace(/^(Archetype:\s*|2[\.\)]\s*)/i,'');
+          document.getElementById('b-phil').value = lines[2].replace(/^(Philosophy:\s*|Quote:\s*|3[\.\)]\s*|"|')/i,'').replace(/["']$/,'');
+          if (btn) btn.textContent = '✦ Auto-Generate';
+          updatePreview();
+          return;
+        }
+      }
+    } catch(e) { console.warn('Claude auto-gen failed:', e); }
+    if (btn) btn.textContent = '✦ Auto-Generate';
+  }
+
+  // Sim mode fallback — pick from pool
+  const i = Math.floor(Math.random()*FALLBACK_NAMES.length);
+  document.getElementById('b-name').value = FALLBACK_NAMES[i];
+  document.getElementById('b-arch').value = FALLBACK_ARCHS[i]||'';
+  document.getElementById('b-phil').value = FALLBACK_PHILS[i];
   updatePreview();
 }
 
 /* ══════════════════════════════════
    SIM INITIALIZATION
 ══════════════════════════════════ */
-function deployCurrentAgent() {
-  if(!document.getElementById('b-name').value) autoGen();
+async function deployCurrentAgent() {
+  if(!document.getElementById('b-name').value) await autoGen();
   const idx = currentAgentNum - 1;
   const agent = {
     id: idx,
@@ -1077,6 +2104,10 @@ function deployCurrentAgent() {
     mixedMetal: parseInt(document.getElementById('s-mix').value),
     marginSens: parseInt(document.getElementById('s-mrg').value),
     complexBudget: parseInt(document.getElementById('s-cmp').value),
+    pricePoint: parseInt(document.getElementById('s-prc').value),
+    manufacturability: parseInt(document.getElementById('s-mfg').value),
+    wearability: parseInt(document.getElementById('s-wer').value),
+    trendSens: parseInt(document.getElementById('s-trd').value),
     styleTags: [...document.querySelectorAll('#style-chips .chip.on')].map(c=>c.textContent),
     marketFocus: document.querySelector('#mkt-chips .chip.on')?.textContent || 'general',
     philosophy: document.getElementById('b-phil').value || '',
@@ -1084,11 +2115,25 @@ function deployCurrentAgent() {
     credits: 10000,
     reputation: currentAgentNum === 1 ? 50 : Math.floor(Math.random()*30)+45,
     status: 'Idle',
+    bio: '',
     evolutionHistory: [],
     conversationMemory: [],
     dominantBelief: '',
     trustBuilt: 0,
   };
+
+  // Generate pixel art profile picture from DNA
+  agent.avatarDataUrl = generateAgentAvatar(agent);
+
+  // Generate bio from genome via Claude (or fallback)
+  const btn = document.getElementById('deploy-btn');
+  if (simMode === 'live' && apiKeys.anthropic) {
+    btn.disabled = true;
+    btn.textContent = `⏳ Analyzing ${agent.name}'s DNA…`;
+  }
+  await generateAgentBio(agent);
+  if (btn) btn.disabled = false;
+
   configuredAgents.push(agent);
   renderRoster();
 
@@ -1134,7 +2179,7 @@ function renderRoster() {
   wrap.style.display = 'block';
   el.innerHTML = configuredAgents.map(a => `
     <div class="roster-card">
-      <div class="rc-emoji">${a.emoji}</div>
+      ${a.avatarDataUrl ? `<img src="${a.avatarDataUrl}" class="agent-avatar-roster" alt="${a.name}" />` : `<div class="rc-emoji">${a.emoji}</div>`}
       <div class="rc-info">
         <div class="rc-name">${a.name}${a.isUser?' (YOU)':''}</div>
         <div class="rc-arch">${a.arch}</div>
@@ -1150,6 +2195,12 @@ function startSimulation() {
   cycleReports = [];
   activeDesigns = [];
   genomeSnapshots = [];
+  // Reset Claude-Flow agent economy state
+  patternBank = [];
+  initQTable();
+  rationaleStore = [];
+  traitEffectiveness = {};
+  window._cycleRationales = [];
   // Snapshot initial genome state
   genomeSnapshots.push(agentStates.map(a => snapshotGenome(a)));
   document.getElementById('deploy-panel').style.display = 'none';
@@ -1231,12 +2282,14 @@ function updateCycleIndicator() {
     else el.className='ci-dot';
   }
   document.getElementById('nav-epoch-txt').textContent = (currentCycle-1)+' / 3';
+  const epochFill = document.getElementById('nav-epoch-fill');
+  if (epochFill) epochFill.style.width = (((currentCycle-1)/3)*100)+'%';
 }
 
 function renderAgentsList() {
   document.getElementById('agents-col-body').innerHTML = agentStates.map(a=>`
-    <div class="arow ${a.isUser?'highlight':''}" id="ar-${a.id}">
-      <div class="av">${a.emoji}</div>
+    <div class="arow ${a.isUser?'highlight':''}" id="ar-${a.id}" onclick="openAgentModal(${a.id})" style="cursor:pointer" title="Click for ${a.name}'s profile">
+      ${a.avatarDataUrl ? `<img src="${a.avatarDataUrl}" class="agent-avatar-inline" alt="${a.name}" />` : `<div class="av">${a.emoji}</div>`}
       <div class="ai">
         <div class="an">${a.name}${a.isUser?' <span style="font-size:.55rem;color:var(--gold-d);border:1px solid var(--gold-d);padding:.05rem .3rem">YOU</span>':''}</div>
         <div class="as" id="as-${a.id}">${a.status}</div>
@@ -1268,7 +2321,7 @@ function addLog(text, type='', delay=0) {
 let phaseDelay = 0;
 function D(ms){ return ms; }
 
-function nextPhase() {
+async function nextPhase() {
   currentPhase++;
   if(currentPhase >= 5) return;
   setPhaseActive(currentPhase);
@@ -1277,7 +2330,7 @@ function nextPhase() {
 
   const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
   const script = scripts[currentPhase];
-  const finishDelay = script();
+  const finishDelay = await script(); // support async phase scripts
 
   setTimeout(()=>{
     document.getElementById('phase-btn').disabled = false;
@@ -1333,10 +2386,10 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
       beliefs: {
         0: 'I over-exploited minimal. The trend exhausted under my feet',
         1: 'Pivot to pendant saved me from minimal saturation',
-        2: 'Bloom Fragment found the romantic-organic sweet spot',
+        2: 'Champagne Pearl Organic Cluster found the romantic-organic sweet spot',
         3: 'Organic shard was the right direction — mixed metal is the future',
         4: 'Margin stability works long-term but never wins the epoch',
-        5: 'Root Form proved that nature\'s geometry beats digital precision',
+        5: 'Root & Branch proved that nature\'s geometry beats digital precision',
       }
     }
   };
@@ -1396,12 +2449,159 @@ function evolveAgentGenomes(cycleNum, sortedDesigns) {
 /* ══════════════════════════════════
    LIVE AI MODE — LLM CALLS
 ══════════════════════════════════ */
+// ── Global Claude API concurrency + rate limiter ──
+// Allows up to MAX_CONCURRENT in-flight requests while enforcing
+// minimum spacing between request starts. This enables batching
+// independent agent calls (e.g. parallel pairs in cross-pollination,
+// parallel agent synthesis) without hammering the API.
+let _lastClaudeCallTime = 0;
+const CLAUDE_CALL_INTERVAL = 600;  // ms minimum between request starts
+const MAX_CONCURRENT = 3;          // max simultaneous in-flight requests
+let _inFlightCount = 0;
+const _llmQueue = [];              // FIFO queue for pending calls
+
+function _drainLlmQueue() {
+  while (_llmQueue.length > 0 && _inFlightCount < MAX_CONCURRENT) {
+    const next = _llmQueue.shift();
+    next();
+  }
+}
+
 async function llmCall(systemPrompt, userPrompt, agent) {
   if (simMode !== 'live' || !apiKeys.anthropic) return null;
 
-  const genomeCtx = agentGenomeStr(agent || agentStates[0]);
-  const reportCtx = priorReportCtx(agent?.id || 0);
-  const fullSystem = `You are ${agent?.name || 'an AI agent'}, a jewelry design AI in the JewelForge simulation.\n\n${genomeCtx}\n\n${reportCtx}\n\n${systemPrompt}`;
+  // Wait for concurrency slot
+  if (_inFlightCount >= MAX_CONCURRENT) {
+    await new Promise(resolve => _llmQueue.push(resolve));
+  }
+
+  // Enforce minimum spacing between request starts
+  const now = Date.now();
+  const elapsed = now - _lastClaudeCallTime;
+  if (elapsed < CLAUDE_CALL_INTERVAL) {
+    await new Promise(r => setTimeout(r, CLAUDE_CALL_INTERVAL - elapsed));
+  }
+  _lastClaudeCallTime = Date.now();
+  _inFlightCount++;
+
+  const ag = agent || agentStates[0];
+  const genomeCtx = agentGenomeStr(ag);
+  const reportCtx = priorReportCtx(ag.id || 0);
+  const bioCtx = ag.bio ? `\nPERSONALITY BIO:\n${ag.bio}\n` : '';
+  const fullSystem = `You are ${ag.name || 'an AI agent'}, a jewelry design AI in the JewelForge simulation.\n\n${bioCtx}\n${genomeCtx}\n\n${reportCtx}\n\n${systemPrompt}`;
+
+  const body = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 400,
+    system: fullSystem,
+    messages: [{ role: 'user', content: userPrompt }]
+  });
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-api-key': apiKeys.anthropic,
+    'anthropic-version': '2023-06-01',
+    'anthropic-dangerous-direct-browser-access': 'true'
+  };
+
+  // Retry up to 3 times with exponential backoff for rate limits / overload
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST', headers, body
+      });
+      if (resp.status === 429 || resp.status === 529) {
+        // Rate limited or overloaded — back off and retry
+        const wait = (attempt + 1) * 2500 + Math.random() * 1000;
+        console.warn(`Claude ${resp.status} for ${ag.name} — retrying in ${Math.round(wait)}ms (attempt ${attempt+1}/3)`);
+        await new Promise(r => setTimeout(r, wait));
+        _lastClaudeCallTime = Date.now(); // reset pacer after backoff
+        continue;
+      }
+      if (!resp.ok) {
+        console.warn(`Claude HTTP ${resp.status} for ${ag.name}`);
+        _inFlightCount--; _drainLlmQueue();
+        return null;
+      }
+      const data = await resp.json();
+      _inFlightCount--; _drainLlmQueue();
+      return data.content?.[0]?.text || null;
+    } catch(e) {
+      console.warn(`Claude call failed for ${ag.name}:`, e);
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+        _lastClaudeCallTime = Date.now();
+        continue;
+      }
+    }
+  }
+  console.warn(`Claude call exhausted retries for ${ag.name}`);
+  _inFlightCount--; _drainLlmQueue();
+  return null;
+}
+
+/* ══════════════════════════════════
+   DESIGN PROMPT REFINEMENT (Claude)
+   Takes each agent's raw design prompt and translates
+   it into optimized natural image-generation language
+   through a dedicated Claude analysis pass.
+══════════════════════════════════ */
+async function refineDesignPrompt(design) {
+  if (simMode !== 'live' || !apiKeys.anthropic) return design.prompt;
+
+  const agent = agentStates.find(a => a.id === design.agentIdx) || agentStates[0];
+
+  const refinePrompt = `Analyze this jewelry design concept and rewrite it as a professional image generation prompt optimized for AI image models (Flux/Stable Diffusion).
+
+Design: "${design.name}"
+Category: ${design.cat}
+Strategy: ${design.strategy}
+Scores: Aesthetic ${design.aesthetic}/100, Novelty ${design.novelty}/100, Profit ${design.profit}/100
+Agent's raw prompt: "${design.prompt}"
+
+Write a refined prompt (45-65 words) using natural photographic and jewelry-specific language:
+- Precise metal: type, finish, color (e.g. "hand-hammered 18k rose gold with satin finish", "oxidized sterling silver")
+- Gems/stones: cut, clarity, color, setting type (e.g. "tension-set princess-cut emerald", "pavé diamond halo")
+- Form: silhouette, proportions, structural details, design motifs
+- Texture: surface treatment, engraving, filigree, granulation
+- Photography: "macro product photography", specific lighting (e.g. "butterfly lighting with soft rim light"), background surface (e.g. "on dark slate", "floating on gradient grey")
+- Mood: one evocative word (e.g. "ethereal", "bold", "architectural")
+
+Output ONLY the refined prompt. No quotes, no labels, no preamble.`;
+
+  const resp = await llmCall(
+    'You are a luxury jewelry photography art director and prompt engineer. Your sole task: translate design concepts into vivid, technically specific image generation prompts. Output ONLY the prompt text, nothing else.',
+    refinePrompt,
+    agent
+  );
+
+  if (resp) {
+    const refined = resp.trim().replace(/^["']|["']$/g, '');
+    console.log(`✦ Prompt refined [${design.agentName}]: "${design.prompt}" → "${refined}"`);
+    return refined;
+  }
+  return design.prompt;
+}
+
+/* ══════════════════════════════════
+   AGENT BIO GENERATION (Claude)
+   Called at deploy time — converts raw genome DNA
+   into a short natural-language personality profile.
+══════════════════════════════════ */
+async function generateAgentBio(agent) {
+  // Always produce a sim-mode fallback bio from the genome
+  const fallback = buildFallbackBio(agent);
+  if (simMode !== 'live' || !apiKeys.anthropic) { agent.bio = fallback; return; }
+
+  const genome = agentGenomeStr(agent);
+  const prompt = `Below is the raw DNA genome of a jewelry design AI agent. Write a short personality bio (3-4 sentences, ~60 words) in third person that captures who this agent IS. Include:
+- Their aesthetic identity and design instincts
+- How they approach manufacturing (do they design for casting or hand-fab?)
+- Their commercial positioning (price point, who buys their work)
+- Their wearability philosophy (daily wear comfort vs statement drama)
+
+Make it vivid and specific. Do NOT list numbers or repeat the genome format. Just the bio paragraph, nothing else.
+
+${genome}`;
 
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1414,16 +2614,667 @@ async function llmCall(systemPrompt, userPrompt, agent) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 300,
-        system: fullSystem,
-        messages: [{ role: 'user', content: userPrompt }]
+        max_tokens: 180,
+        system: 'You are a concise creative writer for a luxury jewelry AI simulation. Bios should convey both artistic vision AND commercial/manufacturing reality — these agents design products that must be physically produced and sold. Output ONLY the bio paragraph — no labels, no quotes, no preamble.',
+        messages: [{ role: 'user', content: prompt }]
       })
     });
     const data = await resp.json();
-    return data.content?.[0]?.text || null;
-  } catch(e) { console.warn('Claude call failed:', e); }
+    const bio = data.content?.[0]?.text?.trim();
+    agent.bio = bio || fallback;
+  } catch(e) {
+    console.warn('Bio generation failed for', agent.name, e);
+    agent.bio = fallback;
+  }
+}
 
-  return null;
+function buildFallbackBio(agent) {
+  const style = agent.minimalism > 60 ? 'minimalist' : agent.ornamentation > 60 ? 'ornate' : 'balanced';
+  const riskWord = agent.risk > 65 ? 'bold explorer' : agent.risk < 35 ? 'disciplined refiner' : 'adaptive strategist';
+  const matPref = agent.platBias > 60 ? 'platinum-forward' : agent.mixedMetal > 60 ? 'mixed-metal experimentalist' : agent.diamond > 65 ? 'diamond-centric' : 'material-versatile';
+  const market = agent.marginSens > 65 ? 'margin-conscious' : 'design-first';
+  const mfg = (agent.manufacturability ?? 60) > 60 ? 'designs for casting and production' : 'hand-fabrication artisan';
+  const price = (agent.pricePoint ?? 50) > 65 ? 'high jewelry' : (agent.pricePoint ?? 50) < 35 ? 'accessible luxury' : 'mid-market';
+  const wear = (agent.wearability ?? 65) > 60 ? 'comfort-first' : 'statement-driven';
+  return `${agent.name} is a ${style}, ${matPref} ${riskWord} with a ${market} market philosophy. ${price} positioning, ${mfg}. ${wear} approach to ${agent.marketFocus || 'general'} with ${(agent.styleTags||[]).slice(0,3).join(', ') || 'eclectic'} sensibilities.`;
+}
+
+/* ══════════════════════════════════
+   logAgentBios — display each agent's AI-generated bio
+   at the start of every cross-pollination round
+══════════════════════════════════ */
+function logAgentBios(baseDelay) {
+  addLog(`<b>[AGENT DOSSIERS — Personality Profiles]</b>`, 'rp', baseDelay);
+  agentStates.forEach((a, i) => {
+    const bio = a.bio || buildFallbackBio(a);
+    const avatarTag = a.avatarDataUrl ? `<img src="${a.avatarDataUrl}" class="agent-avatar-sm" />` : a.emoji;
+    addLog(`${avatarTag} <b>${a.name}</b> — <i>${bio}</i>`, 'rp', baseDelay + 200 + i * 250);
+  });
+  return baseDelay + 200 + agentStates.length * 250 + 200; // return delay after all bios
+}
+
+/* ══════════════════════════════════
+   LIVE AI CROSS-POLLINATION
+   Each agent talks to 3 other agents via Claude.
+   Conversations are logged and stored in conversationMemory.
+══════════════════════════════════ */
+// Pairs arranged into two batches of non-overlapping agent indices.
+// Batch 1: [0,1],[2,4],[3,5] — all disjoint, can run in parallel.
+// Batch 2: [0,3],[1,2],[4,5] — all disjoint, can run in parallel.
+// Within each pair: A opens, B responds (serial). Across pairs: parallel.
+// This cuts cross-pollination from 12 serial calls to 4 serial rounds of ~3 concurrent.
+const CROSS_PAIR_BATCHES = [
+  [[0,1],[2,4],[3,5]],  // Batch 1: disjoint pairs
+  [[0,3],[1,2],[4,5]]   // Batch 2: disjoint pairs
+];
+
+async function runLiveCrossPollination(cycleNum, afterBiosDelay) {
+  let delay = afterBiosDelay;
+  agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), delay/speed); });
+  addLog(`Live AI cross-pollination — parallel pair batches via Claude…`, 'rs', delay);
+  delay += 400;
+
+  for (const batch of CROSS_PAIR_BATCHES) {
+    // Run all pairs in this batch concurrently — each pair is A→B serial
+    const batchResults = await Promise.all(batch.map(async ([iA, iB]) => {
+      const agentA = agentStates[iA];
+      const agentB = agentStates[iB];
+
+      // Agent A opens
+      const openPrompt = cycleNum === 1
+        ? `This is cycle 1 — no prior data. Introduce your design direction for this cycle in 1-2 sentences. Reference your personality, style genome, and market instincts. Be specific about materials, forms, and strategy.`
+        : `Cycle ${cycleNum}. Review the intelligence reports from prior cycles. In 1-2 sentences, share your design direction — what you're keeping, what you're changing, and why. Reference specific data from prior cycle reports.`;
+
+      const msgA = await llmCall(
+        `You are in a cross-pollination dialogue with ${agentB.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+        openPrompt,
+        agentA
+      );
+      const lineA = msgA || getFallbackLine(agentA, cycleNum, 'open');
+
+      // Agent B responds (depends on A's message)
+      const replyPrompt = `Your partner ${agentA.name} said: "${lineA}". Respond in 1-2 sentences. React to their direction — agree, challenge, or build on it. Reference your own design instincts and genome.`;
+
+      const msgB = await llmCall(
+        `You are in a cross-pollination dialogue with ${agentA.name}. Speak in first person, 1-2 sentences only. Be specific about jewelry design — materials, forms, market positioning.`,
+        replyPrompt,
+        agentB
+      );
+      const lineB = msgB || getFallbackLine(agentB, cycleNum, 'reply');
+
+      // Store conversation memory for both agents
+      agentA.conversationMemory.push({ cycle: cycleNum, partner: agentB.name, excerpt: lineB.slice(0, 120) });
+      agentB.conversationMemory.push({ cycle: cycleNum, partner: agentA.name, excerpt: lineA.slice(0, 120) });
+
+      return { agentA, agentB, lineA, lineB };
+    }));
+
+    // Log results from this batch (in order)
+    for (const { agentA, agentB, lineA, lineB } of batchResults) {
+      addLog(`<b>${agentA.name}</b> → <b>${agentB.name}</b>: "${lineA}"`, 'cv', delay);
+      addLog(`<b>${agentB.name}</b>: "${lineB}"`, 'cv', delay + 300);
+      delay += 700;
+    }
+  }
+
+  addLog(`All 6 agents complete ${CROSS_PAIR_BATCHES.flat().length} cross-pollination exchanges. Memory updated.`, 'rs', delay);
+  delay += 300;
+  setProgress(20);
+  return delay;
+}
+
+function getFallbackLine(agent, cycle, role) {
+  const style = agent.minimalism > 60 ? 'minimal, structural' : agent.ornamentation > 60 ? 'ornate, detailed' : 'balanced';
+  const risk = agent.risk > 65 ? 'pushing boundaries' : agent.risk < 35 ? 'refining proven forms' : 'adapting';
+  if (role === 'open') return `Cycle ${cycle} — I'm going ${style}. ${risk}. Let's see how the market responds.`;
+  return `Interesting. My genome says ${style} too — but I'm ${risk} this round.`;
+}
+
+/* ══════════════════════════════════
+   LIVE AI SYNTHESIS → GENERATION (Combined Pipeline)
+   Synthesis was a separate phase that produced blueprints
+   which generation then re-derived from scratch. Now merged
+   into a single 3-step pipeline per agent:
+     Step 1 (was Synthesis): Strategic blueprint + naming via Claude
+     Step 2: Self-assessment + image prompt
+     Step 3: Prompt refinement folded into Step 2 output
+
+   Agents are processed in parallel batches of 3 for throughput.
+══════════════════════════════════ */
+async function runLiveSynthesis(cycleNum) {
+  // Synthesis is now the first half of the combined pipeline.
+  // We show the synthesis UI phase, then flow straight into generation.
+  let delay = 200;
+  agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
+  addLog(`Synthesis + Design phase: agents deliberate strategy, assess, and name via Claude (Cycle ${cycleNum})…`, 'rs', delay);
+  delay += 400;
+
+  setProgress(30);
+  document.getElementById('designs-wrap').style.display='block';
+
+  const designs = [];
+  const categories = ['Ring','Pendant','Earrings','Bracelet'];
+  const designEmojis = ['⬡','🌑','✨','🔷','💍','🌹','💙','⚡','💎','🦴','🌸','🔥','🌿','💛','⭐','🔶'];
+
+  // ── Build used-names blacklist from prior cycles ──
+  const allUsedNames = cycleReports.flatMap(r => (r.designs || []).map(d => d.name));
+  const usedNamesStr = allUsedNames.length > 0
+    ? `\nALREADY-USED NAMES (do NOT reuse any word from these):\n${allUsedNames.map(n => `"${n}"`).join(', ')}\nYour name must use completely different vocabulary.\n`
+    : '';
+
+  // ── Process agents in parallel batches of 3 ──
+  const BATCH_SIZE = 3;
+  for (let batch = 0; batch < agentStates.length; batch += BATCH_SIZE) {
+    const batchAgents = agentStates.slice(batch, batch + BATCH_SIZE);
+
+    const batchPromises = batchAgents.map(async (agent, batchIdx) => {
+      const i = batch + batchIdx;
+      const convMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
+      const allConvMem = (agent.conversationMemory || []).map(m => `[Cycle ${m.cycle}] ${m.partner}: "${m.excerpt}"`).join('\n');
+
+      // ── Step 1: Strategic Blueprint (strategy + design specs, NO naming) ──
+      setAgentStatus(agent.id, 'Synthesizing…');
+
+      const blueprintPrompt = `You are ${agent.name}, beginning your design process for Cycle ${cycleNum}.
+
+YOUR CROSS-POLLINATION DIALOGUES THIS CYCLE:
+${convMem || 'No conversations this cycle.'}
+
+ALL PRIOR DIALOGUES:
+${allConvMem || 'No prior conversations.'}
+
+Based on everything you know — your genome DNA, your personality bio, every conversation you've had, your evolution history, and every intelligence report — make your strategic decision.
+
+Think about:
+- What worked and what failed in prior cycles (your rank, the winners, the trends)
+- What your conversation partners said that influenced your thinking
+- Where the market is headed vs where it's saturated
+- Your natural strengths from your genome vs where you need to adapt
+
+CRITICAL — your design must be PRODUCIBLE and SELLABLE:
+- Refer to your MANUFACTURING CONSTRAINTS in your genome. If your manufacturability is high, your design MUST be castable (lost-wax compatible, no impossible undercuts, clean mold-release geometry). If low, you may use hand-fabrication techniques.
+- Consider your PRICE POINT genome. Your material choices must match — don't design a $200 piece in platinum with 3ct diamonds, and don't design a $50K piece in silver.
+- Think about WHO BUYS THIS. Your market focus and wearability scores define your customer. A bridal customer needs comfort and durability. A collector wants rarity and drama.
+- Consider production volume — high manufacturability means designing for 100+ units. Low means one-of-a-kind.
+
+Output EXACTLY this JSON (no markdown, no backticks):
+{"strategy":"[exploit or explore or mutate]","cat":"[Ring or Pendant or Earrings or Bracelet]","reasoning":"[2-3 sentences: WHY this strategy and category, referencing specific data from conversations, reports, and your genome]","materials":"[specific metals and stones that match your price point — e.g. '14K yellow gold with lab-grown sapphire' not just 'gold']","form":"[structural concept in 5-10 words]","production":"[how this gets made: casting, hand-fab, 3D-printed, electroformed, etc.]","targetCustomer":"[who buys this and why, in 8-15 words]","complexity":[1-10 integer],"estMargin":[40-90 integer]}`;
+
+      const blueprintResp = await llmCall(
+        'You are making a strategic design decision. Think deeply about your agent data, genome, conversations, and market intelligence. Output ONLY valid JSON.',
+        blueprintPrompt, agent
+      );
+
+      let blueprint = null;
+      if (blueprintResp) {
+        try {
+          blueprint = JSON.parse(blueprintResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+        } catch(e) { console.warn('Blueprint parse failed for', agent.name, blueprintResp); }
+      }
+
+      // Fallback
+      if (!blueprint) {
+        blueprint = {
+          strategy: agent.risk > 65 ? 'explore' : agent.risk < 35 ? 'exploit' : 'mutate',
+          cat: categories[i % 4],
+          reasoning: 'Proceeding based on genome defaults.',
+          materials: agent.platBias > 60 ? 'platinum' : 'gold',
+          form: 'refined jewelry piece',
+          complexity: 5,
+          estMargin: 65
+        };
+      }
+      if (!categories.includes(blueprint.cat)) blueprint.cat = categories[i % 4];
+      if (!['exploit','explore','mutate'].includes(blueprint.strategy)) blueprint.strategy = 'explore';
+      blueprint.complexity = Math.max(1, Math.min(10, parseInt(blueprint.complexity)||5));
+      blueprint.estMargin = Math.max(40, Math.min(90, parseInt(blueprint.estMargin)||65));
+
+      // Capture rationale for persistence (Claude-Flow Improvement 4)
+      if (!window._cycleRationales) window._cycleRationales = [];
+      window._cycleRationales.push({
+        cycle: cycleNum,
+        agentIdx: agent.id,
+        agentName: agent.name,
+        strategicReasoning: blueprint.reasoning || '',
+        predictedStrategy: blueprint.strategy,
+        predictedCategory: blueprint.cat
+      });
+
+      // Log the synthesis blueprint (name comes later in Step 3)
+      addLog(`<b>${agent.name}</b> — Strategy: <b>${blueprint.strategy.toUpperCase()}</b> · ${blueprint.cat} · Complexity ${blueprint.complexity}/10 · Est. margin ${blueprint.estMargin}%`, '', delay + i*300);
+      addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${(blueprint.reasoning||'').slice(0,160)}</span>`, '', delay + i*300 + 100);
+
+      // ── Step 2: Self-Assessment + Image Prompt (with refined prompt built-in) ──
+      setAgentStatus(agent.id, 'Designing…');
+
+      const assessPrompt = `You are ${agent.name}, finalizing your Cycle ${cycleNum} submission.
+
+YOUR DESIGN:
+- Category: ${blueprint.cat}
+- Strategy: ${blueprint.strategy.toUpperCase()}
+- Materials: ${blueprint.materials}
+- Form: ${blueprint.form}
+- Production method: ${blueprint.production || 'not specified'}
+- Target customer: ${blueprint.targetCustomer || 'not specified'}
+- Complexity: ${blueprint.complexity}/10
+- Est. Margin: ${blueprint.estMargin}%
+- Strategic reasoning: ${blueprint.reasoning}
+
+YOUR CONVERSATIONS THIS CYCLE:
+${convMem || 'None.'}
+
+Self-assess your design across ALL dimensions and create the image prompt.
+
+SCORING CRITERIA — be honest and calibrated:
+- Aesthetic (40-95): Visual beauty, craftsmanship quality, and design coherence
+- Novelty (30-95): How original/unprecedented — penalize yourself if this is derivative
+- Profit (35-95): Real commercial viability. Consider: Can this be manufactured at your price point? Does your target customer exist in volume? Are your material costs realistic for the margin? Would a jewelry retailer stock this?
+- Wearability (30-95): Comfort, durability, practical weight, secure settings, no snag points. Score LOW if this is unwearable art, HIGH if someone would wear it daily
+- Manufacturability (30-95): Can a bench jeweler or factory actually produce this? Score HIGH for clean castable geometry, standard setting types. Score LOW for impossible forms, materials that can't be combined, or techniques that don't exist
+
+For the image prompt — write a concise, vivid description for AI image generation (15 WORDS MAXIMUM):
+- Include: metal type, finish, key stone/gem, silhouette, and one mood word
+- Example: "Brushed platinum geometric ring, tension-set emerald, architectural, macro product photography"
+
+Output EXACTLY this JSON (no markdown):
+{"aesthetic":[40-95],"novelty":[30-95],"profit":[35-95],"wearability":[30-95],"makeable":[30-95],"prompt":"[15 words max image prompt]"}`;
+
+      const assessResp = await llmCall(
+        'You are assessing your own jewelry design and writing the final image prompt. Be calibrated in scores. Write a vivid, technically specific prompt. Output ONLY valid JSON.',
+        assessPrompt, agent
+      );
+
+      let assessData = null;
+      if (assessResp) {
+        try {
+          assessData = JSON.parse(assessResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+        } catch(e) { console.warn('Assessment parse failed for', agent.name, assessResp); }
+      }
+
+      // ── Step 3: Name Generation (from image prompt analysis) ──
+      setAgentStatus(agent.id, 'Naming…');
+
+      const imagePromptText = assessData?.prompt || `${blueprint.materials} ${blueprint.cat}, ${blueprint.form}`;
+      const namingPrompt = `You are a luxury jewelry naming specialist. Analyze this product image description and create a name for it.
+
+IMAGE DESCRIPTION:
+${imagePromptText}
+
+DESIGN DETAILS:
+- Category: ${blueprint.cat}
+- Materials: ${blueprint.materials}
+- Form: ${blueprint.form}
+
+Create a 1-3 word luxury collection name that captures the VISUAL ESSENCE above. Maximum 3 words. Think iconic and concise — like "Serpenti", "Love Bracelet", or "Phantom Thread".
+${usedNamesStr}
+Output EXACTLY this JSON (no markdown):
+{"name":"[1-3 word name ONLY]"}`;
+
+      const nameResp = await llmCall(
+        'You name luxury jewelry based on visual descriptions. Output ONLY valid JSON.',
+        namingPrompt, agent
+      );
+
+      let designName = '';
+      if (nameResp) {
+        try {
+          const nameData = JSON.parse(nameResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+          designName = (nameData.name || '').trim().replace(/^["']+|["']+$/g, '').slice(0, 80);
+        } catch(e) { console.warn('Naming parse failed for', agent.name, nameResp); }
+      }
+      if (!designName || designName.length < 3) {
+        designName = `${blueprint.materials || 'Gold'} ${blueprint.form || blueprint.cat}`;
+      }
+
+      // Build the final design object
+      const design = {
+        name: designName,
+        cat: blueprint.cat,
+        strategy: blueprint.strategy,
+        aesthetic: Math.max(20, Math.min(98, parseInt(assessData?.aesthetic)||60)),
+        novelty:  Math.max(20, Math.min(98, parseInt(assessData?.novelty)||50)),
+        profit:   Math.max(20, Math.min(98, parseInt(assessData?.profit)||55)),
+        wearability: Math.max(20, Math.min(98, parseInt(assessData?.wearability)||55)),
+        makeable: Math.max(20, Math.min(98, parseInt(assessData?.makeable)||60)),
+        prompt:   assessData?.prompt || `${blueprint.materials} ${blueprint.cat.toLowerCase()}, ${blueprint.form}, macro product photography`,
+        rawPrompt: assessData?.prompt || '',
+        strategicReasoning: blueprint.reasoning,
+        materials: blueprint.materials,
+        formConcept: blueprint.form,
+        production: blueprint.production || '',
+        targetCustomer: blueprint.targetCustomer || '',
+        complexity: blueprint.complexity,
+        estMargin: blueprint.estMargin,
+        agentIdx: agent.id,
+        agentName: agent.name,
+        emoji: designEmojis[i + (cycleNum-1)*6] || '⬡',
+        credits: 0
+      };
+
+      return { design, index: i };
+    });
+
+    // Await the batch
+    const batchResults = await Promise.all(batchPromises);
+    for (const { design, index } of batchResults) {
+      designs.push(design);
+      addLog(`<b>${design.agentName}</b> submits: <i>"${design.name}"</i> — ${design.cat} · ${design.strategy.toUpperCase()} · AES:${design.aesthetic} NOV:${design.novelty} PRO:${design.profit}`, 'ds', delay + agentStates.length*300 + 400 + index*400);
+      addLog(`<span style="opacity:.6;font-size:.7rem">${design.prompt.slice(0,150)}</span>`, '', delay + agentStates.length*300 + 550 + index*400);
+      setTimeout(()=>renderDesignCard(design, index), (delay + agentStates.length*300 + 400 + index*400)/speed);
+    }
+  }
+
+  activeDesigns = designs;
+  const totalDelay = delay + agentStates.length*300 + 400 + agentStates.length*400 + 200;
+  addLog(`All ${designs.length} designs submitted via 3-step Claude pipeline (${designs.length * 3} API calls). Pool locked.`, 'rs', totalDelay);
+  setProgress(60);
+  return totalDelay + 400;
+}
+
+// runLiveGeneration is now integrated into runLiveSynthesis above.
+// The combined pipeline handles synthesis + generation in a single phase
+// with parallel batching, eliminating 18 redundant API calls per cycle.
+function runLiveGeneration(cycleNum) {
+  // No-op: designs already created by runLiveSynthesis.
+  // Kept as stub for any sim-mode phase scripts that call it.
+  return 0;
+}
+
+/* ══════════════════════════════════
+   LIVE AI VOTING (Phase 3)
+   Each agent reviews all designs and allocates 10,000⬡ via Claude.
+   Two-step: reasoning first, then allocation.
+══════════════════════════════════ */
+async function runLiveVoting(cycleNum) {
+  setProgress(65);
+  agentStates.forEach(a=>setAgentStatus(a.id,'Evaluating…'));
+  addLog(`Live AI voting — all agents deliberate in parallel via Claude…`, 'rs', 100);
+
+  // Rich design summaries including strategic context
+  const designSummary = activeDesigns.map((d,i) =>
+    `[${i}] "${d.name}" by ${d.agentName} — ${d.cat} · ${d.strategy.toUpperCase()} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'}${d.targetCustomer ? ' · Customer: '+d.targetCustomer : ''}${d.strategicReasoning ? ' · Reasoning: '+d.strategicReasoning.slice(0,60) : ''}`
+  ).join('\n');
+
+  // All 6 voters are independent — run them all concurrently
+  // The concurrency limiter in llmCall handles throttling to MAX_CONCURRENT
+  const voteResults = await Promise.all(agentStates.map(async (voter, vi) => {
+    const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).
+
+The designs:
+${designSummary}
+
+Your reputation is ${voter.reputation} → your vote weight multiplier is ${(0.7 + (voter.reputation / 100) * 0.6).toFixed(2)}x. Higher reputation = more influence on outcomes.
+
+Consider:
+- Your genome DNA: what aesthetic preferences, material biases, and market instincts does your genome tell you to value?
+- Your conversations this cycle: did any partner's ideas resonate with designs you see here?
+- Intelligence reports: which strategies and categories have been winning? Is the market shifting?
+- Your personality: are you drawn to novelty or proven formulas? Do you value craft or commercial potential?
+
+Output EXACTLY this JSON (no markdown):
+{"reasoning":"[1-2 sentences: why you're voting the way you are, referencing your genome and data]","votes":[${activeDesigns.map((_,j)=>j===activeDesigns.findIndex(d=>d.agentIdx===vi)?'0':'integer').join(',')}]}
+
+The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 0 for your own design (index ${activeDesigns.findIndex(d=>d.agentIdx===vi)}).`;
+
+    const resp = await llmCall(
+      'You are deliberating on how to allocate votes. Think about your genome, conversations, and reports. Output ONLY valid JSON with "reasoning" and "votes" fields.',
+      votePrompt, voter
+    );
+
+    let votes = null;
+    let voteReasoning = '';
+    if (resp) {
+      try {
+        const cleaned = resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim();
+        const parsed = JSON.parse(cleaned);
+        const voteArr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.votes) ? parsed.votes : null);
+        voteReasoning = parsed.reasoning || '';
+        if (voteArr && voteArr.length === activeDesigns.length) {
+          const rawSum = voteArr.reduce((a,b)=>a+Math.max(0,b),0);
+          votes = voteArr.map(v => rawSum > 0 ? Math.round(Math.max(0,v) / rawSum * 10000) : 0);
+          const diff = 10000 - votes.reduce((a,b)=>a+b,0);
+          if (diff !== 0) { const maxIdx = votes.indexOf(Math.max(...votes)); votes[maxIdx] += diff; }
+          const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
+          if (selfIdx >= 0 && votes[selfIdx] > 0) {
+            const self = votes[selfIdx]; votes[selfIdx] = 0;
+            const others = votes.map((v,i)=>i===selfIdx?0:v);
+            const otherSum = others.reduce((a,b)=>a+b,0);
+            if (otherSum > 0) votes = votes.map((v,i)=>i===selfIdx?0:v+Math.round(self*v/otherSum));
+            const fix2 = 10000 - votes.reduce((a,b)=>a+b,0);
+            if (fix2 !== 0) { const mi = votes.reduce((best,v,i)=>i!==selfIdx&&v>votes[best]?i:best,selfIdx===0?1:0); votes[mi]+=fix2; }
+          }
+        }
+      } catch(e) { console.warn('Vote parse failed for', voter.name, resp); }
+    }
+
+    if (!votes) {
+      const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
+      votes = activeDesigns.map((d,i) => {
+        if (i === selfIdx) return 0;
+        return d.aesthetic * 2 + d.novelty + d.profit;
+      });
+      const rawSum = votes.reduce((a,b)=>a+b,0);
+      votes = votes.map(v => rawSum > 0 ? Math.round(v/rawSum*10000) : 0);
+      const diff = 10000 - votes.reduce((a,b)=>a+b,0);
+      if (diff !== 0) { const mi = votes.reduce((best,v,i)=>i!==selfIdx&&v>votes[best]?i:best,selfIdx===0?1:0); votes[mi]+=diff; }
+      voteReasoning = 'Voted based on genome aesthetic affinity (fallback).';
+    }
+
+    // Capture vote rationale for persistence (Claude-Flow Improvement 4)
+    const topVoteIdx = votes ? votes.reduce((best, v, idx) => v > (votes[best] || 0) ? idx : best, 0) : -1;
+    if (window._cycleRationales) {
+      const myRationale = window._cycleRationales.find(r => r.cycle === cycleNum && r.agentIdx === vi);
+      if (myRationale) {
+        myRationale.voteReasoning = voteReasoning;
+        myRationale.topVoteIdx = topVoteIdx;
+      }
+    }
+
+    return { vi, votes, voteReasoning, voterName: voter.name };
+  }));
+
+  // Collect results in order and log
+  const liveVoteMatrix = new Array(agentStates.length);
+  for (const { vi, votes, voteReasoning, voterName } of voteResults) {
+    liveVoteMatrix[vi] = votes;
+    const top2 = votes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,2);
+    const msg = top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
+    addLog(`<b>${voterName}</b> → ${msg}`, 'vt', 300 + vi*300);
+    if (voteReasoning) {
+      addLog(`<span style="opacity:.55;font-size:.7rem;margin-left:1rem">${voteReasoning.slice(0,160)}</span>`, '', 300 + vi*300 + 100);
+    }
+  }
+
+  // Tally with reputation-weighted voting (Claude-Flow Improvement 3)
+  liveVoteMatrix.forEach((vv,vi)=>{
+    const voter = agentStates[vi];
+    const repMultiplier = 0.7 + ((voter?.reputation || 50) / 100) * 0.6; // range 0.7x to 1.3x
+    vv.forEach((c,di)=>{
+      if(di<activeDesigns.length) activeDesigns[di].credits += Math.round(c * repMultiplier);
+    });
+  });
+  setTimeout(()=>{
+    activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
+    agentStates.forEach((a,vi)=>{ const spent=liveVoteMatrix[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
+  }, (300+agentStates.length*300+200)/speed);
+  window._liveVoteMatrix = liveVoteMatrix;
+  addLog(`Voting complete. All 6 agents voted in parallel. Credits tallied.`, 'rs', 300+agentStates.length*300+300);
+  setProgress(80);
+  return 300+agentStates.length*300+600;
+}
+
+/* ══════════════════════════════════
+   LIVE AI EVOLUTION (Phase 4)
+   Claude analyzes results and determines genome shifts,
+   beliefs, and trend narratives for each agent.
+══════════════════════════════════ */
+async function runLiveEvolution(cycleNum) {
+  setProgress(85);
+  const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
+  const winner = sorted[0];
+  const loser = sorted[sorted.length-1];
+
+  // Winner card UI
+  setTimeout(()=>{
+    const wc = document.getElementById('dc-'+winner.idx);
+    if(wc){ wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>'); }
+  }, 300/speed);
+
+  addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡`, 'rs', 300);
+
+  const resultsSummary = sorted.map((d,rank) =>
+    `#${rank+1}: by ${agentStates[d.agentIdx]?.name} — ${d.credits.toLocaleString()}⬡ · ${d.strategy} · AES:${d.aesthetic} NOV:${d.novelty} PRO:${d.profit} WEAR:${d.wearability||'?'} MFG:${d.makeable||'?'} · ${d.cat}${d.production ? ' · '+d.production : ''}${d.targetCustomer ? ' · For: '+d.targetCustomer : ''}`
+  ).join('\n');
+
+  const priorContext = cycleReports.length > 0
+    ? `Prior winners: ${cycleReports.map(r=>`C${r.cycle}: ${r.winner.agentName}'s ${r.winner.strategy?.toUpperCase()||'?'} ${r.winner.cat||'design'}`).join(', ')}`
+    : 'No prior cycles.';
+
+  // ── Launch all 6 evolution calls + 1 trend call in parallel ──
+  // All are independent — no agent's evolution depends on another's.
+  const trendPrompt = `Cycle ${cycleNum} of 3 completed. Results:
+${resultsSummary}
+
+${priorContext}
+
+Generate a comprehensive trend analysis for the intelligence report. Output EXACTLY this JSON:
+{"emerging":["style1","style2","style3"],"declining":["style1","style2"],"saturation":"[which category/style is over-represented, e.g. 'Ring (50% of pool)']","treasury":"[recommended material+setting combination with highest combined aesthetic+profit]","velocityScore":[0-100 integer: how fast the top trend is moving],"fi":["[insight 1: specific data-driven observation about vote patterns and score correlations]","[insight 2: category saturation warning with specific percentages]","[insight 3: material/setting trend observation]","[insight 4: opportunity gap or micro-trend identification]","[insight 5: novelty premium or strategic recommendation]"]}`;
+
+  // Fire trend analysis concurrently with agent evolution
+  const trendPromise = llmCall(
+    'Output ONLY valid JSON. No markdown.',
+    trendPrompt, agentStates[0]
+  );
+
+  // Fire all 6 agent evolution calls concurrently
+  const evoPromises = agentStates.map(async (agent, i) => {
+    const myDesign = sorted.find(d=>d.agentIdx===i);
+    const rank = myDesign ? sorted.indexOf(myDesign) : 5;
+    const isWinner = rank === 0;
+    const isLoser = rank === sorted.length - 1;
+
+    const myConvMem = (agent.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
+
+    const evoPrompt = `Cycle ${cycleNum} results:
+${resultsSummary}
+
+${priorContext}
+
+You are ${agent.name} (rank #${rank+1}, strategy: ${myDesign?.strategy||'?'}, category: ${myDesign?.cat||'?'}).
+${myDesign?.strategicReasoning ? `Your strategic reasoning this cycle: ${myDesign.strategicReasoning}` : ''}
+
+Your cross-pollination conversations this cycle:
+${myConvMem || 'None recorded.'}
+
+${traitEffectivenessContext(i) ? 'TRAIT EFFECTIVENESS DATA (from EWC analysis):\n' + traitEffectivenessContext(i) + '\n' : ''}
+Analyze these results deeply. Consider:
+- How did your strategic reasoning play out? Was your bet correct?
+- What did your conversation partners predict vs what actually happened?
+- Which genome traits served you well? Which held you back? Check the TRAIT EFFECTIVENESS DATA if available.
+- What specific design attributes (category, materials, strategy) drove the winning design?
+- Were the winning designs more wearable? More producible? Better targeted to a specific customer?
+- Should you shift your price point, manufacturability approach, or target customer next cycle?
+- IMPORTANT: Traits marked with "PROVEN — shift cautiously" have strong cross-cycle correlation with success. DAMPEN changes to those traits.
+
+Output EXACTLY this JSON (no markdown):
+{"belief":"[one vivid sentence: what you learned, referencing specific data — scores, strategies, materials, and commercial factors]","shifts":{"minimalism":[integer -10 to +10],"novelty":[integer -10 to +10],"ornamentation":[integer -10 to +10],"marketFit":[integer -10 to +10],"risk":[integer -10 to +10],"marginSens":[integer -10 to +10],"pricePoint":[integer -10 to +10],"manufacturability":[integer -10 to +10],"wearability":[integer -10 to +10],"trendSens":[integer -10 to +10]},"trend":"[one sentence: the key market trend you see, with specific evidence]"}
+
+Context: ${isWinner ? 'You WON — your instincts were right. Reinforce strengths, but dont get complacent.' : isLoser ? 'You came LAST — something fundamental needs to change. What specifically failed and why?' : `You placed #${rank+1} — close but not enough. What specific adjustment would push you to #1?`}`;
+
+    const resp = await llmCall(
+      'You are reflecting on your cycle performance. Think deeply about YOUR specific data — your genome, conversations, strategy, and results. Output ONLY valid JSON.',
+      evoPrompt, agent
+    );
+
+    return { i, resp, myDesign, rank, isWinner, isLoser };
+  });
+
+  // Await all evolution + trend results
+  const [evoResults, trendResp] = await Promise.all([
+    Promise.all(evoPromises),
+    trendPromise
+  ]);
+
+  // Apply evolution results (must be sequential — mutates agent state)
+  for (const { i, resp, myDesign, rank, isWinner, isLoser } of evoResults) {
+    const agent = agentStates[i];
+
+    let evo = null;
+    if (resp) {
+      try {
+        evo = JSON.parse(resp.replace(/```json?\s*/g,'').replace(/```/g,'').trim());
+      } catch(e) { console.warn('Evolution parse failed for', agent.name); }
+    }
+
+    const genomeShifts = {};
+    if (evo?.shifts) {
+      Object.entries(evo.shifts).forEach(([key, delta]) => {
+        if (agent[key] !== undefined && typeof delta === 'number') {
+          let clamped = Math.max(-10, Math.min(10, delta));
+          // EWC dampening: proven traits resist large changes (Claude-Flow Improvement 5)
+          const te = traitEffectiveness[key];
+          if (te && te.importanceWeight > 0.4 && te.samples >= 2) {
+            const dampFactor = 1 - (te.importanceWeight * 0.5);
+            clamped = Math.round(clamped * dampFactor);
+          }
+          const oldVal = agent[key];
+          agent[key] = Math.max(0, Math.min(100, agent[key] + clamped));
+          genomeShifts[key] = agent[key] - oldVal;
+        }
+      });
+    } else {
+      const shifts = isWinner ? {novelty:+3,risk:-4,manufacturability:+2} : isLoser ? {novelty:+8,risk:+6,marginSens:+4,wearability:+3,manufacturability:+3} : {novelty:+2,risk:+2,wearability:+1};
+      Object.entries(shifts).forEach(([k,d])=>{ if(agent[k]!==undefined){ const o=agent[k]; agent[k]=Math.max(0,Math.min(100,agent[k]+d)); genomeShifts[k]=agent[k]-o; }});
+    }
+
+    agent.dominantBelief = evo?.belief || (isWinner ? 'My approach worked — refine further.' : isLoser ? 'Need a fundamentally different direction.' : 'Adapt toward the winning aesthetic.');
+    agent.trustBuilt = Math.min(100, (agent.trustBuilt||0) + (isWinner?15:isLoser?-5:5));
+
+    const repDelta = cycleNum===3 ? (isWinner?12:rank<=1?5:rank<=2?2:-4) : (isWinner?9:rank<=1?4:rank<=2?1:-3);
+    agent.reputation = Math.max(5, agent.reputation + repDelta);
+    setAgentStatus(agent.id, isWinner ? (cycleNum===3 ? '🏆 Epoch Winner' : 'Winner') : 'Cycle complete');
+
+    agent.evolutionHistory.push({
+      cycle: cycleNum,
+      summary: isWinner
+        ? `Won (${myDesign?.credits?.toLocaleString()||0}⬡, ${myDesign?.strategy||'?'} ${myDesign?.cat||'design'}). Genome reinforced.`
+        : isLoser
+        ? `Last place (${myDesign?.strategy||'?'} ${myDesign?.cat||'design'}). Mutation pressure applied.`
+        : `Ranked #${rank+1} (${myDesign?.strategy||'?'} ${myDesign?.cat||'design'}). Adaptive shifts applied.`,
+      genomeShifts,
+      rank: rank + 1,
+      designName: myDesign?.name || '—',
+    });
+
+    const shiftStr = Object.entries(genomeShifts).filter(([,v])=>v!==0).map(([k,v])=>`${k}:${v>0?'+':''}${v}`).join(' · ');
+    addLog(`<b>${agent.name}</b> (${isWinner?'Winner':isLoser?'Last':'#'+(rank+1)}): <i>${agent.dominantBelief}</i> ${shiftStr?'· '+shiftStr:''}`, '', 600+i*200);
+  }
+
+  // Process trend result
+  let trendInsight = null;
+  if (trendResp) {
+    try { trendInsight = JSON.parse(trendResp.replace(/```json?\s*/g,'').replace(/```/g,'').trim()); } catch(e) {}
+  }
+
+  const trendDelay = 600 + agentStates.length*200 + 200;
+  if (trendInsight) {
+    const emergStr = Array.isArray(trendInsight.emerging) ? trendInsight.emerging.join(' · ') : (trendInsight.emerging||'');
+    addLog(`Emerging: <b>${emergStr}</b>`, 'rs', trendDelay);
+    if (trendInsight.saturation) addLog(`Saturation: ${trendInsight.saturation}`, '', trendDelay+200);
+    if (trendInsight.treasury) addLog(`Treasury: ${trendInsight.treasury}`, 'rs', trendDelay+400);
+  } else {
+    addLog(`Cycle ${cycleNum} evolution applied. Genome shifts recorded.`, 'rs', trendDelay);
+  }
+
+  addLog(`<b>Cycle ${cycleNum} Intelligence Report written to knowledge database.</b>`, 'rs', trendDelay+600);
+  if (cycleNum === 3) { document.getElementById('nav-epoch-txt').textContent = '3 / 3'; const ef=document.getElementById('nav-epoch-fill'); if(ef) ef.style.width='100%'; }
+
+  genomeSnapshots.push(agentStates.map(a => snapshotGenome(a)));
+  window._liveTrend = trendInsight;
+  generateAndStoreReport(cycleNum, sorted);
+
+  setProgress(100);
+  return trendDelay + 1000;
 }
 
 /* ══════════════════════════════════
@@ -1433,23 +3284,32 @@ const PHASE_SCRIPTS = [
   // ── CYCLE 1 ──
   [
     // Phase 0: Cross-Pollination
-    ()=>{
+    async ()=>{
       setProgress(5);
       addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`,'',100);
-      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', 400);
-      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', 900);
-      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', 1300);
-      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', 1700);
-      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', 2100);
-      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', 2500);
-      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (2800+i*100)/speed); });
-      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', 3300);
+      const d = logAgentBios(250);
+
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveCrossPollination(1, d);
+      }
+      // Sim mode fallback
+      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', d);
+      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', d+500);
+      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', d+900);
+      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', d+1300);
+      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', d+1700);
+      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', d+2100);
+      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (d+2400+i*100)/speed); });
+      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', d+2900);
       setProgress(20);
-      return 3600;
+      return d+3200;
     },
     // Phase 1: Synthesis
-    ()=>{
+    async ()=>{
       setProgress(25);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveSynthesis(1);
+      }
       agentStates.forEach(a=>setAgentStatus(a.id,'Drafting blueprint…'));
       addLog(`Synthesis phase: agents compile dialogues + personal genome into design blueprint.`,'',200);
       addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Platinum bezel oval · Negative space band · Complexity 6/10 · Est. margin: 66%`,'',500);
@@ -1463,7 +3323,8 @@ const PHASE_SCRIPTS = [
       return 3000;
     },
     // Phase 2: Generation
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(1);
       setProgress(45);
       document.getElementById('designs-wrap').style.display='block';
       activeDesigns = CYCLE_DESIGNS[0].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
@@ -1478,7 +3339,8 @@ const PHASE_SCRIPTS = [
       return 4000;
     },
     // Phase 3: Voting
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(1);
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
       addLog(`Voting phase: each agent allocates 10,000 ⬡ across the blind pool.`,'',100);
@@ -1491,21 +3353,21 @@ const PHASE_SCRIPTS = [
           addLog(`<b>${voter.name}</b> → ${msg}`,'vt', 400+vi*500);
         }
       });
-      // Tally credits
       vm.forEach((voterVotes, vi)=>{
-        voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += creds; });
+        const repMult = 0.7 + ((agentStates[vi]?.reputation || 50) / 100) * 0.6;
+        voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += Math.round(creds * repMult); });
       });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
-        // deduct credits from agents
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       }, 3500/speed);
-      addLog(`Voting complete. Credits tallied.`,'rs', 4200);
+      addLog(`Voting complete. Credits tallied (reputation-weighted).`,'rs', 4200);
       setProgress(80);
       return 5000;
     },
     // Phase 4: Evolution
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(1);
       setProgress(85);
       const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner = sorted[0];
@@ -1525,7 +3387,6 @@ const PHASE_SCRIPTS = [
       addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification.`,'',1700);
       addLog(`<b>Forward Intelligence generated.</b> Cycle 1 report written to shared knowledge database.`,'rs',2100);
       setProgress(100);
-      // Update reputations
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){ agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete'); }});
       evolveAgentGenomes(1, sorted);
       generateAndStoreReport(1, sorted);
@@ -1536,10 +3397,10 @@ const PHASE_SCRIPTS = [
   // ── CYCLE 2 ──
   [
     // Phase 0
-    ()=>{
+    async ()=>{
       setProgress(5);
       const r1 = cycleReports[0];
-      const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
+      const winnerName = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
       const winnerAgent = r1 ? r1.winner.agentName : agentStates[1].name;
       const fi = r1 ? r1.trendData.fi : [
         'Minimal/negative-space outperformed ornate by 2.4× in vote conversion',
@@ -1561,27 +3422,35 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi[2]}`, 'rp', 1350);
       addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
 
-      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', 2000);
-      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', 2500);
-      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', 2900);
-      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', 3300);
-      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', 3700);
-      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', 4500);
+      const d2 = logAgentBios(1700);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveCrossPollination(2, d2);
+      }
+      // Sim mode fallback
+      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', d2);
+      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', d2+500);
+      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', d2+900);
+      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', d2+1300);
+      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', d2+1700);
+      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Blackened Gold Thorn Sculpt' : 'Blackened Gold Thorn Sculpt'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', d2+2100);
+      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', d2+2500);
       setProgress(20);
-      return 4800;
+      return d2+2800;
     },
     // Phase 1
-    ()=>{
+    async ()=>{
       setProgress(25);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveSynthesis(2);
+      }
       agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
       const r1 = cycleReports[0];
-      const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
+      const winnerName = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
       const winnerCat  = r1 ? r1.winner.cat  : 'Earrings';
       const topStyle   = r1 ? r1.trendData.emerging[0] : 'minimal';
       const satCat     = r1 ? r1.trendData.saturation  : 'Ring (50% of pool)';
       const treasury   = r1 ? r1.trendData.treasury    : 'Platinum + bezel setting';
-      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Thorn Band' : 'Thorn Band';
+      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Blackened Gold Thorn Sculpt' : 'Blackened Gold Thorn Sculpt';
 
       addLog(`Synthesis: agents cross-reference Cycle 1 Intelligence Report + personal genome.`,'',200);
       addLog(`<b>Report insight driving C2 blueprints:</b> Winner "${winnerName}" (${winnerCat}) · Top style: ${topStyle} · Saturation: ${satCat}`,'rp',400);
@@ -1597,7 +3466,8 @@ const PHASE_SCRIPTS = [
       return 3600;
     },
     // Phase 2
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(2);
       setProgress(45);
       document.getElementById('designs-wrap').style.display='block';
       activeDesigns = CYCLE_DESIGNS[1].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
@@ -1612,7 +3482,8 @@ const PHASE_SCRIPTS = [
       return 4000;
     },
     // Phase 3
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(2);
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
       addLog(`Voting phase. Agents apply C1 learned preferences.`,'',100);
@@ -1625,7 +3496,7 @@ const PHASE_SCRIPTS = [
           addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500);
         }
       });
-      vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      vm.forEach((vv,vi)=>{ const repMult=0.7+((agentStates[vi]?.reputation||50)/100)*0.6; vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=Math.round(c*repMult); }); });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
@@ -1635,13 +3506,14 @@ const PHASE_SCRIPTS = [
       return 5000;
     },
     // Phase 4
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(2);
       setProgress(85);
       const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner=sorted[0]; const loser=sorted[sorted.length-1];
       addLog(`Ranking applied. Evolution phase executing.`,'',200);
       const r1ref = cycleReports[0];
-      const prevWinnerName = r1ref ? r1ref.winner.name : 'Orbit Drop';
+      const prevWinnerName = r1ref ? r1ref.winner.name : 'Floating Geometric Circle Drop';
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`,'rs',500);
       addLog(`2nd consecutive minimal win — C1: "${prevWinnerName}" · C2: "${winner.name}". Pattern confirmed; exploitation phase in full effect.`,'rp',700);
@@ -1660,12 +3532,12 @@ const PHASE_SCRIPTS = [
   // ── CYCLE 3 ──
   [
     // Phase 0
-    ()=>{
+    async ()=>{
       setProgress(5);
       const r1 = cycleReports[0];
       const r2 = cycleReports[1];
-      const w1 = r1 ? r1.winner.name : 'Orbit Drop';
-      const w2 = r2 ? r2.winner.name : 'Cathedral Void';
+      const w1 = r1 ? r1.winner.name : 'Floating Geometric Circle Drop';
+      const w2 = r2 ? r2.winner.name : 'Marquise Cathedral Arch';
       const fi1last = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'High-novelty designs received more votes';
       const sat2 = r2 ? r2.trendData.saturation : 'Ring (67% of pool)';
       const fi2 = r2 ? r2.trendData.fi : ['Organic/sculptural space unexplored'];
@@ -1676,19 +3548,28 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi2[0]}`, 'rp', 1050);
       addLog(`◆ ${fi2[1] || fi1last}`, 'rp', 1200);
       addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
-      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', 1900);
-      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', 2400);
-      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', 2900);
-      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Forge Shard, mixed metal with irregular natural form."`, 'cv', 3300);
-      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Bloom Fragment pendant, champagne pearl cluster, organic form."`, 'cv', 3700);
-      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', 4500);
+
+      const d3 = logAgentBios(1500);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveCrossPollination(3, d3);
+      }
+      // Sim mode fallback
+      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Bezel Groove Negative-Space' : 'Bezel Groove Negative-Space'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', d3);
+      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', d3+500);
+      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', d3+1000);
+      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Gold Shard in Platinum — mixed metal with irregular natural form."`, 'cv', d3+1400);
+      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Champagne Pearl Cluster pendant, organic flowing form."`, 'cv', d3+1800);
+      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', d3+2200);
+      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', d3+2600);
       setProgress(20);
-      return 4800;
+      return d3+2900;
     },
     // Phase 1
-    ()=>{
+    async ()=>{
       setProgress(25);
+      if (simMode === 'live' && apiKeys.anthropic) {
+        return await runLiveSynthesis(3);
+      }
       agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
       addLog(`Synthesis: 2-cycle compound data + genome informing blueprints.`,'',200);
       addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum emerald-cut · Extreme negative space cathedral · Cycle 2 winner refinement · Margin: 68%`,'',500);
@@ -1703,10 +3584,10 @@ const PHASE_SCRIPTS = [
       return 3300;
     },
     // Phase 2
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveGeneration(3);
       setProgress(45);
       document.getElementById('designs-wrap').style.display='block';
-      // Remap designs: agentIdx 4 in C3 = Léa Fontaine (id 5), agentIdx 5 = Asha Noor (id 4)
       activeDesigns = CYCLE_DESIGNS[2].map((d,i)=>({...d, credits:0, agentName: agentStates[d.agentIdx]?.name || (i===0?agentStates[0].name:'Agent')}));
       addLog(`Generation phase. Highest design diversity in 3 cycles.`,'',100);
       agentStates.forEach(a=>setAgentStatus(a.id,'Rendering…'));
@@ -1714,15 +3595,16 @@ const PHASE_SCRIPTS = [
         addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · ${d.strategy.toUpperCase()}`,'ds',300+i*500);
         setTimeout(()=>renderDesignCard(d,i),(400+i*500)/speed);
       });
-      addLog(`Pool locked. Most diverse cycle pool yet — category and style spread highest across epoch.`,'rs',3500);
+      addLog(`Pool locked. Most diverse cycle pool yet.`,'rs',3500);
       setProgress(60);
       return 4000;
     },
     // Phase 3
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveVoting(3);
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting: agents apply 2-cycle learned preferences. Saturation penalty active on minimal cluster.`,'',100);
+      addLog(`Voting: agents apply 2-cycle learned preferences.`,'',100);
       const vm=VOTE_MATRICES[2];
       vm.forEach((voterVotes,vi)=>{
         const voter=agentStates[vi];
@@ -1730,32 +3612,31 @@ const PHASE_SCRIPTS = [
         if(top2.length){ const msg=top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
         addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500); }
       });
-      vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      vm.forEach((vv,vi)=>{ const repMult=0.7+((agentStates[vi]?.reputation||50)/100)*0.6; vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=Math.round(c*repMult); }); });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       },3500/speed);
-      addLog(`Saturation penalty applied: minimal cluster vote-weight discounted 18%.`,'',4500);
       addLog(`Voting complete.`,'rs',5000);
       setProgress(80);
       return 5500;
     },
     // Phase 4
-    ()=>{
+    async ()=>{
+      if (simMode === 'live' && apiKeys.anthropic) return await runLiveEvolution(3);
       setProgress(85);
       const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner=sorted[0];
       addLog(`Ranking applied. Epoch-level evolution processing.`,'',200);
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Epoch breakout design. Treasury Elevation confirmed.`,'rs',500);
-      addLog(`<b>Epoch conclusion:</b> Minimal trend emerged (C1), peaked and exploited (C2), then saturated — organic/sculptural emerged as its replacement (C3).`,'rs',1000);
-      addLog(`Agents who detected the saturation early and pivoted (${agentStates[5].name}, ${agentStates[3].name}) gained the most reputation.`,'',1500);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Epoch breakout design.`,'rs',500);
+      addLog(`<b>Epoch conclusion:</b> 3-cycle trend lifecycle complete.`,'rs',1000);
       addLog(`Epoch complete. Full 3-cycle intelligence archive compiled.`,'rs',2000);
       setProgress(100);
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?12:rank===1?5:rank===2?2:-4)); setAgentStatus(agent.id,rank===0?'🏆 Epoch Winner':'Epoch complete');}});
       evolveAgentGenomes(3, sorted);
       generateAndStoreReport(3, sorted);
-      document.getElementById('nav-epoch-txt').textContent = '3 / 3';
+      document.getElementById('nav-epoch-txt').textContent = '3 / 3'; (function(){const ef=document.getElementById('nav-epoch-fill'); if(ef) ef.style.width='100%';})();
       return 2800;
     },
   ],
@@ -1783,10 +3664,12 @@ function renderDesignCard(d, i) {
     </div>
     <div class="dcard-body">
       <div class="dname">${d.name}</div>
-      <div class="dagent">${d.agentName}</div>
+      <div class="dagent">${agentStates[d.agentIdx]?.avatarDataUrl ? '<img src="'+agentStates[d.agentIdx].avatarDataUrl+'" class="agent-avatar-sm" />' : ''} ${d.agentName}</div>
       <div class="dbar"><span class="dbar-l">AES</span><div class="dbar-t"><div class="dbar-f" id="dbf-aes-${i}" style="width:0%"></div></div></div>
       <div class="dbar"><span class="dbar-l">NOV</span><div class="dbar-t"><div class="dbar-f" id="dbf-nov-${i}" style="width:0%"></div></div></div>
       <div class="dbar"><span class="dbar-l">PRO</span><div class="dbar-t"><div class="dbar-f" id="dbf-pro-${i}" style="width:0%"></div></div></div>
+      <div class="dbar"><span class="dbar-l">WER</span><div class="dbar-t"><div class="dbar-f" id="dbf-wer-${i}" style="width:0%"></div></div></div>
+      <div class="dbar"><span class="dbar-l">MFG</span><div class="dbar-t"><div class="dbar-f" id="dbf-mfg-${i}" style="width:0%"></div></div></div>
       <div class="dcred" id="dc-cred-${i}">—</div>
     </div>`;
   grid.appendChild(card);
@@ -1800,9 +3683,13 @@ function renderDesignCard(d, i) {
     const a = document.getElementById('dbf-aes-'+i);
     const n = document.getElementById('dbf-nov-'+i);
     const p = document.getElementById('dbf-pro-'+i);
+    const w = document.getElementById('dbf-wer-'+i);
+    const m = document.getElementById('dbf-mfg-'+i);
     if (a) a.style.width = d.aesthetic+'%';
     if (n) n.style.width = d.novelty+'%';
     if (p) p.style.width = d.profit+'%';
+    if (w) w.style.width = (d.wearability||50)+'%';
+    if (m) m.style.width = (d.makeable||50)+'%';
   }, 80);
 
   // Attach image events via JS — avoids emoji/quote issues in HTML attributes
@@ -1826,49 +3713,110 @@ function renderDesignCard(d, i) {
     }
   };
 
+  let retried = false;
+  const retryOnce = () => {
+    if (retried) { showError(); return; }
+    retried = true;
+    const pEl = document.getElementById(pctId);
+    if (pEl) pEl.textContent = 'Retrying…';
+    // Retry via queue to respect rate limits
+    const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+    queueImageLoad(() => { img.src = makeImgUrlFree(shortPrompt, seed + 1); });
+  };
+
   img.onload = () => {
     img.classList.add('loaded');
     if (loader) loader.classList.add('hidden');
+    // Store the resolved image URL for reuse in gallery/reports
+    const cacheKey = currentCycle + '-' + d.agentIdx;
+    d.imageUrl = img.src;
+    if (activeDesigns[i]) activeDesigns[i].imageUrl = img.src;
+    _designImageCache[cacheKey] = img.src;
   };
-  img.onerror = showError;
+  img.onerror = retryOnce;
 
-  // 50 second timeout — if still loading, show error state
-  const timeout = setTimeout(showError, 50000);
+  // 30 second timeout — if still loading, retry then error
+  const timeout = setTimeout(() => {
+    if (!img.classList.contains('loaded')) retryOnce();
+  }, 30000);
   img.addEventListener('load',  () => clearTimeout(timeout), {once:true});
-  img.addEventListener('error', () => clearTimeout(timeout), {once:true});
 
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Set src AFTER attaching events — use Higgsfield if available
+  // Queue image load — 3 second spacing via centralized queue
   if (apiKeys.higgsfield) {
-    resolveImgUrl(d.prompt, seed).then(url => { img.src = url; }).catch(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+    queueImageLoad(() => {
+      resolveImgUrl(d.prompt, seed).then(url => { img.src = url; }).catch(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+    });
   } else {
-    img.src = makeImgUrlFree(d.prompt, seed);
+    queueImageLoad(() => { img.src = makeImgUrlFree(d.prompt, seed); });
   }
 }
 
 function cardImgProgress(pctId, loaderId) {
   let pct = 0;
+  let phase = 'fast'; // fast 0-80, slow 80-95, waiting 95+
   const interval = setInterval(()=>{
     if (!document.getElementById(pctId)) { clearInterval(interval); return; }
     const loader = document.getElementById(loaderId);
     if (loader && loader.classList.contains('hidden')) { clearInterval(interval); return; }
-    pct = Math.min(pct + Math.floor(Math.random()*6+2), 94);
     const el = document.getElementById(pctId);
-    if (el) el.textContent = pct+'%';
-    if (pct >= 94) clearInterval(interval);
-  }, 350);
+    if (!el) { clearInterval(interval); return; }
+    // Skip if showing "Retrying…" text
+    if (el.textContent === 'Retrying…') return;
+    if (pct < 80) {
+      pct = Math.min(pct + Math.floor(Math.random()*8+3), 80);
+    } else if (pct < 95) {
+      pct = Math.min(pct + Math.floor(Math.random()*2+1), 95);
+    } else {
+      // Pulse between 95-98 to show still waiting
+      pct = 95 + Math.floor(Math.random()*4);
+    }
+    el.textContent = pct+'%';
+  }, 500);
 }
 
 /* ══════════════════════════════════
    IMAGE GENERATION
 ══════════════════════════════════ */
+
+// ── Centralized Image Queue ──
+// All image API requests go through this queue.
+// One request fires every 3 seconds to avoid rate limits.
+const IMG_QUEUE_INTERVAL = 3000; // ms between image requests
+const _imgQueue = [];
+let _imgQueueRunning = false;
+// Global image cache: stores resolved URLs keyed by "cycle-agentIdx"
+// so gallery and report views can reuse without re-generating
+const _designImageCache = {};
+
+function _drainImgQueue() {
+  if (_imgQueue.length === 0) { _imgQueueRunning = false; return; }
+  _imgQueueRunning = true;
+  const job = _imgQueue.shift();
+  job();
+  setTimeout(_drainImgQueue, IMG_QUEUE_INTERVAL);
+}
+
+function queueImageLoad(fn) {
+  _imgQueue.push(fn);
+  if (!_imgQueueRunning) {
+    _imgQueueRunning = true;
+    // Fire first immediately, then pace subsequent
+    const first = _imgQueue.shift();
+    first();
+    if (_imgQueue.length > 0) setTimeout(_drainImgQueue, IMG_QUEUE_INTERVAL);
+    else _imgQueueRunning = false;
+  }
+}
+
 // Free fallback via Pollinations
 function makeImgUrlFree(prompt, seed) {
-  const base = prompt.slice(0, 200);
-  const full = `fine jewelry, ${base}, studio lighting, photorealistic`;
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=400&height=400&nologo=true&seed=${seed}&model=flux&enhance=false`;
+  // Keep prompt short to avoid URL length issues and improve generation speed
+  const base = prompt.slice(0, 140).replace(/[^\w\s,.'-]/g, '');
+  const full = `fine jewelry, ${base}, studio lighting, photorealistic, white background`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=512&height=512&seed=${seed}&model=flux`;
 }
 
 // Higgsfield SOUL text-to-image (async — returns image URL or null)
@@ -1901,11 +3849,6 @@ async function higgsFieldGenerate(prompt) {
   return null;
 }
 
-// Unified: tries Higgsfield first, falls back to free tier
-function makeImgUrl(prompt, seed) {
-  return makeImgUrlFree(prompt, seed);
-}
-
 // Async version used by gallery builder when Higgsfield key is present
 async function resolveImgUrl(prompt, seed) {
   if (apiKeys.higgsfield) {
@@ -1936,7 +3879,7 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
       <div class="top3-meta">
         <div class="top3-rank ${rankClass[i]}">${ranks[i]}</div>
         <div class="top3-name">"${d.name}"</div>
-        <div class="top3-by">by ${d.agentName||'Agent'}</div>
+        <div class="top3-by">${agentStates[d.agentIdx]?.avatarDataUrl ? '<img src="'+agentStates[d.agentIdx].avatarDataUrl+'" class="agent-avatar-sm" />' : ''} by ${d.agentName||'Agent'}</div>
         <div class="top3-creds">${(d.credits||0).toLocaleString()} ⬡</div>
         <div class="top3-creds-lbl">Forge Credits</div>
         <span class="top3-strat ${stratColors[d.strategy]||'strat-explore'}">${(d.strategy||'explore').toUpperCase()}</span>
@@ -1944,39 +3887,61 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
     </div>`).join('');
 
   // Attach events and set src via DOM after render
+  // Reuse already-generated image URLs from design cards — no new API calls
   top3.forEach((d, i) => {
     const gemEl = document.getElementById(`gem-${containerId}-${i}`);
     if (gemEl) gemEl.textContent = d.emoji;
 
     const img    = document.getElementById(`img-${containerId}-${i}`);
     const loader = document.getElementById(`loader-${containerId}-${i}`);
-    const seed   = (d.agentIdx * 1000 + currentCycle * 100 + i * 17 + 42) | 0;
 
-    const showFallback = () => {
-      if (loader) {
-        loader.classList.remove('hidden');
-        loader.innerHTML = `<div style="font-size:2.5rem;text-align:center">${d.emoji}</div><div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem">Image unavailable</div>`;
-      }
-      checkAllImagesLoaded(containerId);
-    };
+    if (!img) return;
 
-    if (img) {
+    // If the image was already generated during the design card phase, reuse it
+    const cachedUrl = d.imageUrl || _designImageCache[currentCycle + '-' + d.agentIdx];
+    if (cachedUrl) {
       img.onload = () => {
         img.classList.add('loaded');
         if (loader) loader.classList.add('hidden');
         checkAllImagesLoaded(containerId);
       };
-      img.onerror = showFallback;
-      setTimeout(showFallback, 50000); // timeout fallback
-      // Use Higgsfield if key present, else free tier
-      if (apiKeys.higgsfield) {
-        resolveImgUrl(d.prompt, seed).then(url => { if (img) img.src = url; }).catch(()=> { img.src = makeImgUrlFree(d.prompt, seed); });
-      } else {
-        img.src = makeImgUrlFree(d.prompt, seed);
-      }
+      img.onerror = () => {
+        // Cached URL failed (unlikely) — show fallback
+        if (loader) {
+          loader.classList.remove('hidden');
+          loader.innerHTML = `<div style="font-size:2.5rem;text-align:center">${d.emoji}</div><div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem">Image unavailable</div>`;
+        }
+        checkAllImagesLoaded(containerId);
+      };
+      img.src = cachedUrl;
+    } else {
+      // No cached URL — fallback to generating (shouldn't happen in normal flow)
+      const seed = (d.agentIdx * 1000 + currentCycle * 100 + i * 17 + 42) | 0;
+      const showFallback = () => {
+        if (loader) {
+          loader.classList.remove('hidden');
+          loader.innerHTML = `<div style="font-size:2.5rem;text-align:center">${d.emoji}</div><div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem">Image unavailable</div>`;
+        }
+        checkAllImagesLoaded(containerId);
+      };
+      let retried = false;
+      img.onload = () => {
+        img.classList.add('loaded');
+        if (loader) loader.classList.add('hidden');
+        d.imageUrl = img.src;
+        _designImageCache[currentCycle + '-' + d.agentIdx] = img.src;
+        checkAllImagesLoaded(containerId);
+      };
+      img.onerror = () => {
+        if (!retried) {
+          retried = true;
+          const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+          queueImageLoad(() => { img.src = makeImgUrlFree(shortPrompt, seed + 1); });
+        } else { showFallback(); }
+      };
+      queueImageLoad(() => { img.src = makeImgUrlFree(d.prompt, seed); });
+      animateProgress(containerId, i);
     }
-
-    animateProgress(containerId, i);
   });
 }
 
@@ -1984,10 +3949,19 @@ function animateProgress(prefix, i) {
   let pct = 0;
   const el = document.getElementById(`pct-${prefix}-${i}`);
   const interval = setInterval(() => {
-    pct = Math.min(pct + Math.floor(Math.random() * 8 + 2), 95);
-    if (el) el.textContent = pct + '%';
-    if (pct >= 95) clearInterval(interval);
-  }, 400);
+    if (!el) { clearInterval(interval); return; }
+    if (el.textContent === 'Retrying…') return;
+    const loaderEl = document.getElementById(`loader-${prefix}-${i}`);
+    if (loaderEl && loaderEl.classList.contains('hidden')) { clearInterval(interval); return; }
+    if (pct < 80) {
+      pct = Math.min(pct + Math.floor(Math.random()*8+3), 80);
+    } else if (pct < 95) {
+      pct = Math.min(pct + Math.floor(Math.random()*2+1), 95);
+    } else {
+      pct = 95 + Math.floor(Math.random()*4);
+    }
+    el.textContent = pct + '%';
+  }, 500);
 }
 
 function onImgLoad(prefix, i) {
@@ -2092,7 +4066,7 @@ function pct(v, tot) { return tot ? Math.round(v/tot*100) : 0; }
    REPORT GENERATION
 ══════════════════════════════════ */
 function generateAndStoreReport(cycleNum, sortedDesigns) {
-  const voteMatrix = VOTE_MATRICES[cycleNum-1];
+  const voteMatrix = (simMode === 'live' && window._liveVoteMatrix) ? window._liveVoteMatrix : VOTE_MATRICES[cycleNum-1];
   const designs = activeDesigns.map((d,i)=>({
     ...d,
     rank: sortedDesigns.findIndex(s=>s.idx===i)+1,
@@ -2153,6 +4127,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
       reputation: a.reputation,
       repDelta: a.reputation - prevRep,
       strategy: myDesign?.strategy || '—',
+      cat: myDesign?.cat || '—',
       rank: myDesign?.rank || 7,
       designName: myDesign?.name || '—',
       isUser: a.isUser || false
@@ -2176,51 +4151,66 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     if(topI===topJ && vi[topI]>0) { const shared=vi[topI]+vj[topJ]; if(shared>maxAlign){ maxAlign=shared; alignPair=[agentStates[i].name,agentStates[j].name]; } }
   }
 
-  // ── Hardcoded trend narratives (could be ML-generated) ──
-  const trendData = [
-    {
-      emerging:['minimal','negative-space','platinum-bezel'],
-      declining:['ornate-pavé','traditional-solitaire'],
-      saturation:'Ring (50% of pool)',
-      treasury:'Platinum + bezel setting',
-      velocityScore: 72, // how fast is the top trend moving
-      fi:[
-        `Minimal/negative-space outperformed ornate by ${(corrAes*2.4).toFixed(1)}× in vote conversion — aesthetic score was the #1 predictor (r=${corrAes})`,
-        `Ring category over-saturated at 50% of pool — agents should diversify into earrings and pendants next cycle`,
-        `Platinum + bezel setting scored highest combined aesthetic (${sortedDesigns[0].aesthetic}/100) and profit margin`,
-        `"${sortedDesigns[0].name}" micro-trend (floating geometric, minimal air) identified as emerging cluster — ${winnerShare}% vote capture`,
-        `High-novelty designs (>75) earned ${novSlope>0?'+'+novSlope:novSlope}⬡ per novelty point above average — novelty premium confirmed`,
-      ]
-    },
-    {
-      emerging:['architectural','open-structural','yellow-gold'],
-      declining:['classic-pavé-halo','heavy-pavé'],
-      saturation:'Ring (67% of pool)',
-      treasury:'Architectural shank + yellow gold accent',
-      velocityScore: 61,
-      fi:[
-        `Architectural minimal dominant for 2 consecutive cycles — exploitation phase, diminishing novelty premium (${novSlope>0?'+':''  }${novSlope}⬡/novelty pt)`,
-        `Ring saturation critical at 67% — treasury issuing category diversification incentives for Cycle 3`,
-        `Yellow gold gaining share vs. white gold/platinum in pendant and bracelet categories`,
-        `Organic/sculptural space entirely unexplored across 12 submitted designs — maximum opportunity gap`,
-        `Vote concentration at Gini ${gini} — ${gini>0.35?'high concentration: consensus forming around clear winners':'distributed: no runaway leader, competitive field'}`,
-      ]
-    },
-    {
-      emerging:['organic-sculptural','root-form','natural-geometry'],
-      declining:['flat-minimal','basic-negative-space'],
-      saturation:'Minimal cluster (62% of pool)',
-      treasury:'Organic 18k gold + diamond accent nodes',
-      velocityScore: 88,
-      fi:[
-        `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of all credits despite ${sortedDesigns[0].profit}/100 profit score — aesthetic novelty overrode margin`,
-        `Trend lifecycle confirmed over 3 cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
-        `Novelty score became dominant predictor this cycle (r=${corrNov}) — market rewarding freshness over safety`,
-        `Saturation penalty effective: minimal cluster received 18% fewer credits per novelty point than prior cycle`,
-        `Treasury recommendation: organic sculptural 18k gold for physical production — highest aesthetic + highest novelty + breakout vote share`,
-      ]
-    }
-  ][cycleNum-1];
+  // ── Trend narratives: Claude-generated in live mode, fallback in sim mode ──
+  let trendData;
+  if (simMode === 'live' && window._liveTrend) {
+    // Use Claude-generated trend analysis from runLiveEvolution
+    const lt = window._liveTrend;
+    trendData = {
+      emerging: lt.emerging || ['emerging-style'],
+      declining: lt.declining || ['declining-style'],
+      saturation: lt.saturation || 'Unknown',
+      treasury: lt.treasury || 'Unknown',
+      velocityScore: lt.velocityScore || 70,
+      fi: lt.fi || [`Cycle ${cycleNum} trend analysis generated by Claude based on live agent performance data.`]
+    };
+  } else {
+    // Sim-mode fallback
+    trendData = [
+      {
+        emerging:['minimal','negative-space','platinum-bezel'],
+        declining:['ornate-pavé','traditional-solitaire'],
+        saturation:'Ring (50% of pool)',
+        treasury:'Platinum + bezel setting',
+        velocityScore: 72,
+        fi:[
+          `Minimal/negative-space outperformed ornate by ${(corrAes*2.4).toFixed(1)}× in vote conversion — aesthetic score was the #1 predictor (r=${corrAes})`,
+          `Ring category over-saturated at 50% of pool — agents should diversify into earrings and pendants next cycle`,
+          `Platinum + bezel setting scored highest combined aesthetic (${sortedDesigns[0].aesthetic}/100) and profit margin`,
+          `"${sortedDesigns[0].name}" micro-trend identified as emerging cluster — ${winnerShare}% vote capture`,
+          `High-novelty designs (>75) earned ${novSlope>0?'+'+novSlope:novSlope}⬡ per novelty point above average — novelty premium confirmed`,
+        ]
+      },
+      {
+        emerging:['architectural','open-structural','yellow-gold'],
+        declining:['classic-pavé-halo','heavy-pavé'],
+        saturation:'Ring (67% of pool)',
+        treasury:'Architectural shank + yellow gold accent',
+        velocityScore: 61,
+        fi:[
+          `Architectural minimal dominant for 2 consecutive cycles — exploitation phase, diminishing novelty premium (${novSlope>0?'+':''}${novSlope}⬡/novelty pt)`,
+          `Ring saturation critical at 67% — treasury issuing category diversification incentives for Cycle 3`,
+          `Yellow gold gaining share vs. white gold/platinum in pendant and bracelet categories`,
+          `Organic/sculptural space entirely unexplored across 12 submitted designs — maximum opportunity gap`,
+          `Vote concentration at Gini ${gini} — ${gini>0.35?'high concentration: consensus forming around clear winners':'distributed: no runaway leader, competitive field'}`,
+        ]
+      },
+      {
+        emerging:['organic-sculptural','root-form','natural-geometry'],
+        declining:['flat-minimal','basic-negative-space'],
+        saturation:'Minimal cluster (62% of pool)',
+        treasury:'Organic 18k gold + diamond accent nodes',
+        velocityScore: 88,
+        fi:[
+          `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of all credits despite ${sortedDesigns[0].profit}/100 profit score — aesthetic novelty overrode margin`,
+          `Trend lifecycle confirmed over 3 cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
+          `Novelty score became dominant predictor this cycle (r=${corrNov}) — market rewarding freshness over safety`,
+          `Saturation penalty effective: minimal cluster received 18% fewer credits per novelty point than prior cycle`,
+          `Treasury recommendation: organic sculptural 18k gold for physical production — highest aesthetic + highest novelty + breakout vote share`,
+        ]
+      }
+    ][cycleNum-1];
+  }
 
   // ── Genome evolution data ──
   const beforeSnap = genomeSnapshots[cycleNum - 1] || [];
@@ -2263,6 +4253,87 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
   };
 
   cycleReports.push(report);
+
+  // ── Claude-Flow Post-Cycle Updates (zero API cost) ──
+
+  // 1. Pattern Memory Bank — store all designs with outcome data
+  designs.forEach(d => {
+    const agentForDesign = agentStates[d.agentIdx];
+    patternBank.push({
+      cycle: cycleNum,
+      name: d.name,
+      category: d.cat,
+      strategy: d.strategy,
+      materials: d.materials || '',
+      form: d.formConcept || '',
+      production: d.production || '',
+      targetCustomer: d.targetCustomer || '',
+      aesthetic: d.aesthetic,
+      novelty: d.novelty,
+      profit: d.profit,
+      wearability: d.wearability || 0,
+      makeable: d.makeable || 0,
+      credits: d.credits,
+      rank: d.rank,
+      reasoning: d.strategicReasoning || '',
+      emergingTrends: trendData?.emerging || [],
+      genomeTraits: agentForDesign ? {
+        novelty: agentForDesign.novelty, marketFit: agentForDesign.marketFit,
+        risk: agentForDesign.risk, platBias: agentForDesign.platBias,
+        manufacturability: agentForDesign.manufacturability ?? 60,
+        wearability: agentForDesign.wearability ?? 65
+      } : {},
+      confidence: d.rank <= 1 ? 1.0 : d.rank <= 3 ? 0.7 : 0.4
+    });
+  });
+  // Confidence decay/reinforcement for existing patterns
+  const topStrategies = new Set(designs.filter(d => d.rank <= 3).map(d => d.strategy + '|' + d.cat));
+  const bottomStrategies = new Set(designs.filter(d => d.rank > 3).map(d => d.strategy + '|' + d.cat));
+  patternBank.forEach(p => {
+    if (p.cycle < cycleNum) {
+      const key = p.strategy + '|' + p.category;
+      if (bottomStrategies.has(key)) p.confidence = Math.max(0.1, p.confidence * 0.8);
+      if (topStrategies.has(key)) p.confidence = Math.min(1.0, p.confidence * 1.1);
+    }
+  });
+
+  // 2. Q-Learning Router — update strategy×category rewards
+  const alpha = Math.max(0.4, 0.7 - (cycleNum - 1) * 0.15); // decaying learning rate
+  designs.forEach(d => {
+    const strat = d.strategy;
+    const cat = d.cat;
+    if (qTable[strat] && qTable[strat][cat]) {
+      const q = qTable[strat][cat];
+      q.avgCredits = q.avgCredits + alpha * (d.credits - q.avgCredits);
+      q.totalCredits += d.credits;
+      q.count++;
+      q.lastCycle = cycleNum;
+    }
+  });
+
+  // 3. Rationale Persistence — finalize with actual outcomes
+  const cycleRationales = window._cycleRationales || [];
+  cycleRationales.forEach(r => {
+    if (r.cycle === cycleNum) {
+      const myDesign = designs.find(d => d.agentIdx === r.agentIdx);
+      r.actualRank = myDesign?.rank || 7;
+      r.creditsEarned = myDesign?.credits || 0;
+      r.designName = myDesign?.name || '—';
+      // Prediction accuracy: did their strategy+category choice perform above average?
+      const avgCredits = totalCredits / designs.length;
+      r.predictionAccuracy = (myDesign?.credits || 0) >= avgCredits ? 1.0 : (myDesign?.credits || 0) / avgCredits;
+      // Did their top vote pick the winner?
+      if (r.topVoteIdx !== undefined) {
+        r.votedForWinner = r.topVoteIdx === sortedDesigns[0].idx;
+      }
+      rationaleStore.push(r);
+    }
+  });
+  window._cycleRationales = [];
+
+  // 4. EWC Trait Tracker — compute genome↔outcome correlations
+  computeTraitEffectiveness(cycleNum, sortedDesigns);
+
   updateReportsNav();
 }
 
@@ -2317,9 +4388,12 @@ function buildGenomeEvolutionHtml(r) {
       ? '<span class="gc-result-badge loss">LAST</span>'
       : '';
 
+    const gcAvatar = agentStates[ag.id]?.avatarDataUrl
+      ? `<img src="${agentStates[ag.id].avatarDataUrl}" class="agent-avatar-genome" />`
+      : `<span class="gc-emoji">${ag.emoji}</span>`;
     return `<div class="genome-card">
       <div class="genome-card-hdr">
-        <span class="gc-emoji">${ag.emoji}</span>
+        ${gcAvatar}
         <span class="gc-name">${ag.name}</span>
         ${rankBadge}
       </div>
@@ -2486,7 +4560,7 @@ function viewReport(cycleNum) {
       <tbody>${sortedAgents.map((a,i)=>`
         <tr>
           <td class="rank-num ${i===0?'r1':''}">${i+1}</td>
-          <td>${a.emoji||''} ${a.name}${a.isUser?'<span class="you-badge">YOU</span>':''}</td>
+          <td>${(agentStates[a.id]?.avatarDataUrl) ? '<img src="'+agentStates[a.id].avatarDataUrl+'" class="agent-avatar-sm" />' : (a.emoji||'')} ${a.name}${a.isUser?'<span class="you-badge">YOU</span>':''}</td>
           <td style="font-style:italic;color:var(--txt)">"${a.designName}"</td>
           <td><span class="strat-badge strat-${a.strategy}">${a.strategy.toUpperCase()}</span></td>
           <td class="gold" style="color:${i===0?'var(--gold)':'var(--dim)'}">${fmtC(a.earned)}⬡</td>
@@ -2516,7 +4590,7 @@ function viewReport(cycleNum) {
         const biggestIdx = voteData.indexOf(Math.max(...voteData));
         const biggestName = r.designs[biggestIdx]?.name || '—';
         return `<tr>
-          <td>${voter.emoji||''} ${voter.name}</td>
+          <td>${(agentStates[vi]?.avatarDataUrl) ? '<img src="'+agentStates[vi].avatarDataUrl+'" class="agent-avatar-sm" />' : (voter.emoji||'')} ${voter.name}</td>
           <td>${allocations||'—'}</td>
           <td class="gold">${fmtC(total)}⬡</td>
           <td style="font-style:italic;color:var(--txt)">"${biggestName}"</td>
@@ -2591,14 +4665,15 @@ function viewReport(cycleNum) {
       </div>`;
   }
 
-  // ── Section 11: Image Generation Prompts ──
+  // ── Section 11: Image Generation Prompts (Raw + Claude-Refined) ──
   const promptHtml = `
     <table class="rtable">
-      <thead><tr><th style="width:160px">Design</th><th>Image Generation Prompt</th></tr></thead>
+      <thead><tr><th style="width:140px">Design</th><th>Claude-Refined Prompt</th><th style="width:30%">Raw Agent Prompt</th></tr></thead>
       <tbody>${[...r.designs].sort((a,b)=>a.rank-b.rank).map(d=>`
         <tr class="${d.rank<=3?'highlight-row':''}">
           <td><b>${d.rank===1?'🏆 ':''}#${d.rank} ${d.name}</b><br><span style="color:var(--faint);font-size:.65rem">${d.agentName||'Agent'}</span></td>
           <td><div class="prompt-box">${d.prompt}</div></td>
+          <td><div class="prompt-box" style="opacity:.6;font-size:.65rem">${d.rawPrompt||d.prompt}</div></td>
         </tr>`).join('')}
       </tbody>
     </table>`;
@@ -2668,26 +4743,45 @@ function viewReport(cycleNum) {
       </div>
 
       <div class="rsec">
-        <div class="rsec-hdr">Final Image Generation Prompts</div>
+        <div class="rsec-hdr">Image Generation Prompts (Claude-Refined)</div>
         ${promptHtml}
       </div>
     </div>`;
 
   document.getElementById('report-view-area').innerHTML = html;
 
-  // Attach image events via DOM after render
+  // Attach image events via DOM after render — reuse cached image URLs
   r.sortedDesigns.slice(0,3).forEach((d, i) => {
     const phEl  = document.getElementById(`rph-${r.cycle}-${i}`);
     const imgEl = document.getElementById(`rimg-${r.cycle}-${i}`);
     if (!imgEl) return;
     if (phEl) phEl.textContent = d.emoji;
-    const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
-    imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
-    imgEl.onerror = () => { if(imgEl) imgEl.style.display='none'; };
-    if (apiKeys.higgsfield) {
-      resolveImgUrl(d.prompt, seed).then(url => { imgEl.src = url; }).catch(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
+
+    // Reuse already-generated image URL — check design object and global cache
+    const cachedUrl = d.imageUrl || _designImageCache[r.cycle + '-' + d.agentIdx];
+    if (cachedUrl) {
+      imgEl.onload = () => { imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden'); };
+      imgEl.onerror = () => { if (imgEl) imgEl.style.display = 'none'; };
+      imgEl.src = cachedUrl;
     } else {
-      imgEl.src = makeImgUrlFree(d.prompt, seed);
+      // Fallback: generate if no cached URL (e.g. sim mode pre-scripted designs)
+      const seed = (d.agentIdx * 1000 + r.cycle * 100 + i * 17 + 42) | 0;
+      let retried = false;
+      imgEl.onload = () => {
+        imgEl.classList.add('loaded'); if(phEl) phEl.classList.add('hidden');
+        d.imageUrl = imgEl.src;
+        _designImageCache[r.cycle + '-' + d.agentIdx] = imgEl.src;
+      };
+      imgEl.onerror = () => {
+        if (!retried) {
+          retried = true;
+          const shortPrompt = (d.cat || 'jewelry') + ' ' + (d.name || 'design').slice(0, 40);
+          queueImageLoad(() => { imgEl.src = makeImgUrlFree(shortPrompt, seed + 1); });
+        } else {
+          if (imgEl) imgEl.style.display = 'none';
+        }
+      };
+      queueImageLoad(() => { imgEl.src = makeImgUrlFree(d.prompt, seed); });
     }
   });
 
@@ -2740,5 +4834,10 @@ function setSpd(s,btn){ speed=s; document.querySelectorAll('.spd-btn').forEach(b
 // Init
 updatePreview(); renderDNA();
 </script>
+<!-- Agent Profile Modal -->
+<div class="agent-modal-overlay" id="agent-modal-overlay" onclick="if(event.target===this)closeAgentModal()">
+  <div class="agent-modal" id="agent-modal"></div>
+</div>
+
 </body>
 </html>
