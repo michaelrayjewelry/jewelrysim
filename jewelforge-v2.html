@@ -379,7 +379,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="eyebrow">Agent Configuration</div>
   <h1 class="h1">Design your <em>autonomous agent.</em></h1>
   <div class="rule"></div>
-  <p class="sub">Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles — and evolve based on what it learns.</p>
+  <p class="sub">Configure identity, aesthetic biases, and risk genome. These traits shape every decision your agent makes across all 3 cycles. Agents compete to design jewelry that sells in <b>mass markets</b> — a consumer panel representing Bridal, Everyday, Gift, and Fashion-Forward segments votes alongside agents.</p>
 
   <div class="builder-grid">
     <div>
@@ -548,7 +548,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div class="eyebrow">Intelligence Archive</div>
   <h1 class="h1">Cycle <em>Intelligence Reports</em></h1>
   <div class="rule"></div>
-  <p class="sub" id="reports-sub">Reports are generated after each cycle and fed back into agent decision-making. Run cycles to populate this archive.</p>
+  <p class="sub" id="reports-sub">Reports are generated after each cycle with mass-market intelligence and fed back into agent decision-making. Agents optimize for designs that sell to mass-market consumers. Run cycles to populate this archive.</p>
 
   <div class="reports-layout">
     <div class="report-nav">
@@ -651,6 +651,42 @@ const VOTE_MATRICES = [
   // C3: Root Form (idx 4) wins
   [[2100,1800,2400,1200,3800,700],[1900,1600,2200,900,4100,500],[1700,2000,1500,800,4600,600],[2200,1400,1800,1000,3200,400],[1800,1700,2800,600,0,700],[2400,1900,2100,1100,5200,0]],
 ];
+
+/* ══════════════════════════════════
+   MASS MARKET MODEL
+   Core objective: agents optimize designs for mass-market sales
+══════════════════════════════════ */
+const MASS_MARKET_MODEL = {
+  // Consumer price sensitivity — high profit = accessible price point at retail
+  priceWeight: 0.25,
+  // Category demand share (annual jewelry market data)
+  categoryDemand: { Ring: 0.42, Earrings: 0.25, Pendant: 0.20, Bracelet: 0.13 },
+  // Style accessibility scores — how broadly each style sells at retail
+  styleAccess: {
+    minimal:0.88, geometric:0.72, floral:0.82, organic:0.65,
+    architectural:0.50, brutalist:0.20, industrial:0.28,
+    'haute-joaillerie':0.35, sculptural:0.42, 'negative-space':0.58,
+    editorial:0.45, 'avant-garde':0.18, vintage:0.78, maximalist:0.30,
+    'market-fit':0.92, 'elevated-everyday':0.90, ornate:0.55, asymmetric:0.32
+  },
+  // Novelty sweet spot for mass market (too high = niche, too low = boring)
+  noveltySweetMin: 30, noveltySweetMax: 62,
+  // Minimum margin for mass-market viability
+  minMarginTarget: 65,
+  // Aesthetic floor — mass market still requires beauty
+  aestheticFloor: 70,
+};
+
+// Consumer segments — represent actual buying populations
+const CONSUMER_SEGMENTS = [
+  { name:'Bridal',         weight:0.30, catPref:{Ring:0.80,Earrings:0.10,Pendant:0.05,Bracelet:0.05}, stylePref:['minimal','geometric','floral','vintage'],      novRange:[20,50], marginMin:70, label:'Bridal & Engagement' },
+  { name:'Everyday',       weight:0.25, catPref:{Ring:0.30,Earrings:0.35,Pendant:0.25,Bracelet:0.10}, stylePref:['minimal','organic','vintage','geometric'],      novRange:[15,45], marginMin:60, label:'Everyday Wear' },
+  { name:'Gift',           weight:0.25, catPref:{Ring:0.15,Earrings:0.30,Pendant:0.40,Bracelet:0.15}, stylePref:['floral','geometric','minimal','organic'],       novRange:[25,55], marginMin:55, label:'Gift & Occasion' },
+  { name:'Fashion-Forward',weight:0.20, catPref:{Ring:0.25,Earrings:0.25,Pendant:0.20,Bracelet:0.30}, stylePref:['architectural','sculptural','editorial','avant-garde'], novRange:[55,85], marginMin:40, label:'Fashion-Forward' },
+];
+
+// Consumer credit pool per cycle (represents mass-market demand signal)
+const CONSUMER_CREDIT_POOL = 40000;
 
 /* ══════════════════════════════════
    BUILDER UI
@@ -869,30 +905,31 @@ const PHASE_SCRIPTS = [
     // Phase 0: Cross-Pollination
     ()=>{
       setProgress(5);
-      addLog(`Cycle 1 initiated. No prior data — agents begin cold. Knowledge database empty.`,'',100);
-      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. What's your read?"`, 'cv', 400);
-      addLog(`<b>${agentStates[1].name}</b>: "Agreed. I want to push the geometry further. Floating elements, maximum air in the design."`, 'cv', 900);
-      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry positioning."`, 'cv', 1300);
-      addLog(`<b>${agentStates[4].name}</b>: "I see a bridal market gap. Planning a clean halo ring — strong commercial margins."`, 'cv', 1700);
-      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial frame bracelet. Titanium and gold mixed. Probably not winning this cycle — but I want to plant the flag."`, 'cv', 2100);
-      addLog(`<b>${agentStates[5].name}</b>: "I'm exploring organic form — thorn motif. High novelty. Let's see what consensus rewards."`, 'cv', 2500);
-      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (2800+i*100)/speed); });
-      addLog(`All 6 agents complete 10 cross-pollination interactions. Summaries stored.`, 'rs', 3300);
+      addLog(`Cycle 1 initiated. No prior data — agents begin cold. <b>Objective: optimize for mass-market sales potential.</b>`,'',100);
+      addLog(`<b>🛒 Mass-market model loaded:</b> Consumer segments active — Bridal (30%), Everyday (25%), Gift (25%), Fashion-Forward (20%).`,'rp',300);
+      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. Clean enough for the bridal segment."`, 'cv', 600);
+      addLog(`<b>${agentStates[1].name}</b>: "Agreed. Floating geometry, maximum air. The everyday and gift segments respond to accessible minimalism."`, 'cv', 1100);
+      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry, but the gift segment could absorb this."`, 'cv', 1500);
+      addLog(`<b>${agentStates[4].name}</b>: "Bridal market is 30% of consumer demand. Clean halo ring — strong margins, high mass-market fit."`, 'cv', 1900);
+      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial bracelet — low mass-market appeal, but the fashion-forward segment is underserved."`, 'cv', 2300);
+      addLog(`<b>${agentStates[5].name}</b>: "Organic thorn motif. High novelty, but I need to watch the margin — consumer panel will penalize low profit scores."`, 'cv', 2700);
+      agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (3000+i*100)/speed); });
+      addLog(`All 6 agents complete cross-pollination. Mass-market consumer demand model is the primary fitness signal.`, 'rs', 3500);
       setProgress(20);
-      return 3600;
+      return 3800;
     },
-    // Phase 1: Synthesis
+    // Phase 1: Synthesis (mass-market-aware blueprints)
     ()=>{
       setProgress(25);
       agentStates.forEach(a=>setAgentStatus(a.id,'Drafting blueprint…'));
-      addLog(`Synthesis phase: agents compile dialogues + personal genome into design blueprint.`,'',200);
-      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Platinum bezel oval · Negative space band · Complexity 6/10 · Est. margin: 66%`,'',500);
-      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>EXPLORE</b> · Earrings · Platinum geometric drop · Rose-cut accents · Complexity 5/10 · Est. margin: 71%`,'',900);
-      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLOIT</b> · Pendant · Rose gold pavé cascade · Sapphire + diamond · Complexity 8/10 · Est. margin: 68%`,'',1200);
-      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>EXPLORE</b> · Bracelet · Titanium x gold hex · Industrial · Complexity 9/10 · Est. margin: 48%`,'',1500);
-      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold pavé halo · Classic proportions · Complexity 5/10 · Est. margin: 85%`,'',1800);
-      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>EXPLORE</b> · Ring · Blackened gold thorn band · Sculptural · Complexity 7/10 · Est. margin: 44%`,'',2100);
-      addLog(`All blueprints hashed. Validation gates passed: ✓ Feasibility  ✓ Novelty  ✓ Margin`, 'rs', 2600);
+      addLog(`Synthesis: agents compile dialogues + genome into blueprints. <b>Mass-market fitness = primary objective.</b>`,'',200);
+      addLog(`<b>${agentStates[0].name}</b> — EXPLORE · Ring · Platinum bezel oval · Negative space · Margin: 66% · Target: Bridal + Everyday`,'',500);
+      addLog(`<b>${agentStates[1].name}</b> — EXPLORE · Earrings · Platinum geometric drop · Rose-cut · Margin: 71% · Target: Gift + Everyday`,'',900);
+      addLog(`<b>${agentStates[2].name}</b> — EXPLOIT · Pendant · Rose gold pavé cascade · Sapphire · Margin: 68% · Target: Gift segment`,'',1200);
+      addLog(`<b>${agentStates[3].name}</b> — EXPLORE · Bracelet · Titanium x gold hex · Industrial · Margin: 48% · ⚠ Low mass-market fit`,'',1500);
+      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold pavé halo · Classic · Margin: 85% · Target: Bridal (highest demand)`,'',1800);
+      addLog(`<b>${agentStates[5].name}</b> — EXPLORE · Ring · Blackened gold thorn · Sculptural · Margin: 44% · ⚠ Niche, fashion-forward only`,'',2100);
+      addLog(`Blueprints validated: ✓ Feasibility ✓ Novelty ✓ Margin ✓ <b>Mass-Market Fit</b>. 2 designs flagged as niche (MKT < 55).`, 'rs', 2600);
       setProgress(40);
       return 3000;
     },
@@ -911,11 +948,11 @@ const PHASE_SCRIPTS = [
       setProgress(60);
       return 4000;
     },
-    // Phase 3: Voting
+    // Phase 3: Voting (Agent votes + Consumer Panel)
     ()=>{
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting phase: each agent allocates 10,000 ⬡ across the blind pool.`,'',100);
+      addLog(`Voting phase: agents allocate 10,000 ⬡ each + <b>Consumer Panel</b> distributes ${CONSUMER_CREDIT_POOL.toLocaleString()}⬡ by mass-market appeal.`,'',100);
       const vm = VOTE_MATRICES[0];
       vm.forEach((voterVotes, vi)=>{
         const voter = agentStates[vi];
@@ -925,26 +962,32 @@ const PHASE_SCRIPTS = [
           addLog(`<b>${voter.name}</b> → ${msg}`,'vt', 400+vi*500);
         }
       });
-      // Tally credits
+      // Consumer panel votes based on mass market scores
+      const consumerVotes = computeConsumerVotes(activeDesigns);
+      const topConsumer = consumerVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,2);
+      addLog(`<b>🛒 Consumer Panel</b> (mass-market demand) → ${topConsumer.map(x=>`"${activeDesigns[x.i].name}" ${x.v.toLocaleString()}⬡`).join(', ')}`,'vt', 400+agentStates.length*500);
+      // Tally agent credits
       vm.forEach((voterVotes, vi)=>{
         voterVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += creds; });
       });
+      // Tally consumer panel credits
+      consumerVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits += creds; });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
-        // deduct credits from agents
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       }, 3500/speed);
-      addLog(`Voting complete. Credits tallied.`,'rs', 4200);
+      addLog(`Consumer panel allocated ${CONSUMER_CREDIT_POOL.toLocaleString()}⬡ — mass-market viability now weighted in final ranking.`,'rs', 4200);
+      addLog(`Voting complete. Agent + Consumer credits tallied.`,'rs', 4600);
       setProgress(80);
-      return 5000;
+      return 5500;
     },
-    // Phase 4: Evolution
+    // Phase 4: Evolution (with mass market fitness)
     ()=>{
       setProgress(85);
       const sorted = [...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner = sorted[0];
       const loser = sorted[sorted.length-1];
-      addLog(`Ranking finalized. Applying reputation shifts…`,'',200);
+      addLog(`Ranking finalized. Applying reputation shifts + mass-market fitness evaluation…`,'',200);
       setTimeout(()=>{
         const wc = document.getElementById('dc-'+winner.idx);
         if(wc){
@@ -953,16 +996,24 @@ const PHASE_SCRIPTS = [
           if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');
         }
       }, 300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Reputation +9. Treasury eligible.`,'rs', 500);
-      addLog(`📉 <b>${loser.agentName}</b> receives mutation pressure. Style genome shifts toward higher novelty.`,'',900);
+      const winMkt = winner.massMarket || computeMassMarketScore(winner);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market Score: <b>${winMkt}/100</b>. Treasury eligible.`,'rs', 500);
+      const loserMkt = loser.massMarket || computeMassMarketScore(loser);
+      addLog(`📉 <b>${loser.agentName}</b> receives mass-market mutation pressure (MKT: ${loserMkt}/100). Genome shifting toward higher commercial viability.`,'',900);
       addLog(`Trend insight: <b>Minimal/negative-space</b> aesthetic outperformed ornate by 2.4× in vote conversion.`,'rs',1300);
       addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification.`,'',1700);
-      addLog(`<b>Forward Intelligence generated.</b> Cycle 1 report written to shared knowledge database.`,'rs',2100);
+      // Apply mass market pressure to bottom-half agents
+      sorted.forEach((d,rank)=>{
+        const mkt = d.massMarket || computeMassMarketScore(d);
+        if (rank >= 3) applyMassMarketPressure(d.agentIdx, mkt);
+      });
+      const avgMkt = Math.round(sorted.reduce((s,d)=>s+(d.massMarket||computeMassMarketScore(d)),0)/sorted.length);
+      addLog(`Mass-market baseline: avg MKT score <b>${avgMkt}/100</b> — agents below 60 flagged for commercial genome shift.`,'rs',2100);
+      addLog(`<b>Forward Intelligence generated.</b> Mass-market analytics + trend data written to shared knowledge database.`,'rs',2500);
       setProgress(100);
-      // Update reputations
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){ agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete'); }});
       generateAndStoreReport(1, sorted);
-      return 2800;
+      return 3200;
     },
   ],
 
@@ -994,13 +1045,13 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi[2]}`, 'rp', 1350);
       addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
 
-      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won last cycle. I'm doubling down — same minimal direction, even more intentional negative space."`, 'cv', 2000);
-      addLog(`<b>${agentStates[0].name}</b>: "Agreed. Exploiting that trend — going deeper architectural. Cathedral-arch negative space. Marquise center."`, 'cv', 2500);
-      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Report confirms minimal wins. Pivoting my halo toward cleaner architecture — the data is clear."`, 'cv', 2900);
-      addLog(`<b>${agentStates[2].name}</b>: "I'll hold romantic. But trying yellow gold — market reports show it gaining share versus platinum."`, 'cv', 3300);
-      addLog(`<b>${agentStates[3].name}</b>: "C1 showed high novelty wasn't rewarded enough relative to margin. Mutating — keeping industrial edge but integrating minimal geometry."`, 'cv', 3700);
-      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' underperformed — low margin was the kill. Pivoting to sculptural bracelet with better margin profile."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 winning aesthetic. Saturation risk building.`, 'rs', 4500);
+      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won — consumer panel rewarded clean minimal strongly. I'm doubling down."`, 'cv', 2000);
+      addLog(`<b>${agentStates[0].name}</b>: "Consumer data confirms it. Going deeper architectural — cathedral-arch negative space. The bridal segment will love it."`, 'cv', 2500);
+      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Mass-market data is clear: clean architecture + high margin = winning formula. Pivoting my halo accordingly."`, 'cv', 2900);
+      addLog(`<b>${agentStates[2].name}</b>: "Holding romantic, but shifting to yellow gold — consumer panel data shows gift segment prefers warmer tones."`, 'cv', 3300);
+      addLog(`<b>${agentStates[3].name}</b>: "C1 consumer panel penalized my low margins. Mutating — keeping industrial edge but targeting higher mass-market viability."`, 'cv', 3700);
+      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' failed — consumer panel gave almost zero credits for low-margin niche. Must fix profit score this cycle."`, 'cv', 4100);
+      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 mass-market winning formula. Saturation risk building.`, 'rs', 4500);
       setProgress(20);
       return 4800;
     },
@@ -1016,16 +1067,16 @@ const PHASE_SCRIPTS = [
       const treasury   = r1 ? r1.trendData.treasury    : 'Platinum + bezel setting';
       const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Thorn Band' : 'Thorn Band';
 
-      addLog(`Synthesis: agents cross-reference Cycle 1 Intelligence Report + personal genome.`,'',200);
-      addLog(`<b>Report insight driving C2 blueprints:</b> Winner "${winnerName}" (${winnerCat}) · Top style: ${topStyle} · Saturation: ${satCat}`,'rp',400);
-      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum marquise · Cathedral negative-space · Exploiting "${topStyle}" trend from C1 report · Margin: 71%`,'',700);
-      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum bezel · Deep negative-space groove · C1 winner "${winnerName}" refinement · Margin: 74%`,'',1100);
-      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLOIT</b> · Pendant · Yellow gold sapphire canopy · Pivoted from saturated ring category per C1 data · Margin: 73%`,'',1500);
-      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>MUTATE</b> · Ring · Platinum/titanium arc · C1: high novelty underperformed alone — merging with ${topStyle} direction · Margin: 53%`,'',1800);
-      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold arch shank · Treasury signal: "${treasury}" · Margin: 88%`,'',2100);
-      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>MUTATE</b> · Bracelet · Silver organic bone form · C1: "${loserName}" failed on margin — this cycle prioritizing margin recovery · Margin: 50%`,'',2400);
-      addLog(`Blueprint validation: ⚠ Ring saturation at 67% (5 of 6 submissions) — C1 ring saturation flagged but agents are still converging. Incentive nudge issued.`,'',2900);
-      addLog(`All blueprints hashed and locked. C1 data successfully integrated into all agent decisions.`, 'rs', 3300);
+      addLog(`Synthesis: agents cross-reference C1 Intelligence + mass-market fitness signals.`,'',200);
+      addLog(`<b>Mass-market insight driving C2:</b> Winner "${winnerName}" (${winnerCat}) · Top consumer segment: Bridal · Saturation: ${satCat}`,'rp',400);
+      addLog(`<b>${agentStates[0].name}</b> — EXPLOIT · Ring · Platinum marquise cathedral · Exploiting "${topStyle}" trend · Margin: 71% · Target: Bridal + Everyday`,'',700);
+      addLog(`<b>${agentStates[1].name}</b> — EXPLOIT · Ring · Platinum bezel · C1 winner refinement · Margin: 74% · Target: Everyday segment`,'',1100);
+      addLog(`<b>${agentStates[2].name}</b> — EXPLOIT · Pendant · Yellow gold sapphire · Diversifying from ring saturation · Margin: 73% · Target: Gift segment`,'',1500);
+      addLog(`<b>${agentStates[3].name}</b> — MUTATE · Ring · Platinum/titanium arc · Consumer data: raising margin to improve MKT score · Margin: 53% · ⚠ Still below MKT target`,'',1800);
+      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold arch · "${treasury}" signal · Margin: 88% · Target: Bridal (highest consumer demand)`,'',2100);
+      addLog(`<b>${agentStates[5].name}</b> — MUTATE · Bracelet · Silver organic bone · Genome shifted: margin priority +15 from C1 pressure · Margin: 50%`,'',2400);
+      addLog(`⚠ Ring saturation 67% — consumer panel will penalize category clustering. Only ${agentStates[2].name} diversified.`,'',2900);
+      addLog(`Blueprints locked. All agents now reference mass-market consumer demand as primary objective.`, 'rs', 3300);
       setProgress(40);
       return 3600;
     },
@@ -1044,11 +1095,11 @@ const PHASE_SCRIPTS = [
       setProgress(60);
       return 4000;
     },
-    // Phase 3
+    // Phase 3 (Agent votes + Consumer Panel)
     ()=>{
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting phase. Agents apply C1 learned preferences.`,'',100);
+      addLog(`Voting phase: agents apply C1 preferences. Consumer Panel weighing mass-market viability.`,'',100);
       const vm = VOTE_MATRICES[1];
       vm.forEach((voterVotes, vi)=>{
         const voter = agentStates[vi];
@@ -1058,30 +1109,42 @@ const PHASE_SCRIPTS = [
           addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500);
         }
       });
+      const consumerVotes = computeConsumerVotes(activeDesigns);
+      const topConsumer = consumerVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,2);
+      addLog(`<b>🛒 Consumer Panel</b> → ${topConsumer.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ')}`,'vt', 400+agentStates.length*500);
       vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      consumerVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=creds; });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       }, 3500/speed);
-      addLog(`Voting complete.`,'rs',4200);
+      const avgMkt = Math.round(activeDesigns.reduce((s,d)=>s+(d.massMarket||computeMassMarketScore(d)),0)/activeDesigns.length);
+      addLog(`Consumer panel: avg mass-market score this cycle: <b>${avgMkt}/100</b>. Designs below 60 received demand penalty.`,'rs',4200);
+      addLog(`Voting complete. Agent + Consumer credits tallied.`,'rs',4600);
       setProgress(80);
-      return 5000;
+      return 5500;
     },
-    // Phase 4
+    // Phase 4 (Evolution with mass market pressure)
     ()=>{
       setProgress(85);
       const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner=sorted[0]; const loser=sorted[sorted.length-1];
-      addLog(`Ranking applied. Evolution phase executing.`,'',200);
+      addLog(`Ranking applied. Evolution phase executing with mass-market fitness function.`,'',200);
       const r1ref = cycleReports[0];
       const prevWinnerName = r1ref ? r1ref.winner.name : 'Orbit Drop';
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Treasury Elevation triggered.`,'rs',500);
+      const winMkt = winner.massMarket || computeMassMarketScore(winner);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market Score: <b>${winMkt}/100</b>. Treasury Elevation triggered.`,'rs',500);
       addLog(`2nd consecutive minimal win — C1: "${prevWinnerName}" · C2: "${winner.name}". Pattern confirmed; exploitation phase in full effect.`,'rp',700);
       addLog(`⚠ <b>Saturation alert detected:</b> 67% of pool was Ring category. Incentive multipliers issued for Earrings, Pendants, Bracelets in Cycle 3.`,'',1100);
       addLog(`Trend signal: <b>Architectural minimal</b> dominant for 2 consecutive cycles. Novelty gap widening — opportunity forming in organic/sculptural space.`,'rs',1600);
-      addLog(`<b>${loser.agentName}</b> mutation: high novelty designs consistently underperformed on margin — agent genome adjusting margin sensitivity upward.`,'',2100);
-      addLog(`<b>Cycle 2 Intelligence Report written.</b> Compiling alongside Cycle 1 data as 2-cycle trend baseline.`,'rs',2600);
+      // Apply mass market pressure to underperformers
+      sorted.forEach((d,rank)=>{
+        const mkt = d.massMarket || computeMassMarketScore(d);
+        if (rank >= 3) applyMassMarketPressure(d.agentIdx, mkt);
+      });
+      addLog(`<b>${loser.agentName}</b> mutation: mass-market score ${loser.massMarket||computeMassMarketScore(loser)}/100 — genome shifting toward higher commercial viability.`,'',2100);
+      addLog(`<b>Cycle 2 Intelligence Report written.</b> Mass-market analytics compiled alongside trend data.`,'rs',2600);
       setProgress(100);
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?9:rank===1?4:rank===2?1:-3)); setAgentStatus(agent.id,rank===0?'Winner':'Cycle complete');}});
       generateAndStoreReport(2, sorted);
@@ -1108,13 +1171,13 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi2[0]}`, 'rp', 1050);
       addLog(`◆ ${fi2[1] || fi1last}`, 'rp', 1200);
       addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
-      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating. My '${r2 ? r2.sortedDesigns[1]?.name||'Phase Ring' : 'Phase Ring'}' only ranked 2nd. I need to differentiate — exploring a pendant this cycle."`, 'cv', 1900);
-      addLog(`<b>${agentStates[0].name}</b>: "I'm pushing deeper architectural — I think one more refinement cycle before the trend exhausts."`, 'cv', 2400);
-      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two reports say the same thing: organic/sculptural is the gap. I'm going all in — root form bracelet."`, 'cv', 2900);
-      addLog(`<b>${agentStates[3].name}</b>: "Agreed. I've been thinking organic geometry into my industrial approach — Forge Shard, mixed metal with irregular natural form."`, 'cv', 3300);
-      addLog(`<b>${agentStates[2].name}</b>: "Minimal is everywhere. Returning to romantic roots — Bloom Fragment pendant, champagne pearl cluster, organic form."`, 'cv', 3700);
-      addLog(`<b>${agentStates[4].name}</b>: "Database confirms bridal/everyday still has strongest margins. Staying in that lane — it's not saturated."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. Divergence detected: 3 agents pivoting organic/sculptural, 3 maintaining minimal.`, 'rs', 4500);
+      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating — consumer panel penalized clustering last cycle. Differentiating into pendant for gift segment."`, 'cv', 1900);
+      addLog(`<b>${agentStates[0].name}</b>: "Last push on architectural — but I know the consumer panel will discount this if too many follow the same path."`, 'cv', 2400);
+      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two cycles of data: organic/sculptural is the mass-market gap. Fashion-forward segment is entirely unserved. Going all in."`, 'cv', 2900);
+      addLog(`<b>${agentStates[3].name}</b>: "My genome shifted after C1 and C2 pressure. Organic geometry + higher margins — consumer panel demands it."`, 'cv', 3300);
+      addLog(`<b>${agentStates[2].name}</b>: "Returning to romantic pendant — champagne pearl cluster. Gift segment data shows this converts at 3.2× vs. minimal."`, 'cv', 3700);
+      addLog(`<b>${agentStates[4].name}</b>: "Consumer panel data: bridal = 30% of all demand. Staying in that lane — it's the highest mass-market value."`, 'cv', 4100);
+      addLog(`Cross-pollination complete. Agents diverging to serve different consumer segments — mass-market optimization driving category spread.`, 'rs', 4500);
       setProgress(20);
       return 4800;
     },
@@ -1122,15 +1185,15 @@ const PHASE_SCRIPTS = [
     ()=>{
       setProgress(25);
       agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
-      addLog(`Synthesis: 2-cycle compound data + genome informing blueprints.`,'',200);
-      addLog(`<b>${agentStates[0].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · Platinum emerald-cut · Extreme negative space cathedral · Cycle 2 winner refinement · Margin: 68%`,'',500);
-      addLog(`<b>${agentStates[1].name}</b> — Strategy: <b>MUTATE</b> · Pendant · Platinum arc · Explores pendant category gap · Retains minimal identity · Margin: 69%`,'',900);
-      addLog(`<b>${agentStates[2].name}</b> — Strategy: <b>EXPLORE</b> · Pendant · Yellow gold organic · Champagne pearl cluster · Return to romantic roots · Margin: 70%`,'',1300);
-      addLog(`<b>${agentStates[3].name}</b> — Strategy: <b>MUTATE</b> · Ring · Mixed metal organic shard · Industrial meets natural form · Novel direction · Margin: 53%`,'',1600);
-      addLog(`<b>${agentStates[5].name}</b> — Strategy: <b>EXPLORE</b> · Bracelet · 18k gold root form · Treasury bracelet incentive active (+1.4×) · Margin: 64%`,'',1900);
-      addLog(`<b>${agentStates[4].name}</b> — Strategy: <b>EXPLOIT</b> · Ring · White gold cushion · Proven margin lane · Consistency play · Margin: 89%`,'',2200);
-      addLog(`Ring saturation easing: 3 of 6 agents moved to pendants/bracelets. Treasury incentive active.`, 'rs', 2700);
-      addLog(`All blueprints hashed and locked.`, 'rs', 3000);
+      addLog(`Synthesis: 2-cycle compound data + mass-market fitness signals informing blueprints.`,'',200);
+      addLog(`<b>${agentStates[0].name}</b> — EXPLOIT · Ring · Platinum emerald-cut cathedral · Winner refinement · Margin: 68% · Bridal segment`,'',500);
+      addLog(`<b>${agentStates[1].name}</b> — MUTATE · Pendant · Platinum arc · Category diversification · Margin: 69% · Gift + Everyday segments`,'',900);
+      addLog(`<b>${agentStates[2].name}</b> — EXPLORE · Pendant · Yellow gold pearl cluster · Organic form · Margin: 70% · Gift segment (highest conversion)`,'',1300);
+      addLog(`<b>${agentStates[3].name}</b> — MUTATE · Ring · Mixed metal organic shard · Genome mutated: +15 margin sensitivity · Margin: 53% · Fashion-forward`,'',1600);
+      addLog(`<b>${agentStates[5].name}</b> — EXPLORE · Bracelet · 18k gold root form · Consumer gap: no bracelet winner in 2 cycles · Margin: 64% · Fashion-forward`,'',1900);
+      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold cushion · Highest mass-market score in pool (est. 89/100) · Margin: 89% · Bridal`,'',2200);
+      addLog(`Category spread improved: 3 agents diversified to pendants/bracelets — consumer panel incentive working.`, 'rs', 2700);
+      addLog(`Blueprints locked. Mass-market scores pre-computed: range 48–89/100.`, 'rs', 3000);
       setProgress(40);
       return 3300;
     },
@@ -1150,11 +1213,11 @@ const PHASE_SCRIPTS = [
       setProgress(60);
       return 4000;
     },
-    // Phase 3
+    // Phase 3 (Agent votes + Consumer Panel — final cycle)
     ()=>{
       setProgress(65);
       agentStates.forEach(a=>setAgentStatus(a.id,'Voting…'));
-      addLog(`Voting: agents apply 2-cycle learned preferences. Saturation penalty active on minimal cluster.`,'',100);
+      addLog(`Voting: agents apply 2-cycle preferences. Consumer Panel applying full mass-market demand model.`,'',100);
       const vm=VOTE_MATRICES[2];
       vm.forEach((voterVotes,vi)=>{
         const voter=agentStates[vi];
@@ -1162,32 +1225,49 @@ const PHASE_SCRIPTS = [
         if(top2.length){ const msg=top2.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
         addLog(`<b>${voter.name}</b> → ${msg}`,'vt',400+vi*500); }
       });
+      const consumerVotes = computeConsumerVotes(activeDesigns);
+      const topConsumer = consumerVotes.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,2);
+      addLog(`<b>🛒 Consumer Panel</b> → ${topConsumer.map(x=>`"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ')}`,'vt', 400+agentStates.length*500);
       vm.forEach((vv,vi)=>vv.forEach((c,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=c; }));
+      consumerVotes.forEach((creds,di)=>{ if(di<activeDesigns.length) activeDesigns[di].credits+=creds; });
       setTimeout(()=>{
         activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
         agentStates.forEach((a,vi)=>{ const spent=vm[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
       },3500/speed);
       addLog(`Saturation penalty applied: minimal cluster vote-weight discounted 18%.`,'',4500);
-      addLog(`Voting complete.`,'rs',5000);
+      // Show segment breakdown for top design
+      const topIdx = consumerVotes.indexOf(Math.max(...consumerVotes));
+      const topSegs = computeSegmentFit(activeDesigns[topIdx]);
+      const bestSeg = topSegs.sort((a,b)=>b.fit-a.fit)[0];
+      addLog(`Consumer insight: "${activeDesigns[topIdx].name}" strongest in <b>${bestSeg.label}</b> segment (${bestSeg.fit}/100 fit).`,'rs',5200);
+      addLog(`Voting complete. Agent + Consumer credits tallied.`,'rs',5600);
       setProgress(80);
-      return 5500;
+      return 6000;
     },
-    // Phase 4
+    // Phase 4 (Epoch-level evolution with mass market fitness)
     ()=>{
       setProgress(85);
       const sorted=[...activeDesigns].map((d,i)=>({...d,idx:i})).sort((a,b)=>b.credits-a.credits);
       const winner=sorted[0];
-      addLog(`Ranking applied. Epoch-level evolution processing.`,'',200);
+      addLog(`Ranking applied. Epoch-level evolution with mass-market fitness processing.`,'',200);
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
-      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡. Epoch breakout design. Treasury Elevation confirmed.`,'rs',500);
-      addLog(`<b>Epoch conclusion:</b> Minimal trend emerged (C1), peaked and exploited (C2), then saturated — organic/sculptural emerged as its replacement (C3).`,'rs',1000);
-      addLog(`Agents who detected the saturation early and pivoted (${agentStates[5].name}, ${agentStates[3].name}) gained the most reputation.`,'',1500);
-      addLog(`Epoch complete. Full 3-cycle intelligence archive compiled.`,'rs',2000);
+      const winMkt = winner.massMarket || computeMassMarketScore(winner);
+      const avgMkt = Math.round(sorted.reduce((s,d)=>s+(d.massMarket||computeMassMarketScore(d)),0)/sorted.length);
+      addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market: <b>${winMkt}/100</b>. Epoch breakout design.`,'rs',500);
+      addLog(`<b>Epoch mass-market summary:</b> Avg MKT score progressed across cycles — agents converged toward commercially viable designs.`,'rs',1000);
+      addLog(`<b>Epoch conclusion:</b> Minimal trend emerged (C1), peaked and exploited (C2), then saturated — organic/sculptural emerged as its replacement (C3).`,'rs',1500);
+      addLog(`Agents who detected saturation early and pivoted (${agentStates[5].name}, ${agentStates[3].name}) gained the most reputation + consumer panel rewards.`,'',2000);
+      // Final mass market pressure application
+      sorted.forEach((d,rank)=>{
+        const mkt = d.massMarket || computeMassMarketScore(d);
+        if (rank >= 3) applyMassMarketPressure(d.agentIdx, mkt);
+      });
+      addLog(`Epoch complete. Mass-market intelligence archive compiled for production readiness.`,'rs',2500);
       setProgress(100);
       sorted.forEach((d,rank)=>{ const agent=agentStates[d.agentIdx]; if(agent){agent.reputation=Math.max(5,agent.reputation+(rank===0?12:rank===1?5:rank===2?2:-4)); setAgentStatus(agent.id,rank===0?'🏆 Epoch Winner':'Epoch complete');}});
       generateAndStoreReport(3, sorted);
       document.getElementById('nav-epoch-txt').textContent = '3 / 3';
-      return 2800;
+      return 3200;
     },
   ],
 ];
@@ -1218,6 +1298,7 @@ function renderDesignCard(d, i) {
       <div class="dbar"><span class="dbar-l">AES</span><div class="dbar-t"><div class="dbar-f" id="dbf-aes-${i}" style="width:0%"></div></div></div>
       <div class="dbar"><span class="dbar-l">NOV</span><div class="dbar-t"><div class="dbar-f" id="dbf-nov-${i}" style="width:0%"></div></div></div>
       <div class="dbar"><span class="dbar-l">PRO</span><div class="dbar-t"><div class="dbar-f" id="dbf-pro-${i}" style="width:0%"></div></div></div>
+      <div class="dbar"><span class="dbar-l" style="color:var(--grn)">MKT</span><div class="dbar-t"><div class="dbar-f" id="dbf-mkt-${i}" style="width:0%;background:linear-gradient(90deg,#4caf7d,#7be0a8)"></div></div></div>
       <div class="dcred" id="dc-cred-${i}">—</div>
     </div>`;
   grid.appendChild(card);
@@ -1226,14 +1307,19 @@ function renderDesignCard(d, i) {
   const gemEl = document.getElementById(pctId+'-gem');
   if (gemEl) gemEl.textContent = d.emoji;
 
+  // Compute mass market score for this design
+  d.massMarket = computeMassMarketScore(d);
+
   // Animate score bars
   setTimeout(()=>{
     const a = document.getElementById('dbf-aes-'+i);
     const n = document.getElementById('dbf-nov-'+i);
     const p = document.getElementById('dbf-pro-'+i);
+    const m = document.getElementById('dbf-mkt-'+i);
     if (a) a.style.width = d.aesthetic+'%';
     if (n) n.style.width = d.novelty+'%';
     if (p) p.style.width = d.profit+'%';
+    if (m) m.style.width = d.massMarket+'%';
   }, 80);
 
   // Attach image events via JS — avoids emoji/quote issues in HTML attributes
@@ -1468,6 +1554,77 @@ function linearSlope(xs, ys) {
 function pct(v, tot) { return tot ? Math.round(v/tot*100) : 0; }
 
 /* ══════════════════════════════════
+   MASS MARKET SCORING ENGINE
+══════════════════════════════════ */
+// Compute how well a design would sell in mass retail markets (0–100)
+function computeMassMarketScore(design) {
+  const mm = MASS_MARKET_MODEL;
+  let score = 0;
+
+  // 1. Profit/margin accessibility (25%) — mass market needs healthy margins
+  const marginScore = Math.min(100, (design.profit / mm.minMarginTarget) * 100);
+  score += marginScore * mm.priceWeight;
+
+  // 2. Category demand alignment (15%) — rings sell most, bracelets least
+  const catDemand = mm.categoryDemand[design.cat] || 0.15;
+  score += (catDemand / 0.42) * 100 * 0.15;
+
+  // 3. Novelty sweet spot (20%) — mass market wants moderate novelty
+  let novScore = 100;
+  if (design.novelty < mm.noveltySweetMin) novScore -= (mm.noveltySweetMin - design.novelty) * 2;
+  if (design.novelty > mm.noveltySweetMax) novScore -= (design.novelty - mm.noveltySweetMax) * 2;
+  novScore = Math.max(0, Math.min(100, novScore));
+  score += novScore * 0.20;
+
+  // 4. Aesthetic quality (20%) — consumers still want beauty
+  const aesScore = Math.min(100, (design.aesthetic / mm.aestheticFloor) * 100);
+  score += aesScore * 0.20;
+
+  // 5. Consumer segment fit (20%) — how many buying populations want this
+  let segFit = 0;
+  CONSUMER_SEGMENTS.forEach(seg => {
+    let fit = 0;
+    fit += (seg.catPref[design.cat] || 0.05) * 40;
+    if (design.novelty >= seg.novRange[0] && design.novelty <= seg.novRange[1]) fit += 30;
+    if (design.profit >= seg.marginMin) fit += 30;
+    segFit += fit * seg.weight;
+  });
+  score += segFit * 0.20;
+
+  return Math.round(Math.min(100, Math.max(0, score)));
+}
+
+// Compute consumer panel votes — distributes CONSUMER_CREDIT_POOL by mass market appeal
+function computeConsumerVotes(designs) {
+  const scores = designs.map(d => computeMassMarketScore(d));
+  const total = scores.reduce((a, b) => a + b, 0) || 1;
+  return scores.map(s => Math.round((s / total) * CONSUMER_CREDIT_POOL));
+}
+
+// Compute per-segment breakdown for a design
+function computeSegmentFit(design) {
+  return CONSUMER_SEGMENTS.map(seg => {
+    let fit = 0;
+    fit += (seg.catPref[design.cat] || 0.05) * 35;
+    if (design.novelty >= seg.novRange[0] && design.novelty <= seg.novRange[1]) fit += 35;
+    if (design.profit >= seg.marginMin) fit += 30;
+    return { name: seg.name, label: seg.label, weight: seg.weight, fit: Math.round(fit) };
+  });
+}
+
+// Apply mass-market pressure to agent genome after a cycle
+function applyMassMarketPressure(agentIdx, massMarketScore) {
+  const agent = agentStates[agentIdx];
+  if (!agent) return;
+  const gap = 70 - massMarketScore; // target: MKT ≥ 70
+  if (gap > 0) {
+    // Shift agent toward mass market: increase marketFit, moderate risk
+    agent.marketFit = Math.min(100, agent.marketFit + Math.round(gap * 0.15));
+    if (agent.risk > 60) agent.risk = Math.max(35, agent.risk - Math.round(gap * 0.1));
+  }
+}
+
+/* ══════════════════════════════════
    REPORT GENERATION
 ══════════════════════════════════ */
 function generateAndStoreReport(cycleNum, sortedDesigns) {
@@ -1520,12 +1677,37 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
   });
   const catCount = Object.fromEntries(Object.entries(catMap).map(([k,v])=>[k,v.count]));
 
+  // ── Mass Market Analytics ──
+  const massMarketScores = designs.map(d => d.massMarket || computeMassMarketScore(d));
+  const avgMassMarket = +(massMarketScores.reduce((a,b)=>a+b,0)/massMarketScores.length).toFixed(1);
+  const corrMkt = pearsonCorr(massMarketScores, credits);
+  const bestMktIdx = massMarketScores.indexOf(Math.max(...massMarketScores));
+  const worstMktIdx = massMarketScores.indexOf(Math.min(...massMarketScores));
+  const consumerVoteBreakdown = computeConsumerVotes(designs);
+  const consumerTotal = consumerVoteBreakdown.reduce((a,b)=>a+b,0);
+
+  // Per-segment analysis
+  const segmentAnalysis = CONSUMER_SEGMENTS.map(seg => {
+    const bestFit = designs.map((d,i) => {
+      const segs = computeSegmentFit(d);
+      const segFit = segs.find(s=>s.name===seg.name);
+      return { design: d, fit: segFit ? segFit.fit : 0, idx: i };
+    }).sort((a,b)=>b.fit-a.fit);
+    return {
+      name: seg.name, label: seg.label, weight: seg.weight,
+      bestDesign: bestFit[0]?.design?.name || '—',
+      bestFit: bestFit[0]?.fit || 0,
+      avgFit: Math.round(bestFit.reduce((s,x)=>s+x.fit,0)/bestFit.length)
+    };
+  });
+
   // ── Agent performance snapshot ──
   const agentPerf = agentStates.map((a,idx)=>{
     const myDesign = designs.find(d=>d.agentIdx===idx);
     const earned   = myDesign?.credits || 0;
     const spent    = (voteMatrix[idx]||[]).reduce((s,v)=>s+v,0);
     const prevRep  = cycleReports.length > 0 ? cycleReports[cycleReports.length-1].agentSnapshot[idx]?.reputation || a.reputation : 50;
+    const mktScore = myDesign ? (myDesign.massMarket || computeMassMarketScore(myDesign)) : 0;
     return {
       id: a.id, name: a.name, emoji: a.emoji, arch: a.arch,
       earned, spent, roi: spent ? +(earned/spent).toFixed(2) : 0,
@@ -1534,7 +1716,9 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
       strategy: myDesign?.strategy || '—',
       rank: myDesign?.rank || 7,
       designName: myDesign?.name || '—',
-      isUser: a.isUser || false
+      isUser: a.isUser || false,
+      massMarket: mktScore,
+      marketFit: a.marketFit || 50
     };
   });
 
@@ -1555,20 +1739,22 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     if(topI===topJ && vi[topI]>0) { const shared=vi[topI]+vj[topJ]; if(shared>maxAlign){ maxAlign=shared; alignPair=[agentStates[i].name,agentStates[j].name]; } }
   }
 
-  // ── Hardcoded trend narratives (could be ML-generated) ──
+  // ── Hardcoded trend narratives + mass market signals ──
+  const winnerMkt = massMarketScores[sortedDesigns[0].idx] || 0;
+  const bestMktDesign = designs[bestMktIdx];
   const trendData = [
     {
       emerging:['minimal','negative-space','platinum-bezel'],
       declining:['ornate-pavé','traditional-solitaire'],
       saturation:'Ring (50% of pool)',
       treasury:'Platinum + bezel setting',
-      velocityScore: 72, // how fast is the top trend moving
+      velocityScore: 72,
       fi:[
-        `Minimal/negative-space outperformed ornate by ${(corrAes*2.4).toFixed(1)}× in vote conversion — aesthetic score was the #1 predictor (r=${corrAes})`,
-        `Ring category over-saturated at 50% of pool — agents should diversify into earrings and pendants next cycle`,
-        `Platinum + bezel setting scored highest combined aesthetic (${sortedDesigns[0].aesthetic}/100) and profit margin`,
-        `"${sortedDesigns[0].name}" micro-trend (floating geometric, minimal air) identified as emerging cluster — ${winnerShare}% vote capture`,
-        `High-novelty designs (>75) earned ${novSlope>0?'+'+novSlope:novSlope}⬡ per novelty point above average — novelty premium confirmed`,
+        `Minimal/negative-space outperformed ornate by ${(corrAes*2.4).toFixed(1)}× — aesthetic was #1 predictor (r=${corrAes}). Consumer panel confirmed mass-market appeal.`,
+        `Ring category over-saturated at 50% — agents must diversify into earrings and pendants to capture Gift + Everyday consumer segments`,
+        `Mass-market leader: "${bestMktDesign.name}" scored ${massMarketScores[bestMktIdx]}/100 MKT — highest consumer panel allocation`,
+        `Consumer segment gap: Fashion-Forward (20% of demand) received zero optimized designs — underserved opportunity`,
+        `Avg mass-market score: ${avgMassMarket}/100 — agents below 60 MKT received genome pressure toward commercial viability (⬡/novelty: ${novSlope>0?'+'+novSlope:novSlope})`,
       ]
     },
     {
@@ -1578,11 +1764,11 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
       treasury:'Architectural shank + yellow gold accent',
       velocityScore: 61,
       fi:[
-        `Architectural minimal dominant for 2 consecutive cycles — exploitation phase, diminishing novelty premium (${novSlope>0?'+':''  }${novSlope}⬡/novelty pt)`,
-        `Ring saturation critical at 67% — treasury issuing category diversification incentives for Cycle 3`,
-        `Yellow gold gaining share vs. white gold/platinum in pendant and bracelet categories`,
-        `Organic/sculptural space entirely unexplored across 12 submitted designs — maximum opportunity gap`,
-        `Vote concentration at Gini ${gini} — ${gini>0.35?'high concentration: consensus forming around clear winners':'distributed: no runaway leader, competitive field'}`,
+        `Architectural minimal dominant 2 cycles — consumer panel rewarding familiarity but novelty premium declining (${novSlope>0?'+':''}${novSlope}⬡/pt)`,
+        `Ring saturation 67% — consumer panel demand concentrated: agents targeting same Bridal segment. Diversification incentives issued.`,
+        `Mass-market convergence: avg MKT score rose to ${avgMassMarket}/100 — agents evolving toward commercial viability under consumer pressure`,
+        `Organic/sculptural entirely unexplored — Fashion-Forward segment (20% demand) unserved across 12 designs. Maximum mass-market gap.`,
+        `Consumer panel correlation r=${corrMkt.toFixed(3)} with total credits — mass-market fit is now a ${Math.abs(corrMkt)>0.5?'strong':'moderate'} predictor of success`,
       ]
     },
     {
@@ -1592,11 +1778,11 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
       treasury:'Organic 18k gold + diamond accent nodes',
       velocityScore: 88,
       fi:[
-        `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of all credits despite ${sortedDesigns[0].profit}/100 profit score — aesthetic novelty overrode margin`,
-        `Trend lifecycle confirmed over 3 cycles: minimal emerged (C1, ${cycleReports[0]?.winner?.name||'—'}) → peaked (C2, ${cycleReports[1]?.winner?.name||'—'}) → displaced (C3)`,
-        `Novelty score became dominant predictor this cycle (r=${corrNov}) — market rewarding freshness over safety`,
-        `Saturation penalty effective: minimal cluster received 18% fewer credits per novelty point than prior cycle`,
-        `Treasury recommendation: organic sculptural 18k gold for physical production — highest aesthetic + highest novelty + breakout vote share`,
+        `Organic/sculptural breakout: "${sortedDesigns[0].name}" captured ${winnerShare}% of credits — consumer panel rewarded category diversification and novelty`,
+        `Mass-market evolution across epoch: agents converged from avg MKT ${cycleReports[0]?.avgMassMarket||'—'}/100 (C1) to ${avgMassMarket}/100 (C3) — genome pressure working`,
+        `Consumer segment served: ${segmentAnalysis.sort((a,b)=>b.bestFit-a.bestFit)[0].label} best served (${segmentAnalysis[0].bestDesign}, ${segmentAnalysis[0].bestFit}/100 fit)`,
+        `Saturation penalty effective: minimal cluster received 18% fewer consumer credits — panel penalized design clustering`,
+        `Treasury for production: "${bestMktDesign.name}" (MKT ${massMarketScores[bestMktIdx]}/100) — highest mass-market viability for retail launch`,
       ]
     }
   ][cycleNum-1];
@@ -1608,6 +1794,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     time: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
     winner: sortedDesigns[0],
     totalCredits, avgAesthetic, avgNovelty, avgProfit,
+    avgMassMarket, corrMkt, massMarketScores, consumerVoteBreakdown, consumerTotal, segmentAnalysis,
     corrAes, corrNov, corrPro, topCorr,
     gini, winnerShare, top3Share,
     novSlope, selfVotePct, alignPair,
@@ -1668,14 +1855,18 @@ function viewReport(cycleNum) {
   // ── Section 1: KPI strip ──
   const winnerShare = r.winnerShare || Math.round(r.winner.credits/r.totalCredits*100);
   const top3Share   = r.top3Share || 0;
+  const avgMkt = r.avgMassMarket || 0;
+  const mktCorr = r.corrMkt || 0;
   const kpiHtml = `
-    <div class="kpi-strip">
+    <div class="kpi-strip" style="grid-template-columns:repeat(8,1fr)">
       <div class="kpi-cell"><div class="kpi-val neu">${r.winner.credits.toLocaleString()}⬡</div><div class="kpi-lbl">Winner Credits</div></div>
       <div class="kpi-cell"><div class="kpi-val">${winnerShare}%</div><div class="kpi-lbl">Winner Vote Share</div></div>
       <div class="kpi-cell"><div class="kpi-val">${top3Share}%</div><div class="kpi-lbl">Top 3 Capture</div></div>
       <div class="kpi-cell"><div class="kpi-val ${r.gini>0.4?'down':r.gini>0.25?'':'up'}">${r.gini}</div><div class="kpi-lbl">Gini (Concentration)</div></div>
       <div class="kpi-cell"><div class="kpi-val">${r.topCorr||'—'}</div><div class="kpi-lbl">Top Vote Predictor</div></div>
       <div class="kpi-cell"><div class="kpi-val ${(r.novSlope||0)>0?'up':'down'}">${sign(r.novSlope||0)}⬡</div><div class="kpi-lbl">Novelty Premium/pt</div></div>
+      <div class="kpi-cell" style="background:rgba(76,175,125,.06)"><div class="kpi-val ${avgMkt>=70?'up':avgMkt>=55?'':'down'}">${avgMkt}</div><div class="kpi-lbl">Avg Mass-Market</div></div>
+      <div class="kpi-cell" style="background:rgba(76,175,125,.06)"><div class="kpi-val ${Math.abs(mktCorr)>0.5?'up':''}">${mktCorr.toFixed(2)}</div><div class="kpi-lbl">MKT × Credits r</div></div>
     </div>`;
 
   // ── Section 2: Top-3 images (placeholders, populated after render) ──
@@ -1773,25 +1964,75 @@ function viewReport(cycleNum) {
       }).join('')}</tbody>
     </table>`;
 
-  // ── Section 6: Agent leaderboard ──
+  // ── Section 6: Agent leaderboard (with mass market score) ──
   const sortedAgents = [...(r.agentPerf||[])].sort((a,b)=>a.rank-b.rank);
   const lbHtml = `
     <table class="agent-lb">
-      <thead><tr><th style="width:32px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Credits Earned</th><th>Credits Spent</th><th>ROI</th><th>Rep</th><th>Delta</th></tr></thead>
-      <tbody>${sortedAgents.map((a,i)=>`
-        <tr>
+      <thead><tr><th style="width:32px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Credits</th><th>ROI</th><th style="color:var(--grn)">MKT</th><th>Rep</th><th>Delta</th></tr></thead>
+      <tbody>${sortedAgents.map((a,i)=>{
+        const mkt = a.massMarket || 0;
+        return `<tr>
           <td class="rank-num ${i===0?'r1':''}">${i+1}</td>
           <td>${a.emoji||''} ${a.name}${a.isUser?'<span class="you-badge">YOU</span>':''}</td>
           <td style="font-style:italic;color:var(--txt)">"${a.designName}"</td>
           <td><span class="strat-badge strat-${a.strategy}">${a.strategy.toUpperCase()}</span></td>
           <td class="gold" style="color:${i===0?'var(--gold)':'var(--dim)'}">${fmtC(a.earned)}⬡</td>
-          <td>${fmtC(a.spent)}⬡</td>
           <td style="color:${a.roi>=1?'var(--grn)':'var(--red)'}">${a.roi}×</td>
+          <td style="color:${mkt>=70?'var(--grn)':mkt>=55?'var(--gold)':'var(--red)'}"><b>${mkt}</b>/100</td>
           <td>${a.reputation}</td>
           <td class="rep-delta ${a.repDelta>0?'rep-up':a.repDelta<0?'rep-dn':''}">${sign(a.repDelta)}</td>
-        </tr>`).join('')}
+        </tr>`;}).join('')}
       </tbody>
     </table>`;
+
+  // ── Section 6b: Mass Market Intelligence ──
+  const segments = r.segmentAnalysis || [];
+  const mktScores = r.massMarketScores || [];
+  const massMarketHtml = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bdr);margin-bottom:1rem">
+      <div style="background:var(--s2);padding:1rem">
+        <div style="font-size:.58rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem">Consumer Panel Contribution</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--grn)">${fmtC(r.consumerTotal||CONSUMER_CREDIT_POOL)}⬡</div>
+        <div style="font-size:.68rem;color:var(--faint);margin-top:.2rem">${pct(r.consumerTotal||CONSUMER_CREDIT_POOL, r.totalCredits)}% of total vote pool</div>
+      </div>
+      <div style="background:var(--s2);padding:1rem">
+        <div style="font-size:.58rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem">MKT × Credits Correlation</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:${Math.abs(r.corrMkt||0)>0.5?'var(--grn)':'var(--gold)'}">r = ${(r.corrMkt||0).toFixed(3)}</div>
+        <div style="font-size:.68rem;color:var(--faint);margin-top:.2rem">${Math.abs(r.corrMkt||0)>0.7?'Strong':'Moderate'} — mass-market fit ${Math.abs(r.corrMkt||0)>0.5?'strongly':'partially'} predicts success</div>
+      </div>
+    </div>
+    <div style="font-size:.6rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem;margin-top:1rem">Consumer Segment Demand Analysis</div>
+    <table class="rtable">
+      <thead><tr><th>Segment</th><th>Market Share</th><th>Best Design</th><th>Fit Score</th><th>Avg Pool Fit</th></tr></thead>
+      <tbody>${segments.map(s=>`
+        <tr>
+          <td><b>${s.label}</b></td>
+          <td>${Math.round(s.weight*100)}%</td>
+          <td style="font-style:italic;color:var(--txt)">"${s.bestDesign}"</td>
+          <td style="color:${s.bestFit>=70?'var(--grn)':s.bestFit>=50?'var(--gold)':'var(--red)'}"><b>${s.bestFit}</b>/100</td>
+          <td style="color:var(--dim)">${s.avgFit}/100</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="font-size:.6rem;letter-spacing:.25em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem;margin-top:1.2rem">Design Mass-Market Scores</div>
+    <table class="rtable">
+      <thead><tr><th>Design</th><th>Agent</th><th>AES</th><th>NOV</th><th>PRO</th><th style="color:var(--grn)">MKT</th><th>Consumer ⬡</th></tr></thead>
+      <tbody>${[...r.designs].sort((a,b)=>a.rank-b.rank).map((d,i)=>{
+        const mkt = mktScores[i] || computeMassMarketScore(d);
+        const cv = (r.consumerVoteBreakdown||[])[i] || 0;
+        return `<tr class="${d.rank<=3?'highlight-row':''}">
+          <td><b>${d.rank===1?'🏆 ':''}#${d.rank} ${d.name}</b></td>
+          <td style="color:var(--dim)">${d.agentName||'Agent'}</td>
+          <td>${d.aesthetic}</td><td>${d.novelty}</td><td>${d.profit}</td>
+          <td style="color:${mkt>=70?'var(--grn)':mkt>=55?'var(--gold)':'var(--red)'}"><b>${mkt}</b></td>
+          <td style="color:var(--grn)">${fmtC(cv)}⬡</td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>
+    <div style="font-size:.75rem;color:var(--faint);line-height:1.6;margin-top:.8rem">
+      MKT score combines: margin accessibility (25%), category demand (15%), novelty sweet spot (20%), aesthetic quality (20%), and consumer segment fit (20%).
+      Designs scoring <b style="color:var(--grn)">≥70</b> are considered <b>mass-market ready</b>. Below <b style="color:var(--red)">55</b> = niche only.
+    </div>`;
 
   // ── Section 7: Vote flow matrix ──
   const vm = r.voteMatrix || r.vm;
@@ -1840,10 +2081,10 @@ function viewReport(cycleNum) {
       <div class="tcard"><div class="tcard-label">Treasury Signal</div><div class="tcard-val up">${r.trendData?.treasury||'—'}</div><div class="tcard-sub">Highest combined AES + PRO</div></div>
     </div>`;
 
-  // ── Section 9: FI box ──
+  // ── Section 9: FI box (mass-market-aware) ──
   const fiHtml = `
     <div class="fi-box">
-      <div class="fi-title">◆ Loaded into shared knowledge database at start of Cycle ${r.cycle+1}</div>
+      <div class="fi-title">◆ Mass-Market Intelligence — Loaded into agent knowledge base for Cycle ${r.cycle+1}</div>
       ${(r.trendData?.fi||[]).map(f=>`<div class="fi-item">${f}</div>`).join('')}
     </div>`;
 
@@ -1875,13 +2116,16 @@ function viewReport(cycleNum) {
           peaked in Cycle 2 under exploitation pressure (${c2.winner.credits.toLocaleString()}⬡, ring saturation ${c2.trendData?.saturation}),
           and was displaced in Cycle 3 as ${epochTrends[2]} generated the highest vote concentration of the epoch (${c3.winner.credits.toLocaleString()}⬡, Gini ${c3.gini}).
           <br><br>
+          <b>Mass-market evolution:</b> Avg MKT score progressed C1 ${c1.avgMassMarket||'—'}/100 → C2 ${c2.avgMassMarket||'—'}/100 → C3 ${c3.avgMassMarket||'—'}/100.
+          Consumer panel pressure drove agents toward commercially viable designs. Agents below MKT 60 received genome mutation toward higher marketFit.
+          <br><br>
+          <b>Consumer segment coverage:</b> C1 concentrated on Bridal; by C3, agents served ${(c3.segmentAnalysis||[]).filter(s=>s.bestFit>=50).length} of 4 consumer segments (Bridal, Everyday, Gift, Fashion-Forward).
+          Mass-market optimization objective drove category diversification and margin improvement across the epoch.
+          <br><br>
           <b>Vote predictor evolution:</b> C1 ${c1.topCorr} (r=${c1.corrAes}) → C2 ${c2.topCorr} (r=${c2.corrAes}) → C3 ${c3.topCorr} (r=${c3.corrNov}) —
           the market shifted from rewarding <i>aesthetics</i> toward rewarding <i>novelty</i> as the pool saturated.
           <br><br>
-          <b>Compounding novelty premium:</b> C1 ${sign(c1.novSlope)}⬡/pt → C2 ${sign(c2.novSlope)}⬡/pt → C3 ${sign(c3.novSlope)}⬡/pt.
-          ${c3.novSlope>c1.novSlope?'Novelty became progressively more valuable over the epoch — agents who built novelty into their genome compounded their advantage.':'The novelty premium declined as exploitation strategies dominated mid-epoch.'}
-          <br><br>
-          <b>Full epoch circulated:</b> ${fmtC((c1.totalCredits||0)+(c2.totalCredits||0)+(c3.totalCredits||0))}⬡ across 18 designs.
+          <b>Full epoch circulated:</b> ${fmtC((c1.totalCredits||0)+(c2.totalCredits||0)+(c3.totalCredits||0))}⬡ across 18 designs (incl. ${fmtC(CONSUMER_CREDIT_POOL*3)}⬡ consumer demand).
         </div>
       </div>`;
   }
@@ -1931,8 +2175,13 @@ function viewReport(cycleNum) {
       </div>
 
       <div class="rsec">
-        <div class="rsec-hdr">Agent Leaderboard — Credits · ROI · Reputation</div>
+        <div class="rsec-hdr">Agent Leaderboard — Credits · ROI · Mass-Market · Reputation</div>
         ${lbHtml}
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">🛒 Mass-Market Intelligence — Consumer Demand Analysis</div>
+        ${massMarketHtml}
       </div>
 
       <div class="rsec">
@@ -1948,12 +2197,12 @@ function viewReport(cycleNum) {
       ${r.cycle===3 && epochHtml ? `<div class="rsec"><div class="rsec-hdr">Epoch Arc — Full Trend Lifecycle</div>${epochHtml}</div>` : ''}
 
       <div class="rsec">
-        <div class="rsec-hdr">Forward Intelligence — Loaded into Agent Knowledge Base for Cycle ${r.cycle < 3 ? r.cycle+1 : 'N/A'}</div>
+        <div class="rsec-hdr">Forward Intelligence — Mass-Market Signals for Cycle ${r.cycle < 3 ? r.cycle+1 : 'N/A (Epoch Complete)'}</div>
         ${fiHtml}
         ${r.cycle===3?`<div style="margin-top:1rem;padding:1rem;border:1px solid var(--gold-d);background:rgba(201,168,76,.04);font-size:.82rem;color:var(--dim);line-height:1.7">
-          <b style="color:var(--gold)">Epoch Complete.</b> 3-cycle compound dataset compiled.
-          Trend lifecycle documented autonomously: emergence → exploitation → saturation → displacement.
-          Total epoch volume: ${fmtC((cycleReports[0]?.totalCredits||0)+(cycleReports[1]?.totalCredits||0)+(r.totalCredits||0))}⬡.
+          <b style="color:var(--gold)">Epoch Complete.</b> 3-cycle compound dataset compiled. Mass-market optimization objective achieved.
+          Trend lifecycle: emergence → exploitation → saturation → displacement. Agents evolved toward mass-market viable designs across all 3 cycles.
+          Total epoch volume: ${fmtC((cycleReports[0]?.totalCredits||0)+(cycleReports[1]?.totalCredits||0)+(r.totalCredits||0))}⬡ (incl. ${fmtC(CONSUMER_CREDIT_POOL*3)}⬡ consumer demand).
         </div>`:''}
       </div>
 
@@ -1989,18 +2238,22 @@ function viewReport(cycleNum) {
 ══════════════════════════════════ */
 function exportAllReports() {
   let content = 'JEWELFORGE — EPOCH INTELLIGENCE ARCHIVE\n';
+  content += 'OBJECTIVE: Optimize designs for mass-market sales\n';
   content += '==========================================\n\n';
   cycleReports.forEach(r => {
     content += `CYCLE ${r.cycle} REPORT — ${r.date}\n`;
-    content += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()}⬡)\n\n`;
+    content += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()}⬡)\n`;
+    content += `Avg Mass-Market Score: ${r.avgMassMarket||'—'}/100\n\n`;
     content += `AGENT DECISIONS:\n`;
-    r.designs.forEach(d => { content += `  ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.name} (${d.cat}) — Rank #${d.rank}\n`; });
+    r.designs.forEach(d => {
+      const mkt = d.massMarket || computeMassMarketScore(d);
+      content += `  ${d.agentName} — ${d.strategy.toUpperCase()} — ${d.name} (${d.cat}) — Rank #${d.rank} — MKT: ${mkt}/100\n`;
+    });
+    content += `\nCONSUMER SEGMENT ANALYSIS:\n`;
+    (r.segmentAnalysis||[]).forEach(s => { content += `  ${s.label} (${Math.round(s.weight*100)}%): Best="${s.bestDesign}" Fit=${s.bestFit}/100\n`; });
     content += `\nPROMPTS:\n`;
-    r.designs.sort((a,b)=>a.rank-b.rank).forEach(d => { content += `  [${d.name}] ${d.prompt}\n`; });
-    content += `\nTREND CONSENSUS:\n`;
-    content += `  Emerging: ${r.trendData.emerging.join(', ')}\n`;
-    content += `  Declining: ${r.trendData.declining.join(', ')}\n`;
-    content += `\nFORWARD INTELLIGENCE:\n`;
+    [...r.designs].sort((a,b)=>a.rank-b.rank).forEach(d => { content += `  [${d.name}] ${d.prompt}\n`; });
+    content += `\nMASS-MARKET FORWARD INTELLIGENCE:\n`;
     r.trendData.fi.forEach(f => { content += `  • ${f}\n`; });
     content += '\n' + '─'.repeat(50) + '\n\n';
   });
