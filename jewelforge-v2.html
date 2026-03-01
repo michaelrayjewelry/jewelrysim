@@ -597,59 +597,59 @@ const BASE_AGENTS = [
 // C2 winner: User "Cathedral Void" — exploits C1 trend
 // C3 winner: Léa Fontaine "Root Form" — organic emerges as minimal saturates
 const CYCLE_DESIGNS = [
-  [ // CYCLE 1
-    { name:'Void Solitaire',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:71, novelty:78, profit:68,
-      prompt:'Platinum solitaire ring, oval diamond bezel setting, open band with negative space, modern architectural design, neutral gray background, soft studio lighting, jewelry product photo' },
-    { name:'Orbit Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:85, novelty:82, profit:74,
-      prompt:'Platinum drop earrings, floating geometric circles, minimal open design, rose-cut diamond accents, light gray background, clean studio lighting, jewelry product photo' },
-    { name:'Cascade Pavé',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:79, novelty:52, profit:72,
-      prompt:'18k rose gold pendant necklace, blue sapphire center with small diamond accents, floral design, white background, soft studio lighting, commercial jewelry photo' },
-    { name:'Hex Frame',       cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:67, novelty:90, profit:50,
-      prompt:'Titanium and 18k yellow gold bracelet, hexagonal geometric links, industrial mixed-metal design, bold modern style, white background, clean studio lighting' },
-    { name:'Silk Halo',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:77, novelty:40, profit:88,
+  [ // CYCLE 1 — Initial designs: agents exploring, some niche, some commercial
+    { name:'Halo Solitaire',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'explore', aesthetic:78, novelty:52, profit:75,
+      prompt:'Platinum solitaire ring, round brilliant diamond, classic halo setting, clean tapered band, white background, soft studio lighting, commercial jewelry product photo' },
+    { name:'Orbit Drop',      cat:'Earrings', emoji:'🌑', agentIdx:1, strategy:'explore', aesthetic:82, novelty:58, profit:74,
+      prompt:'14k white gold drop earrings, small round diamond accents, clean geometric circles, elegant everyday design, white background, soft even lighting, commercial jewelry product photo' },
+    { name:'Cascade Pavé',    cat:'Pendant',  emoji:'✨', agentIdx:2, strategy:'exploit', aesthetic:80, novelty:45, profit:78,
+      prompt:'18k rose gold pendant necklace, small round blue sapphire center with pavé diamond halo, delicate cable chain, white background, soft studio lighting, commercial jewelry photo' },
+    { name:'Hex Link',        cat:'Bracelet', emoji:'🔷', agentIdx:3, strategy:'explore', aesthetic:68, novelty:82, profit:52,
+      prompt:'18k yellow gold bracelet, geometric hexagonal links with polished finish, modern bold chain design, white background, clean studio lighting, jewelry product photo' },
+    { name:'Silk Halo',       cat:'Ring',     emoji:'💍', agentIdx:4, strategy:'exploit', aesthetic:79, novelty:38, profit:88,
       prompt:'14k white gold engagement ring, round brilliant diamond, classic halo setting, clean simple band, white background, soft even lighting, commercial jewelry photo' },
-    { name:'Thorn Band',      cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:73, novelty:80, profit:46,
-      prompt:'18k blackened gold ring, sculptural thorn vine motif band, matte and polished contrast, artistic jewelry, dark gray background, moody lighting' },
+    { name:'Vine Band',       cat:'Ring',     emoji:'🌹', agentIdx:5, strategy:'explore', aesthetic:74, novelty:65, profit:60,
+      prompt:'18k rose gold ring, delicate floral vine motif band, small diamond accents, feminine romantic design, white background, soft studio lighting, commercial jewelry photo' },
   ],
-  [ // CYCLE 2 — agents reference C1 report, minimal trend exploited
-    { name:'Cathedral Void',  cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:79, profit:74,
-      prompt:'Platinum ring, marquise diamond, architectural cathedral setting with open arches, modern structural band, neutral gray background, clean studio lighting, jewelry product photo' },
-    { name:'Phase Ring',      cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:82, novelty:68, profit:77,
-      prompt:'Platinum ring, bezel-set round diamond, clean flush band with groove detail, minimal modern design, light gray background, soft even lighting, product photo' },
-    { name:'Sapphire Canopy', cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:81, novelty:54, profit:76,
-      prompt:'18k yellow gold pendant, cushion-cut blue sapphire, small diamond halo, elegant simple chain, white background, soft studio lighting, commercial jewelry photo' },
-    { name:'Arc Shard',       cat:'Ring',     emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:74, novelty:88, profit:55,
-      prompt:'Platinum and titanium ring, bezel-set diamond, industrial-minimal hybrid design, open arc detail, modern style, steel-gray background, clean studio lighting' },
-    { name:'Market Arch',     cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:80, novelty:52, profit:91,
-      prompt:'14k white gold ring, oval diamond, clean open shank setting, classic bridal proportions, white background, soft box lighting, commercial jewelry product photo' },
-    { name:'Bone Structure',  cat:'Bracelet', emoji:'🦴', agentIdx:5, strategy:'mutate',  aesthetic:76, novelty:85, profit:52,
-      prompt:'Sterling silver sculptural bracelet, organic bone-shaped links, oxidized dark accents, modern statement piece, neutral gray background, clean studio lighting' },
+  [ // CYCLE 2 — Agents learned from C1: more commercial, higher margins, cleaner designs
+    { name:'Cathedral Classic', cat:'Ring',    emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:86, novelty:48, profit:80,
+      prompt:'Platinum engagement ring, oval diamond, elegant cathedral setting, clean polished band, classic bridal proportions, white background, soft studio lighting, commercial jewelry product photo' },
+    { name:'Bezel Modern',     cat:'Ring',     emoji:'🌑', agentIdx:1, strategy:'exploit', aesthetic:83, novelty:42, profit:82,
+      prompt:'14k white gold ring, bezel-set round diamond, clean flush band, minimal modern design, everyday wearable, white background, soft even lighting, commercial jewelry product photo' },
+    { name:'Sapphire Drop',    cat:'Pendant',  emoji:'💙', agentIdx:2, strategy:'exploit', aesthetic:84, novelty:46, profit:79,
+      prompt:'18k yellow gold pendant, cushion-cut blue sapphire center, small diamond halo, delicate cable chain, classic elegant design, white background, soft studio lighting, commercial jewelry photo' },
+    { name:'Geo Bangle',       cat:'Bracelet', emoji:'⚡', agentIdx:3, strategy:'mutate',  aesthetic:76, novelty:58, profit:68,
+      prompt:'14k yellow gold bangle bracelet, clean geometric pattern, polished finish, modern everyday design, comfortable fit, white background, clean studio lighting, commercial jewelry photo' },
+    { name:'Market Arch',      cat:'Ring',     emoji:'💎', agentIdx:4, strategy:'exploit', aesthetic:82, novelty:40, profit:91,
+      prompt:'14k white gold ring, oval diamond, clean split shank setting, classic bridal proportions, white background, soft box lighting, commercial jewelry product photo' },
+    { name:'Nature Twist',     cat:'Earrings', emoji:'🌿', agentIdx:5, strategy:'mutate',  aesthetic:80, novelty:52, profit:72,
+      prompt:'18k rose gold stud earrings, organic leaf design, small diamond accents, feminine everyday wear, white background, soft studio lighting, commercial jewelry product photo' },
   ],
-  [ // CYCLE 3 — minimal saturation detected, organic breakout emerges
-    { name:'Negative Cathedral', cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:84, novelty:72, profit:71,
-      prompt:'Platinum ring, emerald-cut diamond, double cathedral arch setting, open structural design, neutral gray background, soft studio lighting, jewelry product photo' },
-    { name:'Arc Minimal',     cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:80, novelty:74, profit:72,
-      prompt:'Platinum arc pendant, single floating diamond, clean minimal design, delicate chain, light gray background, soft even lighting, jewelry product photo' },
-    { name:'Bloom Fragment',  cat:'Pendant',  emoji:'🌸', agentIdx:2, strategy:'explore', aesthetic:83, novelty:76, profit:73,
-      prompt:'18k yellow gold pendant, champagne pearl center with small diamond accents, organic floral cluster shape, delicate chain, cream background, soft natural lighting, jewelry product photo' },
-    { name:'Forge Shard',     cat:'Ring',     emoji:'🔥', agentIdx:3, strategy:'mutate',  aesthetic:79, novelty:91, profit:56,
-      prompt:'Mixed metal ring, 18k yellow gold organic shard set into platinum band, irregular natural texture, hammered finish, neutral gray background, soft studio lighting' },
-    { name:'Root Form',       cat:'Bracelet', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:91, novelty:89, profit:67,
-      prompt:'18k yellow gold bracelet, organic root and branch form, small champagne diamond accents, sculptural modern design, warm linen background, natural soft lighting, jewelry product photo' },
-    { name:'Consensus Cut',   cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:78, novelty:45, profit:92,
-      prompt:'14k white gold ring, cushion diamond, clean simple band, classic proportions, white background, soft box lighting, commercial jewelry product photo' },
+  [ // CYCLE 3 — Fully optimized: mass-market sweet spot, diverse categories, high margins
+    { name:'Eternity Halo',    cat:'Ring',     emoji:'⬡', agentIdx:0, strategy:'exploit', aesthetic:88, novelty:44, profit:83,
+      prompt:'Platinum engagement ring, round brilliant diamond, classic halo with pavé band, timeless bridal design, white background, soft studio lighting, commercial jewelry product photo' },
+    { name:'Minimal Pendant',  cat:'Pendant',  emoji:'🌑', agentIdx:1, strategy:'mutate',  aesthetic:83, novelty:40, profit:80,
+      prompt:'14k white gold pendant, single bezel-set round diamond, clean minimal design, delicate chain, everyday elegant, white background, soft even lighting, commercial jewelry product photo' },
+    { name:'Bloom Cluster',    cat:'Earrings', emoji:'🌸', agentIdx:2, strategy:'exploit', aesthetic:85, novelty:48, profit:78,
+      prompt:'18k yellow gold stud earrings, small floral cluster design, round diamond center with pavé petals, feminine gift-ready, white background, soft natural lighting, commercial jewelry product photo' },
+    { name:'Modern Link',      cat:'Bracelet', emoji:'🔥', agentIdx:3, strategy:'exploit', aesthetic:80, novelty:45, profit:75,
+      prompt:'14k yellow gold chain bracelet, polished oval links, clean modern design, everyday comfortable wear, white background, soft studio lighting, commercial jewelry product photo' },
+    { name:'Pearl Drop',       cat:'Earrings', emoji:'🌿', agentIdx:5, strategy:'explore', aesthetic:86, novelty:50, profit:76,
+      prompt:'14k rose gold drop earrings, freshwater pearl with small diamond accent, elegant feminine design, gift occasion, white background, soft studio lighting, commercial jewelry product photo' },
+    { name:'Consensus Cut',    cat:'Ring',     emoji:'💛', agentIdx:4, strategy:'exploit', aesthetic:84, novelty:38, profit:92,
+      prompt:'14k white gold engagement ring, cushion-cut diamond, clean simple band, classic bridal proportions, white background, soft box lighting, commercial jewelry product photo' },
   ],
 ];
 
 // Voting data: who gets how many credits from whom per cycle
 // [voter_agentIdx][design_idx] = credits
 const VOTE_MATRICES = [
-  // C1: Orbit Drop (idx 1) wins
-  [[0,4200,2100,800,1200,1700],[4800,0,2000,600,1400,1200],[3200,3800,0,500,2100,400],[3100,3600,2200,0,800,300],[2800,4100,2800,300,0,1000],[3000,3900,1900,400,900,0]],
-  // C2: Cathedral Void (idx 0) wins
-  [[0,3600,2800,1100,2500,0],[5100,0,1900,700,2300,0],[4200,1800,0,900,3100,0],[3800,2400,1600,0,2200,0],[4600,2100,2300,500,0,0],[3500,2900,2100,600,1900,0]],
-  // C3: Root Form (idx 4) wins
-  [[2100,1800,2400,1200,3800,700],[1900,1600,2200,900,4100,500],[1700,2000,1500,800,4600,600],[2200,1400,1800,1000,3200,400],[1800,1700,2800,600,0,700],[2400,1900,2100,1100,5200,0]],
+  // C1: Orbit Drop earrings (idx 1) wins — commercial everyday appeal
+  [[0,3800,2400,600,2200,1000],[4200,0,2200,500,1800,1300],[3000,3600,0,400,2500,500],[2800,3400,2600,0,800,400],[2600,3800,2800,200,0,600],[2900,3500,2200,300,1100,0]],
+  // C2: Cathedral Classic ring (idx 0) wins — bridal dominance
+  [[0,3200,2600,1200,2800,200],[4800,0,2000,800,2200,200],[4000,1600,0,1000,3200,200],[3600,2200,1800,0,2400,0],[4400,2000,2200,600,0,200],[3200,2800,2400,800,1600,0]],
+  // C3: Eternity Halo ring (idx 0) wins — mass-market consensus
+  [[0,2000,2400,1200,1800,2600],[3800,0,2000,1000,1600,1600],[3600,1800,0,900,2200,1500],[3200,1600,2000,0,1400,1800],[4200,1800,2200,800,0,1000],[3400,2000,2200,1000,1400,0]],
 ];
 
 /* ══════════════════════════════════
@@ -907,12 +907,12 @@ const PHASE_SCRIPTS = [
       setProgress(5);
       addLog(`Cycle 1 initiated. No prior data — agents begin cold. <b>Objective: optimize for mass-market sales potential.</b>`,'',100);
       addLog(`<b>🛒 Mass-market model loaded:</b> Consumer segments active — Bridal (30%), Everyday (25%), Gift (25%), Fashion-Forward (20%).`,'rp',300);
-      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. I'm thinking minimal — structural negative space. Clean enough for the bridal segment."`, 'cv', 600);
-      addLog(`<b>${agentStates[1].name}</b>: "Agreed. Floating geometry, maximum air. The everyday and gift segments respond to accessible minimalism."`, 'cv', 1100);
-      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "I'm going ornate — pavé cascade pendant. High jewelry, but the gift segment could absorb this."`, 'cv', 1500);
-      addLog(`<b>${agentStates[4].name}</b>: "Bridal market is 30% of consumer demand. Clean halo ring — strong margins, high mass-market fit."`, 'cv', 1900);
-      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Industrial bracelet — low mass-market appeal, but the fashion-forward segment is underserved."`, 'cv', 2300);
-      addLog(`<b>${agentStates[5].name}</b>: "Organic thorn motif. High novelty, but I need to watch the margin — consumer panel will penalize low profit scores."`, 'cv', 2700);
+      addLog(`<b>${agentStates[0].name}</b> → <b>${agentStates[1].name}</b>: "First cycle. Classic halo solitaire — clean, bridal-first. Platinum for perceived value."`, 'cv', 600);
+      addLog(`<b>${agentStates[1].name}</b>: "Smart. I'm targeting everyday earrings — geometric drops in white gold. Broad appeal, good margins."`, 'cv', 1100);
+      addLog(`<b>${agentStates[2].name}</b> → <b>${agentStates[4].name}</b>: "Rose gold sapphire pendant — the gift segment loves color + warmth. Keeping it accessible."`, 'cv', 1500);
+      addLog(`<b>${agentStates[4].name}</b>: "Bridal market is 30% of consumer demand. Classic halo — strong margins, proven mass-market formula."`, 'cv', 1900);
+      addLog(`<b>${agentStates[3].name}</b> → <b>${agentStates[5].name}</b>: "Geometric bracelet — bold but accessible. Gold hex links should read modern without alienating buyers."`, 'cv', 2300);
+      addLog(`<b>${agentStates[5].name}</b>: "Floral vine band in rose gold. Romantic but wearable — I need margins above 60% to avoid consumer panel penalties."`, 'cv', 2700);
       agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (3000+i*100)/speed); });
       addLog(`All 6 agents complete cross-pollination. Mass-market consumer demand model is the primary fitness signal.`, 'rs', 3500);
       setProgress(20);
@@ -923,13 +923,13 @@ const PHASE_SCRIPTS = [
       setProgress(25);
       agentStates.forEach(a=>setAgentStatus(a.id,'Drafting blueprint…'));
       addLog(`Synthesis: agents compile dialogues + genome into blueprints. <b>Mass-market fitness = primary objective.</b>`,'',200);
-      addLog(`<b>${agentStates[0].name}</b> — EXPLORE · Ring · Platinum bezel oval · Negative space · Margin: 66% · Target: Bridal + Everyday`,'',500);
-      addLog(`<b>${agentStates[1].name}</b> — EXPLORE · Earrings · Platinum geometric drop · Rose-cut · Margin: 71% · Target: Gift + Everyday`,'',900);
-      addLog(`<b>${agentStates[2].name}</b> — EXPLOIT · Pendant · Rose gold pavé cascade · Sapphire · Margin: 68% · Target: Gift segment`,'',1200);
-      addLog(`<b>${agentStates[3].name}</b> — EXPLORE · Bracelet · Titanium x gold hex · Industrial · Margin: 48% · ⚠ Low mass-market fit`,'',1500);
-      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold pavé halo · Classic · Margin: 85% · Target: Bridal (highest demand)`,'',1800);
-      addLog(`<b>${agentStates[5].name}</b> — EXPLORE · Ring · Blackened gold thorn · Sculptural · Margin: 44% · ⚠ Niche, fashion-forward only`,'',2100);
-      addLog(`Blueprints validated: ✓ Feasibility ✓ Novelty ✓ Margin ✓ <b>Mass-Market Fit</b>. 2 designs flagged as niche (MKT < 55).`, 'rs', 2600);
+      addLog(`<b>${agentStates[0].name}</b> — EXPLORE · Ring · Platinum halo solitaire · Classic · Margin: 75% · Target: Bridal + Everyday`,'',500);
+      addLog(`<b>${agentStates[1].name}</b> — EXPLORE · Earrings · White gold geometric drops · Diamond accents · Margin: 74% · Target: Everyday + Gift`,'',900);
+      addLog(`<b>${agentStates[2].name}</b> — EXPLOIT · Pendant · Rose gold sapphire pavé · Feminine · Margin: 78% · Target: Gift segment`,'',1200);
+      addLog(`<b>${agentStates[3].name}</b> — EXPLORE · Bracelet · Gold hex links · Modern · Margin: 52% · ⚠ Needs margin improvement`,'',1500);
+      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold classic halo · Bridal · Margin: 88% · Target: Bridal (highest demand)`,'',1800);
+      addLog(`<b>${agentStates[5].name}</b> — EXPLORE · Ring · Rose gold vine band · Floral · Margin: 60% · Target: Everyday + Gift`,'',2100);
+      addLog(`Blueprints validated: ✓ Feasibility ✓ Novelty ✓ Margin ✓ <b>Mass-Market Fit</b>. 1 design flagged for low margin (bracelet).`, 'rs', 2600);
       setProgress(40);
       return 3000;
     },
@@ -1000,8 +1000,8 @@ const PHASE_SCRIPTS = [
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market Score: <b>${winMkt}/100</b>. Treasury eligible.`,'rs', 500);
       const loserMkt = loser.massMarket || computeMassMarketScore(loser);
       addLog(`📉 <b>${loser.agentName}</b> receives mass-market mutation pressure (MKT: ${loserMkt}/100). Genome shifting toward higher commercial viability.`,'',900);
-      addLog(`Trend insight: <b>Minimal/negative-space</b> aesthetic outperformed ornate by 2.4× in vote conversion.`,'rs',1300);
-      addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification.`,'',1700);
+      addLog(`Trend insight: <b>Classic/clean designs</b> with high margins outperformed bold/experimental by 1.8× in vote conversion.`,'rs',1300);
+      addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification into Earrings + Pendants.`,'',1700);
       // Apply mass market pressure to bottom-half agents
       sorted.forEach((d,rank)=>{
         const mkt = d.massMarket || computeMassMarketScore(d);
@@ -1026,13 +1026,13 @@ const PHASE_SCRIPTS = [
       const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
       const winnerAgent = r1 ? r1.winner.agentName : agentStates[1].name;
       const fi = r1 ? r1.trendData.fi : [
-        'Minimal/negative-space outperformed ornate by 2.4× in vote conversion',
-        'Ring category over-saturated — agents should diversify',
-        'Platinum + bezel setting received highest combined scores',
+        'Classic clean designs with high margins outperformed experimental by 1.8×',
+        'Ring category over-saturated — agents should diversify into Earrings + Pendants',
+        'White/rose gold with diamond accents received highest combined scores',
       ];
-      const emerging = r1 ? r1.trendData.emerging.join(' · ') : 'minimal · negative-space · platinum-bezel';
+      const emerging = r1 ? r1.trendData.emerging.join(' · ') : 'classic · clean · high-margin';
       const saturation = r1 ? r1.trendData.saturation : 'Ring (50% of pool)';
-      const treasury = r1 ? r1.trendData.treasury : 'Platinum + bezel setting';
+      const treasury = r1 ? r1.trendData.treasury : 'White gold + classic settings';
       const totalCredits = r1 ? r1.totalCredits.toLocaleString() : '—';
       const avgAes = r1 ? r1.avgAesthetic : '—';
 
@@ -1045,13 +1045,13 @@ const PHASE_SCRIPTS = [
       addLog(`◆ ${fi[2]}`, 'rp', 1350);
       addLog(`◆ Total credits circulated: <b>${totalCredits}⬡</b> · Avg aesthetic: <b>${avgAes}/100</b>`, 'rp', 1500);
 
-      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' won — consumer panel rewarded clean minimal strongly. I'm doubling down."`, 'cv', 2000);
-      addLog(`<b>${agentStates[0].name}</b>: "Consumer data confirms it. Going deeper architectural — cathedral-arch negative space. The bridal segment will love it."`, 'cv', 2500);
-      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Mass-market data is clear: clean architecture + high margin = winning formula. Pivoting my halo accordingly."`, 'cv', 2900);
-      addLog(`<b>${agentStates[2].name}</b>: "Holding romantic, but shifting to yellow gold — consumer panel data shows gift segment prefers warmer tones."`, 'cv', 3300);
-      addLog(`<b>${agentStates[3].name}</b>: "C1 consumer panel penalized my low margins. Mutating — keeping industrial edge but targeting higher mass-market viability."`, 'cv', 3700);
-      addLog(`<b>${agentStates[5].name}</b>: "'${r1 ? r1.designs.sort((a,b)=>b.rank-a.rank).slice(-1)[0]?.name || 'Thorn Band' : 'Thorn Band'}' failed — consumer panel gave almost zero credits for low-margin niche. Must fix profit score this cycle."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. 4 of 6 agents pivoting toward C1 mass-market winning formula. Saturation risk building.`, 'rs', 4500);
+      addLog(`<b>${winnerAgent}</b> → <b>${agentStates[0].name}</b>: "My '${winnerName}' performed well — consumer panel rewarded accessible, clean designs. Refining the formula."`, 'cv', 2000);
+      addLog(`<b>${agentStates[0].name}</b>: "Consumer data is clear: bridal classics with high margins win. Going cathedral oval — elegant, proven, commercial."`, 'cv', 2500);
+      addLog(`<b>${agentStates[4].name}</b> → <b>${agentStates[2].name}</b>: "Mass-market signal: clean + high margin = winning formula. I'm optimizing my bridal ring for maximum commercial fit."`, 'cv', 2900);
+      addLog(`<b>${agentStates[2].name}</b>: "Gift segment wants warmth and color. Yellow gold sapphire pendant — diversifying from ring saturation."`, 'cv', 3300);
+      addLog(`<b>${agentStates[3].name}</b>: "C1 taught me margins matter. Pivoting to a gold bangle — still modern, but commercially viable this time."`, 'cv', 3700);
+      addLog(`<b>${agentStates[5].name}</b>: "Switching to rose gold earrings — leaf motif, everyday wearable. Category diversification + better margins."`, 'cv', 4100);
+      addLog(`Cross-pollination complete. All 6 agents aligning toward higher mass-market fit. Category diversification improving.`, 'rs', 4500);
       setProgress(20);
       return 4800;
     },
@@ -1062,20 +1062,20 @@ const PHASE_SCRIPTS = [
       const r1 = cycleReports[0];
       const winnerName = r1 ? r1.winner.name : 'Orbit Drop';
       const winnerCat  = r1 ? r1.winner.cat  : 'Earrings';
-      const topStyle   = r1 ? r1.trendData.emerging[0] : 'minimal';
+      const topStyle   = r1 ? r1.trendData.emerging[0] : 'classic';
       const satCat     = r1 ? r1.trendData.saturation  : 'Ring (50% of pool)';
-      const treasury   = r1 ? r1.trendData.treasury    : 'Platinum + bezel setting';
-      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Thorn Band' : 'Thorn Band';
+      const treasury   = r1 ? r1.trendData.treasury    : 'White gold + classic settings';
+      const loserName  = r1 ? r1.sortedDesigns[r1.sortedDesigns.length-1]?.name || 'Hex Link' : 'Hex Link';
 
       addLog(`Synthesis: agents cross-reference C1 Intelligence + mass-market fitness signals.`,'',200);
       addLog(`<b>Mass-market insight driving C2:</b> Winner "${winnerName}" (${winnerCat}) · Top consumer segment: Bridal · Saturation: ${satCat}`,'rp',400);
-      addLog(`<b>${agentStates[0].name}</b> — EXPLOIT · Ring · Platinum marquise cathedral · Exploiting "${topStyle}" trend · Margin: 71% · Target: Bridal + Everyday`,'',700);
-      addLog(`<b>${agentStates[1].name}</b> — EXPLOIT · Ring · Platinum bezel · C1 winner refinement · Margin: 74% · Target: Everyday segment`,'',1100);
-      addLog(`<b>${agentStates[2].name}</b> — EXPLOIT · Pendant · Yellow gold sapphire · Diversifying from ring saturation · Margin: 73% · Target: Gift segment`,'',1500);
-      addLog(`<b>${agentStates[3].name}</b> — MUTATE · Ring · Platinum/titanium arc · Consumer data: raising margin to improve MKT score · Margin: 53% · ⚠ Still below MKT target`,'',1800);
-      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold arch · "${treasury}" signal · Margin: 88% · Target: Bridal (highest consumer demand)`,'',2100);
-      addLog(`<b>${agentStates[5].name}</b> — MUTATE · Bracelet · Silver organic bone · Genome shifted: margin priority +15 from C1 pressure · Margin: 50%`,'',2400);
-      addLog(`⚠ Ring saturation 67% — consumer panel will penalize category clustering. Only ${agentStates[2].name} diversified.`,'',2900);
+      addLog(`<b>${agentStates[0].name}</b> — EXPLOIT · Ring · Platinum oval cathedral · Classic bridal formula · Margin: 80% · Target: Bridal + Everyday`,'',700);
+      addLog(`<b>${agentStates[1].name}</b> — EXPLOIT · Ring · White gold bezel modern · Everyday appeal · Margin: 82% · Target: Everyday segment`,'',1100);
+      addLog(`<b>${agentStates[2].name}</b> — EXPLOIT · Pendant · Yellow gold sapphire · Diversifying from ring saturation · Margin: 79% · Target: Gift segment`,'',1500);
+      addLog(`<b>${agentStates[3].name}</b> — MUTATE · Bracelet · Gold geometric bangle · Improved margins from C1 · Margin: 68% · Commercial pivot`,'',1800);
+      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold split shank · "${treasury}" signal · Margin: 91% · Target: Bridal (highest demand)`,'',2100);
+      addLog(`<b>${agentStates[5].name}</b> — MUTATE · Earrings · Rose gold leaf studs · Category diversification · Margin: 72% · Everyday + Gift`,'',2400);
+      addLog(`Category diversity improved: 3 Rings, 1 Pendant, 1 Bracelet, 1 Earrings. Agents responding to saturation signal.`,'',2900);
       addLog(`Blueprints locked. All agents now reference mass-market consumer demand as primary objective.`, 'rs', 3300);
       setProgress(40);
       return 3600;
@@ -1135,9 +1135,9 @@ const PHASE_SCRIPTS = [
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
       const winMkt = winner.massMarket || computeMassMarketScore(winner);
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market Score: <b>${winMkt}/100</b>. Treasury Elevation triggered.`,'rs',500);
-      addLog(`2nd consecutive minimal win — C1: "${prevWinnerName}" · C2: "${winner.name}". Pattern confirmed; exploitation phase in full effect.`,'rp',700);
-      addLog(`⚠ <b>Saturation alert detected:</b> 67% of pool was Ring category. Incentive multipliers issued for Earrings, Pendants, Bracelets in Cycle 3.`,'',1100);
-      addLog(`Trend signal: <b>Architectural minimal</b> dominant for 2 consecutive cycles. Novelty gap widening — opportunity forming in organic/sculptural space.`,'rs',1600);
+      addLog(`2nd consecutive commercial classic win — C1: "${prevWinnerName}" · C2: "${winner.name}". Mass-market formula validated.`,'rp',700);
+      addLog(`Agents converging on commercial sweet spot: clean design, high margins, proven categories. Category mix improving.`,'',1100);
+      addLog(`Trend signal: <b>Classic bridal + everyday wearable</b> dominant. Margins rising — avg profit score up 8 points from C1.`,'rs',1600);
       // Apply mass market pressure to underperformers
       sorted.forEach((d,rank)=>{
         const mkt = d.massMarket || computeMassMarketScore(d);
@@ -1160,24 +1160,24 @@ const PHASE_SCRIPTS = [
       const r1 = cycleReports[0];
       const r2 = cycleReports[1];
       const w1 = r1 ? r1.winner.name : 'Orbit Drop';
-      const w2 = r2 ? r2.winner.name : 'Cathedral Void';
-      const fi1last = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'High-novelty designs received more votes';
-      const sat2 = r2 ? r2.trendData.saturation : 'Ring (67% of pool)';
-      const fi2 = r2 ? r2.trendData.fi : ['Organic/sculptural space unexplored'];
+      const w2 = r2 ? r2.winner.name : 'Cathedral Classic';
+      const fi1last = r1 ? r1.trendData.fi[r1.trendData.fi.length-1] : 'Commercial classics dominated votes';
+      const sat2 = r2 ? r2.trendData.saturation : 'Ring (50% of pool)';
+      const fi2 = r2 ? r2.trendData.fi : ['All agents improved margins — mass-market pressure working'];
       addLog(`Cycle 3 initiated. Loading Cycle 1 + Cycle 2 Intelligence Reports…`,'rp',100);
       addLog(`<b>[KNOWLEDGE DATABASE — 2-Cycle Compound Analysis]</b>`, 'rp', 400);
-      addLog(`◆ C1 winner: "${w1}" · C2 winner: "${w2}" — 2 consecutive minimal wins`, 'rp', 650);
-      addLog(`◆ C2 saturation: <b>${sat2}</b> — critical threshold exceeded`, 'rp', 850);
+      addLog(`◆ C1 winner: "${w1}" · C2 winner: "${w2}" — 2 consecutive commercial wins`, 'rp', 650);
+      addLog(`◆ C2 category mix: <b>${sat2}</b> — improved from C1`, 'rp', 850);
       addLog(`◆ ${fi2[0]}`, 'rp', 1050);
       addLog(`◆ ${fi2[1] || fi1last}`, 'rp', 1200);
-      addLog(`◆ ${fi2[2] || 'Explore underrepresented categories for maximum vote advantage'}`, 'rp', 1350);
-      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Minimal is saturating — consumer panel penalized clustering last cycle. Differentiating into pendant for gift segment."`, 'cv', 1900);
-      addLog(`<b>${agentStates[0].name}</b>: "Last push on architectural — but I know the consumer panel will discount this if too many follow the same path."`, 'cv', 2400);
-      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Two cycles of data: organic/sculptural is the mass-market gap. Fashion-forward segment is entirely unserved. Going all in."`, 'cv', 2900);
-      addLog(`<b>${agentStates[3].name}</b>: "My genome shifted after C1 and C2 pressure. Organic geometry + higher margins — consumer panel demands it."`, 'cv', 3300);
-      addLog(`<b>${agentStates[2].name}</b>: "Returning to romantic pendant — champagne pearl cluster. Gift segment data shows this converts at 3.2× vs. minimal."`, 'cv', 3700);
-      addLog(`<b>${agentStates[4].name}</b>: "Consumer panel data: bridal = 30% of all demand. Staying in that lane — it's the highest mass-market value."`, 'cv', 4100);
-      addLog(`Cross-pollination complete. Agents diverging to serve different consumer segments — mass-market optimization driving category spread.`, 'rs', 4500);
+      addLog(`◆ ${fi2[2] || 'Maximize category diversity for consumer panel bonus'}`, 'rp', 1350);
+      addLog(`<b>${agentStates[1].name}</b> → <b>${agentStates[0].name}</b>: "Two cycles confirmed: clean, commercial, high-margin wins. I'm perfecting a minimal pendant for the gift segment."`, 'cv', 1900);
+      addLog(`<b>${agentStates[0].name}</b>: "Final cycle — going for the bridal crown. Platinum halo with pavé band. Timeless, proven, maximum MKT score."`, 'cv', 2400);
+      addLog(`<b>${agentStates[5].name}</b> → <b>${agentStates[3].name}</b>: "Earrings are underserved. Rose gold pearl drops — feminine, gift-ready, great margins."`, 'cv', 2900);
+      addLog(`<b>${agentStates[3].name}</b>: "I've fully pivoted. Gold chain bracelet — everyday comfort wear. Consumer panel rewards accessibility."`, 'cv', 3300);
+      addLog(`<b>${agentStates[2].name}</b>: "Floral cluster earrings — gift segment data shows 2.8× conversion vs. niche designs. Mass-market or nothing."`, 'cv', 3700);
+      addLog(`<b>${agentStates[4].name}</b>: "Consensus cut: bridal ring, highest margins in the pool. The mass-market formula is clear."`, 'cv', 4100);
+      addLog(`Cross-pollination complete. All agents fully aligned on mass-market optimization. Best category diversity yet: 2 Rings, 2 Earrings, 1 Pendant, 1 Bracelet.`, 'rs', 4500);
       setProgress(20);
       return 4800;
     },
@@ -1186,14 +1186,14 @@ const PHASE_SCRIPTS = [
       setProgress(25);
       agentStates.forEach(a=>setAgentStatus(a.id,'Synthesizing…'));
       addLog(`Synthesis: 2-cycle compound data + mass-market fitness signals informing blueprints.`,'',200);
-      addLog(`<b>${agentStates[0].name}</b> — EXPLOIT · Ring · Platinum emerald-cut cathedral · Winner refinement · Margin: 68% · Bridal segment`,'',500);
-      addLog(`<b>${agentStates[1].name}</b> — MUTATE · Pendant · Platinum arc · Category diversification · Margin: 69% · Gift + Everyday segments`,'',900);
-      addLog(`<b>${agentStates[2].name}</b> — EXPLORE · Pendant · Yellow gold pearl cluster · Organic form · Margin: 70% · Gift segment (highest conversion)`,'',1300);
-      addLog(`<b>${agentStates[3].name}</b> — MUTATE · Ring · Mixed metal organic shard · Genome mutated: +15 margin sensitivity · Margin: 53% · Fashion-forward`,'',1600);
-      addLog(`<b>${agentStates[5].name}</b> — EXPLORE · Bracelet · 18k gold root form · Consumer gap: no bracelet winner in 2 cycles · Margin: 64% · Fashion-forward`,'',1900);
-      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold cushion · Highest mass-market score in pool (est. 89/100) · Margin: 89% · Bridal`,'',2200);
-      addLog(`Category spread improved: 3 agents diversified to pendants/bracelets — consumer panel incentive working.`, 'rs', 2700);
-      addLog(`Blueprints locked. Mass-market scores pre-computed: range 48–89/100.`, 'rs', 3000);
+      addLog(`<b>${agentStates[0].name}</b> — EXPLOIT · Ring · Platinum pavé halo · Bridal crown piece · Margin: 83% · Target: Bridal segment`,'',500);
+      addLog(`<b>${agentStates[1].name}</b> — MUTATE · Pendant · White gold bezel diamond · Everyday elegance · Margin: 80% · Target: Everyday + Gift`,'',900);
+      addLog(`<b>${agentStates[2].name}</b> — EXPLOIT · Earrings · Yellow gold floral cluster · Gift-ready · Margin: 78% · Target: Gift segment`,'',1300);
+      addLog(`<b>${agentStates[3].name}</b> — EXPLOIT · Bracelet · Gold oval links · Full commercial pivot · Margin: 75% · Target: Everyday`,'',1600);
+      addLog(`<b>${agentStates[5].name}</b> — EXPLORE · Earrings · Rose gold pearl drops · Feminine appeal · Margin: 76% · Target: Gift + Everyday`,'',1900);
+      addLog(`<b>${agentStates[4].name}</b> — EXPLOIT · Ring · White gold cushion · Highest mass-market score in pool (est. 91/100) · Margin: 92% · Bridal`,'',2200);
+      addLog(`Best category diversity yet: 2 Rings, 2 Earrings, 1 Pendant, 1 Bracelet. All margins above 75%.`, 'rs', 2700);
+      addLog(`Blueprints locked. Mass-market scores pre-computed: range 72–91/100. Highest floor in epoch.`, 'rs', 3000);
       setProgress(40);
       return 3300;
     },
@@ -1254,9 +1254,9 @@ const PHASE_SCRIPTS = [
       const winMkt = winner.massMarket || computeMassMarketScore(winner);
       const avgMkt = Math.round(sorted.reduce((s,d)=>s+(d.massMarket||computeMassMarketScore(d)),0)/sorted.length);
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market: <b>${winMkt}/100</b>. Epoch breakout design.`,'rs',500);
-      addLog(`<b>Epoch mass-market summary:</b> Avg MKT score progressed across cycles — agents converged toward commercially viable designs.`,'rs',1000);
-      addLog(`<b>Epoch conclusion:</b> Minimal trend emerged (C1), peaked and exploited (C2), then saturated — organic/sculptural emerged as its replacement (C3).`,'rs',1500);
-      addLog(`Agents who detected saturation early and pivoted (${agentStates[5].name}, ${agentStates[3].name}) gained the most reputation + consumer panel rewards.`,'',2000);
+      addLog(`<b>Epoch mass-market summary:</b> Avg MKT score rose from ~65 (C1) to ~78 (C3) — agents successfully converged on commercially viable designs.`,'rs',1000);
+      addLog(`<b>Epoch conclusion:</b> C1 established commercial baselines, C2 refined margins + categories, C3 achieved full mass-market alignment with best category diversity.`,'rs',1500);
+      addLog(`All agents improved mass-market scores. Margins up 15+ points average. Category diversity peaked. Consumer panel rewards maximized.`,'',2000);
       // Final mass market pressure application
       sorted.forEach((d,rank)=>{
         const mkt = d.massMarket || computeMassMarketScore(d);
@@ -1344,22 +1344,42 @@ function renderDesignCard(d, i) {
     }
   };
 
-  img.onload = () => {
-    img.classList.add('loaded');
-    if (loader) loader.classList.add('hidden');
+  // Retry logic: attempt up to 3 times with exponential backoff (2s, 4s)
+  let attempt = 0;
+  const maxRetries = 3;
+  const loadImage = (url) => {
+    attempt++;
+    img.onload = () => {
+      img.classList.add('loaded');
+      if (loader) loader.classList.add('hidden');
+      clearTimeout(timeout);
+    };
+    img.onerror = () => {
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // 2s, 4s
+        setTimeout(() => {
+          // Vary the seed slightly on retry to avoid cached failures
+          const retryUrl = url + '&retry=' + attempt;
+          loadImage(retryUrl);
+        }, delay);
+      } else {
+        clearTimeout(timeout);
+        showError();
+      }
+    };
+    img.src = url;
   };
-  img.onerror = showError;
 
-  // 35 second timeout — if still loading, show error state
-  const timeout = setTimeout(showError, 35000);
-  img.addEventListener('load',  () => clearTimeout(timeout), {once:true});
-  img.addEventListener('error', () => clearTimeout(timeout), {once:true});
+  // 45 second overall timeout — if still loading after all retries, show error
+  const timeout = setTimeout(() => {
+    if (!img.classList.contains('loaded')) showError();
+  }, 45000);
 
   // Start progress animation
   cardImgProgress(pctId, loaderId);
 
-  // Set src AFTER attaching events
-  img.src = imgUrl;
+  // Start first load attempt
+  loadImage(imgUrl);
 }
 
 function cardImgProgress(pctId, loaderId) {
@@ -1462,14 +1482,27 @@ function buildTop3Gallery(sortedDesigns, containerId, cardClass) {
     };
 
     if (img) {
-      img.onload = () => {
-        img.classList.add('loaded');
-        if (loader) loader.classList.add('hidden');
-        checkAllImagesLoaded(containerId);
+      const imgUrl = makeImgUrl(d.prompt, seed, d.massMarket || computeMassMarketScore(d));
+      let imgAttempt = 0;
+      const maxImgRetries = 3;
+      const tryLoadImg = (url) => {
+        imgAttempt++;
+        img.onload = () => {
+          img.classList.add('loaded');
+          if (loader) loader.classList.add('hidden');
+          checkAllImagesLoaded(containerId);
+        };
+        img.onerror = () => {
+          if (imgAttempt < maxImgRetries) {
+            setTimeout(() => tryLoadImg(url + '&retry=' + imgAttempt), Math.pow(2, imgAttempt) * 1000);
+          } else {
+            showFallback();
+          }
+        };
+        img.src = url;
       };
-      img.onerror = showFallback;
-      setTimeout(showFallback, 35000); // timeout fallback
-      img.src = makeImgUrl(d.prompt, seed, d.massMarket || computeMassMarketScore(d));
+      setTimeout(() => { if (!img.classList.contains('loaded')) showFallback(); }, 45000);
+      tryLoadImg(imgUrl);
     }
 
     animateProgress(containerId, i);

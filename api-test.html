@@ -296,6 +296,29 @@ function getHfCredentials() {
 }
 
 /* ══════════════════════════════════
+   RETRY HELPER
+══════════════════════════════════ */
+async function fetchWithRetry(url, options, maxRetries = 3, statusId) {
+  let lastError;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      // Don't retry on auth errors or client errors (4xx) — only on server/network issues
+      if (res.ok || (res.status >= 400 && res.status < 500)) return res;
+      lastError = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastError = err;
+    }
+    if (attempt < maxRetries - 1) {
+      const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+      if (statusId) setStatus(statusId, 'running', `Network error — retry ${attempt + 1}/${maxRetries - 1} in ${delay/1000}s...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
+
+/* ══════════════════════════════════
    TEST 1: CLAUDE API
 ══════════════════════════════════ */
 async function testClaude() {
@@ -308,7 +331,7 @@ async function testClaude() {
   const model = document.getElementById('claude-model').value;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -324,7 +347,7 @@ async function testClaude() {
           content: 'In one sentence, describe a piece of jewelry designed to sell well in mass retail markets. Be specific about metals, stones, and design elements. Focus on broad consumer appeal, wearability, and commercial viability.'
         }]
       })
-    });
+    }, 3, 'claude-status');
 
     timer.stop();
     const data = await res.json();
@@ -342,7 +365,7 @@ async function testClaude() {
 
   } catch (err) {
     timer.stop();
-    setStatus('claude-status', 'fail', `Network error — ${err.message}`);
+    setStatus('claude-status', 'fail', `Network error after retries — ${err.message}`);
     showResult('claude-result', err.stack || err.message);
   }
 }
@@ -352,37 +375,63 @@ async function testClaude() {
 ══════════════════════════════════ */
 const HF_BASE = 'https://platform.higgsfield.ai';
 
-async function hfSubmit(modelId, input, creds) {
-  // POST https://platform.higgsfield.ai/{model_id}
-  // Auth: Authorization: Key {api_key}:{api_key_secret}
-  const res = await fetch(`${HF_BASE}/${modelId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Key ${creds.keyId}:${creds.keySecret}`
-    },
-    body: JSON.stringify(input)
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(`HTTP ${res.status}: ${body.error || body.message || res.statusText}`);
+async function hfSubmit(modelId, input, creds, maxRetries = 3) {
+  let lastError;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch(`${HF_BASE}/${modelId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Key ${creds.keyId}:${creds.keySecret}`
+        },
+        body: JSON.stringify(input)
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const err = new Error(`HTTP ${res.status}: ${body.error || body.message || res.statusText}`);
+        // Don't retry client errors (auth, bad request)
+        if (res.status >= 400 && res.status < 500) throw err;
+        lastError = err;
+      } else {
+        return res.json();
+      }
+    } catch (err) {
+      if (err.message.includes('HTTP 4')) throw err; // re-throw client errors
+      lastError = err;
+    }
+    if (attempt < maxRetries - 1) {
+      await new Promise(r => setTimeout(r, Math.pow(2, attempt + 1) * 1000));
+    }
   }
-  return res.json();
+  throw lastError;
 }
 
 async function hfPoll(requestId, creds, maxWait = 120000) {
   // GET https://platform.higgsfield.ai/requests/{request_id}/status
   const t0 = Date.now();
   const interval = 3000;
+  let consecutiveErrors = 0;
   while (Date.now() - t0 < maxWait) {
-    const res = await fetch(`${HF_BASE}/requests/${requestId}/status`, {
-      headers: { 'Authorization': `Key ${creds.keyId}:${creds.keySecret}` }
-    });
-    if (!res.ok) throw new Error(`Poll failed: HTTP ${res.status}`);
-    const data = await res.json();
-    if (data.status === 'completed') return data;
-    if (data.status === 'failed') throw new Error('Generation failed on server (credits refunded)');
-    if (data.status === 'nsfw') throw new Error('Content failed moderation checks (credits refunded)');
+    try {
+      const res = await fetch(`${HF_BASE}/requests/${requestId}/status`, {
+        headers: { 'Authorization': `Key ${creds.keyId}:${creds.keySecret}` }
+      });
+      if (!res.ok) throw new Error(`Poll failed: HTTP ${res.status}`);
+      const data = await res.json();
+      consecutiveErrors = 0; // reset on success
+      if (data.status === 'completed') return data;
+      if (data.status === 'failed') throw new Error('Generation failed on server (credits refunded)');
+      if (data.status === 'nsfw') throw new Error('Content failed moderation checks (credits refunded)');
+    } catch (err) {
+      // Terminal errors — don't retry
+      if (err.message.includes('failed on server') || err.message.includes('moderation')) throw err;
+      consecutiveErrors++;
+      if (consecutiveErrors >= 4) throw new Error(`Polling failed after ${consecutiveErrors} consecutive network errors: ${err.message}`);
+      // Backoff on network errors
+      await new Promise(r => setTimeout(r, Math.pow(2, consecutiveErrors) * 1000));
+      continue;
+    }
     await new Promise(r => setTimeout(r, interval));
   }
   throw new Error('Timed out waiting for generation (120s)');
@@ -547,7 +596,7 @@ async function testHarmony() {
   let imagePrompt;
   try {
     const claudeModel = document.getElementById('claude-model').value;
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -563,7 +612,7 @@ async function testHarmony() {
           content: `You are an AI assistant for a mass-market jewelry brand. Given a jewelry description, output ONLY a concise image-generation prompt (max 180 characters) optimized for commercial product photography. Use simple, clear language. White or neutral background, soft even lighting. Focus on the piece, metals, stones. No artsy or editorial terms. No explanation, just the prompt.\n\nJewelry: ${description}`
         }]
       })
-    });
+    }, 3, 'harmony-status');
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
