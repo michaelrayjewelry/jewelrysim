@@ -58,7 +58,7 @@ function makeAgent(overrides = {}) {
     manufacturability: 60,
     wearability: 65,
     trendSens: 45,
-    credits: 10000,
+    credits: 100000,
     reputation: 50,
     status: 'idle',
     isUser: false,
@@ -99,7 +99,7 @@ function makeTenAgents() {
       marketFit: 50,
       symmetry: 60,
       reputation: 50,
-      credits: 10000,
+      credits: 100000,
     })
   );
 }

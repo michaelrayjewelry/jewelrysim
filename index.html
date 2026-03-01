@@ -2934,7 +2934,7 @@ async function deployCurrentAgent() {
     marketFocus: marketFocus,
     philosophy: document.getElementById('b-phil').value || '',
     isUser: currentAgentNum === 1,
-    credits: 10000,
+    credits: 100000,
     reputation: currentAgentNum === 1 ? 50 : Math.floor(Math.random()*30)+45,
     status: 'Idle',
     bio: '',
@@ -3931,11 +3931,12 @@ async function runLiveVoting(cycleNum) {
     const selfIdx = activeDesigns.findIndex(d=>d.agentIdx===vi);
     const convMem = (voter.conversationMemory || []).filter(m => m.cycle === cycleNum).map(m => `${m.partner}: "${m.excerpt}"`).join('\n');
 
-    const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. You have 10,000⬡ to allocate across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${selfIdx}).
+    const votePrompt = `You are ${voter.name}, voting in Cycle ${cycleNum}. Your total treasury: ${voter.credits.toLocaleString()}⬡. You have 10,000⬡ to allocate this round across ${activeDesigns.length} designs. You CANNOT vote for your own design (index ${selfIdx}).
 
 THE DESIGNS TO EVALUATE:
 ${designSummary}
 
+YOUR TREASURY: ${voter.credits.toLocaleString()}⬡ (started with 100,000⬡ — round budget: 10,000⬡)
 YOUR REPUTATION: ${voter.reputation} → vote weight multiplier: ${(0.7 + (voter.reputation / 100) * 0.6).toFixed(2)}x
 
 YOUR CONVERSATIONS THIS CYCLE:
@@ -4035,10 +4036,21 @@ The votes array must be ${activeDesigns.length} integers that sum to 10000. Put 
   });
   setTimeout(()=>{
     activeDesigns.forEach((d,i)=>{ const e=document.getElementById('dc-cred-'+i); if(e) e.textContent=d.credits.toLocaleString()+'⬡'; });
-    agentStates.forEach((a,vi)=>{ const spent=liveVoteMatrix[vi].reduce((s,v)=>s+v,0); a.credits=10000-spent; setAgentCreds(a.id,a.credits); setAgentStatus(a.id,'Voted'); });
+    agentStates.forEach((a,vi)=>{
+      const spent=liveVoteMatrix[vi].reduce((s,v)=>s+v,0);
+      a.credits -= spent; // deduct round spend from running total
+      const myDesign = activeDesigns.find(d=>d.agentIdx===vi);
+      if(myDesign) a.credits += myDesign.credits; // add earned credits from votes received
+      setAgentCreds(a.id,a.credits);
+      setAgentStatus(a.id,'Voted');
+    });
   }, (300+agentStates.length*300+200)/speed);
   window._liveVoteMatrix = liveVoteMatrix;
-  addLog(`Voting complete. All ${agentStates.length} agents voted in parallel. Credits tallied.`, 'rs', 300+agentStates.length*300+300);
+  addLog(`Voting complete. All ${agentStates.length} agents voted in parallel. Credits tallied (10,000⬡ round budget spent per agent).`, 'rs', 300+agentStates.length*300+300);
+  // Log treasury totals after voting
+  const treasuryDelay = 300+agentStates.length*300+500;
+  const treasurySummary = agentStates.map(a => `${a.name}: ${a.credits.toLocaleString()}⬡`).join(' · ');
+  addLog(`<span style="font-size:.7rem;opacity:.7">Treasury totals → ${treasurySummary}</span>`, '', treasuryDelay);
   setProgress(80);
   return 300+agentStates.length*300+600;
 }
@@ -4803,6 +4815,7 @@ function generateAndStoreReport(cycleNum, sortedDesigns) {
     return {
       id: a.id, name: a.name, emoji: a.emoji, arch: a.arch,
       earned, spent, roi: spent ? +(earned/spent).toFixed(2) : 0,
+      totalCredits: a.credits,
       reputation: a.reputation,
       repDelta: a.reputation - prevRep,
       strategy: myDesign?.strategy || '—',
@@ -5247,7 +5260,7 @@ function viewReport(cycleNum) {
   const sortedAgents = [...(r.agentPerf||[])].sort((a,b)=>a.rank-b.rank);
   const lbHtml = `
     <table class="agent-lb">
-      <thead><tr><th style="width:32px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Credits Earned</th><th>Credits Spent</th><th>ROI</th><th>Rep</th><th>Delta</th></tr></thead>
+      <thead><tr><th style="width:32px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Credits Earned</th><th>Credits Spent</th><th>ROI</th><th>Total Treasury</th><th>Rep</th><th>Delta</th></tr></thead>
       <tbody>${sortedAgents.map((a,i)=>`
         <tr>
           <td class="rank-num ${i===0?'r1':''}">${i+1}</td>
@@ -5257,6 +5270,7 @@ function viewReport(cycleNum) {
           <td class="gold" style="color:${i===0?'var(--gold)':'var(--dim)'}">${fmtC(a.earned)}⬡</td>
           <td>${fmtC(a.spent)}⬡</td>
           <td style="color:${a.roi>=1?'var(--grn)':'var(--red)'}">${a.roi}×</td>
+          <td style="color:var(--gold);font-weight:600">${fmtC(a.totalCredits||0)}⬡</td>
           <td>${a.reputation}</td>
           <td class="rep-delta ${a.repDelta>0?'rep-up':a.repDelta<0?'rep-dn':''}">${sign(a.repDelta)}</td>
         </tr>`).join('')}
@@ -6034,7 +6048,7 @@ function _createPdfContainer(r) {
     <div class="pdf-section">
       <div class="pdf-sec-hdr">Agent Leaderboard — Credits / ROI / Reputation</div>
       <table class="pdf-table">
-        <thead><tr><th style="width:28px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Earned</th><th>Spent</th><th>ROI</th><th>Rep</th><th>Delta</th></tr></thead>
+        <thead><tr><th style="width:28px">#</th><th>Agent</th><th>Design</th><th>Strategy</th><th>Earned</th><th>Spent</th><th>ROI</th><th>Treasury</th><th>Rep</th><th>Delta</th></tr></thead>
         <tbody>${sortedAgents.map((a, i) => `
           <tr>
             <td class="pdf-rank-num ${i === 0 ? 'r1' : ''}">${i + 1}</td>
@@ -6044,6 +6058,7 @@ function _createPdfContainer(r) {
             <td class="gold">${fmtC(a.earned)}</td>
             <td>${fmtC(a.spent)}</td>
             <td style="color:${a.roi >= 1 ? '#4caf7d' : '#b5332a'}">${a.roi}x</td>
+            <td style="color:#c9a84c;font-weight:600">${fmtC(a.totalCredits||0)}</td>
             <td>${a.reputation}</td>
             <td style="color:${a.repDelta > 0 ? '#4caf7d' : a.repDelta < 0 ? '#b5332a' : '#8a8680'}">${sign(a.repDelta)}</td>
           </tr>`).join('')}
