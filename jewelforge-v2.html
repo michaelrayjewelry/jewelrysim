@@ -460,6 +460,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <button class="btn btn-primary" onclick="initSim()">Deploy Agent → Begin 3-Cycle Epoch</button>
     <button class="btn btn-ghost" onclick="autoGen()">✦ Auto-Generate</button>
   </div>
+
+  <div class="bsec" style="margin-top:1.5rem">
+    <h4>Claude API — Live Design Generation &nbsp;<span style="color:var(--faint);font-weight:300;font-size:.65rem">(optional)</span></h4>
+    <p style="font-size:.75rem;color:var(--dim);line-height:1.6;margin-bottom:1rem">Enter an Anthropic API key to enable live AI design generation. Claude will create designs, agent dialogue, and image prompts that naturally evolve toward mass-market appeal across cycles. Without an API key, the simulation uses pre-defined designs.</p>
+    <div class="field">
+      <label>Anthropic API Key</label>
+      <input type="password" id="claude-api-key" placeholder="sk-ant-..." style="letter-spacing:.15em" />
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="claude-sim-model">
+        <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514</option>
+        <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+      </select>
+    </div>
+    <div style="font-size:.62rem;color:var(--faint);letter-spacing:.1em">Keys are stored only in your browser session and sent only to the Anthropic API.</div>
+  </div>
 </div>
 
 
@@ -873,16 +890,30 @@ function addLog(text, type='', delay=0) {
 let phaseDelay = 0;
 function D(ms){ return ms; }
 
-function nextPhase() {
+async function nextPhase() {
   currentPhase++;
   if(currentPhase >= 5) return;
   setPhaseActive(currentPhase);
   document.getElementById('phase-btn').disabled = true;
   document.getElementById('phase-btn').textContent = '⏳ Running phase…';
 
-  const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
-  const script = scripts[currentPhase];
-  const finishDelay = script();
+  let finishDelay;
+  // Use API-powered phases when API key is present and phase supports it
+  if (isApiEnabled() && currentPhase <= 3) {
+    try {
+      finishDelay = await runApiPhase(currentCycle, currentPhase);
+    } catch (err) {
+      // API failed — fall back to pre-defined scripts
+      addLog(`⚠ API call failed: ${err.message}. Using pre-computed data.`, '', 100);
+      console.error('API phase error:', err);
+      const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
+      finishDelay = scripts[currentPhase]();
+    }
+  } else {
+    const scripts = PHASE_SCRIPTS[currentCycle-1] || PHASE_SCRIPTS[0];
+    const script = scripts[currentPhase];
+    finishDelay = script();
+  }
 
   setTimeout(()=>{
     document.getElementById('phase-btn').disabled = false;
@@ -894,6 +925,147 @@ function nextPhase() {
       document.getElementById('phase-btn').textContent = labels[currentPhase]||'▶ Next Phase';
     }
   }, finishDelay/speed);
+}
+
+/* ══════════════════════════════════
+   API-POWERED PHASE RUNNER
+   Calls Claude for dialogue, designs, and votes.
+   Falls back to pre-defined data on error.
+══════════════════════════════════ */
+async function runApiPhase(cycleNum, phase) {
+  if (phase === 0) return await runApiCrossPollination(cycleNum);
+  if (phase === 1) return await runApiSynthesis(cycleNum);
+  if (phase === 2) return await runApiGeneration(cycleNum);
+  if (phase === 3) return await runApiVoting(cycleNum);
+  // Phase 4 (evolution) always uses the regular script — it's deterministic
+  const scripts = PHASE_SCRIPTS[cycleNum-1] || PHASE_SCRIPTS[0];
+  return scripts[phase]();
+}
+
+// Phase 0: Cross-Pollination via Claude
+async function runApiCrossPollination(cycleNum) {
+  setProgress(5);
+  addLog(`Cycle ${cycleNum} initiated. <b>Claude API generating agent dialogue…</b>`,'rp',100);
+  addLog(`<b>🛒 Mass-market model loaded:</b> Consumer segments — Bridal (30%), Everyday (25%), Gift (25%), Fashion-Forward (20%).`,'rp',300);
+
+  if (cycleNum > 1 && cycleReports.length > 0) {
+    const r = cycleReports[cycleReports.length - 1];
+    addLog(`<b>[KNOWLEDGE DATABASE — Prior Cycle Intelligence]</b>`, 'rp', 500);
+    addLog(`◆ Winner: "${r.winner.name}" by ${r.winner.agentName}`, 'rp', 700);
+    addLog(`◆ Avg MKT: ${r.avgMassMarket || '—'}/100 · Emerging: ${(r.trendData.emerging || []).join(' · ')}`, 'rp', 900);
+  }
+
+  agentStates.forEach((a,i)=>{ setTimeout(()=>setAgentStatus(a.id,'Conversing…'), (1000+i*100)/speed); });
+  addLog(`<i>Calling Claude API for cross-pollination dialogue…</i>`,'',1200);
+
+  const lines = await generateDialogueViaAPI(cycleNum, 0);
+  let delay = 1500;
+  lines.forEach((line, i) => {
+    const agent = agentStates[line.agentIdx] || agentStates[0];
+    addLog(`<b>${agent.name}</b>: "${line.text}"`, 'cv', delay);
+    delay += 500;
+  });
+
+  addLog(`Cross-pollination complete. Mass-market consumer demand model is the primary fitness signal.`, 'rs', delay + 200);
+  setProgress(20);
+  return delay + 600;
+}
+
+// Phase 1: Synthesis via Claude
+async function runApiSynthesis(cycleNum) {
+  setProgress(25);
+  agentStates.forEach(a => setAgentStatus(a.id, 'Synthesizing…'));
+  addLog(`Synthesis: Claude API generating agent blueprints with mass-market fitness signals.`,'',200);
+  addLog(`<i>Calling Claude API for synthesis blueprints…</i>`,'',400);
+
+  const lines = await generateDialogueViaAPI(cycleNum, 1);
+  let delay = 700;
+  lines.forEach((line, i) => {
+    const agent = agentStates[line.agentIdx] || agentStates[0];
+    addLog(`<b>${agent.name}</b> — ${line.text}`, '', delay);
+    delay += 400;
+  });
+
+  addLog(`Blueprints locked. Mass-market fitness = primary objective.`, 'rs', delay + 200);
+  setProgress(40);
+  return delay + 500;
+}
+
+// Phase 2: Generation via Claude
+async function runApiGeneration(cycleNum) {
+  setProgress(45);
+  document.getElementById('designs-wrap').style.display = 'block';
+
+  addLog(`<b>Claude API generating ${cycleNum === 1 ? 'initial' : 'evolved'} designs for Cycle ${cycleNum}…</b>`,'',100);
+  agentStates.forEach(a => setAgentStatus(a.id, 'Generating…'));
+
+  const apiDesigns = await generateDesignsViaAPI(cycleNum);
+
+  activeDesigns = apiDesigns.map((d, i) => ({
+    ...d,
+    credits: 0,
+    agentName: agentStates[d.agentIdx]?.name || `Agent ${d.agentIdx}`,
+  }));
+
+  activeDesigns.forEach((d, i) => {
+    const rationaleStr = d.rationale ? ` · <i>${d.rationale}</i>` : '';
+    addLog(`<b>${d.agentName}</b> submits: <i>"${d.name}"</i> — ${d.cat} · ${d.strategy.toUpperCase()}${rationaleStr}`, 'ds', 300 + i * 500);
+    setTimeout(() => renderDesignCard(d, i), (400 + i * 500) / speed);
+  });
+
+  addLog(`All ${activeDesigns.length} designs submitted via Claude API. Pool locked. Voting begins.`, 'rs', 300 + activeDesigns.length * 500 + 200);
+  setProgress(60);
+  return 300 + activeDesigns.length * 500 + 600;
+}
+
+// Phase 3: Voting via Claude
+async function runApiVoting(cycleNum) {
+  setProgress(65);
+  agentStates.forEach(a => setAgentStatus(a.id, 'Voting…'));
+  addLog(`Voting: Claude API generating agent votes + Consumer Panel allocating ${CONSUMER_CREDIT_POOL.toLocaleString()}⬡.`,'',100);
+  addLog(`<i>Calling Claude API for vote allocation…</i>`,'',300);
+
+  const voteResult = await generateVotesViaAPI(cycleNum, activeDesigns);
+  const vm = voteResult.votes;
+
+  let delay = 600;
+  vm.forEach((voterVotes, vi) => {
+    const voter = agentStates[vi];
+    if (!voter) return;
+    const top2 = voterVotes.map((v, i) => ({ i, v })).sort((a, b) => b.v - a.v).filter(x => x.v > 0).slice(0, 2);
+    if (top2.length) {
+      const msg = top2.map(x => `"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ');
+      addLog(`<b>${voter.name}</b> → ${msg}`, 'vt', delay);
+      delay += 400;
+    }
+  });
+
+  // Consumer panel votes
+  const consumerVotes = computeConsumerVotes(activeDesigns);
+  const topConsumer = consumerVotes.map((v, i) => ({ i, v })).sort((a, b) => b.v - a.v).slice(0, 2);
+  addLog(`<b>🛒 Consumer Panel</b> (mass-market demand) → ${topConsumer.map(x => `"${activeDesigns[x.i]?.name}" ${x.v.toLocaleString()}⬡`).join(', ')}`, 'vt', delay);
+  delay += 400;
+
+  // Tally agent credits
+  vm.forEach((voterVotes, vi) => {
+    voterVotes.forEach((creds, di) => { if (di < activeDesigns.length) activeDesigns[di].credits += creds; });
+  });
+  // Tally consumer panel credits
+  consumerVotes.forEach((creds, di) => { if (di < activeDesigns.length) activeDesigns[di].credits += creds; });
+
+  setTimeout(() => {
+    activeDesigns.forEach((d, i) => { const e = document.getElementById('dc-cred-' + i); if (e) e.textContent = d.credits.toLocaleString() + '⬡'; });
+    agentStates.forEach((a, vi) => { const spent = vm[vi] ? vm[vi].reduce((s, v) => s + v, 0) : 0; a.credits = 10000 - spent; setAgentCreds(a.id, a.credits); setAgentStatus(a.id, 'Voted'); });
+  }, (delay + 500) / speed);
+
+  if (voteResult.reasoning) {
+    addLog(`<i>Claude voting insight: ${voteResult.reasoning}</i>`, '', delay + 200);
+    delay += 300;
+  }
+  addLog(`Consumer panel allocated ${CONSUMER_CREDIT_POOL.toLocaleString()}⬡. Agent + Consumer credits tallied.`, 'rs', delay + 200);
+  addLog(`Voting complete.`, 'rs', delay + 500);
+  setProgress(80);
+  return delay + 1000;
 }
 
 /* ══════════════════════════════════
@@ -1000,8 +1172,16 @@ const PHASE_SCRIPTS = [
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market Score: <b>${winMkt}/100</b>. Treasury eligible.`,'rs', 500);
       const loserMkt = loser.massMarket || computeMassMarketScore(loser);
       addLog(`📉 <b>${loser.agentName}</b> receives mass-market mutation pressure (MKT: ${loserMkt}/100). Genome shifting toward higher commercial viability.`,'',900);
-      addLog(`Trend insight: <b>Classic/clean designs</b> with high margins outperformed bold/experimental by 1.8× in vote conversion.`,'rs',1300);
-      addLog(`Saturation alert: Rings represent 50% of pool — agents flagged for category diversification into Earrings + Pendants.`,'',1700);
+      // Dynamic trend analysis
+      const catCounts = {};
+      sorted.forEach(d => { catCounts[d.cat] = (catCounts[d.cat]||0) + 1; });
+      const topCat = Object.entries(catCounts).sort((a,b) => b[1]-a[1])[0];
+      const topCatPct = Math.round((topCat[1]/sorted.length)*100);
+      const winStrat = sorted.slice(0,3).map(d=>d.strategy);
+      const dominantStrat = winStrat.filter(s=>s==='exploit').length >= 2 ? 'exploit (proven formulas)' : winStrat[0];
+      addLog(`Trend insight: <b>${dominantStrat}</b> strategy dominated top 3. Winner "${winner.name}" — ${winner.cat}, MKT ${winMkt}/100.`,'rs',1300);
+      if (topCatPct >= 50) addLog(`Saturation alert: ${topCat[0]} represents ${topCatPct}% of pool — agents flagged for category diversification.`,'',1700);
+      else addLog(`Category diversity healthy: ${Object.keys(catCounts).length} categories represented across ${sorted.length} designs.`,'',1700);
       // Apply mass market pressure to bottom-half agents
       sorted.forEach((d,rank)=>{
         const mkt = d.massMarket || computeMassMarketScore(d);
@@ -1135,9 +1315,15 @@ const PHASE_SCRIPTS = [
       setTimeout(()=>{ const wc=document.getElementById('dc-'+winner.idx); if(wc){wc.classList.add('winner-card'); const body=wc.querySelector('.dcard-body'); if(body) body.insertAdjacentHTML('afterbegin','<div class="win-badge">🏆 Cycle Winner</div>');} },300/speed);
       const winMkt = winner.massMarket || computeMassMarketScore(winner);
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market Score: <b>${winMkt}/100</b>. Treasury Elevation triggered.`,'rs',500);
-      addLog(`2nd consecutive commercial classic win — C1: "${prevWinnerName}" · C2: "${winner.name}". Mass-market formula validated.`,'rp',700);
-      addLog(`Agents converging on commercial sweet spot: clean design, high margins, proven categories. Category mix improving.`,'',1100);
-      addLog(`Trend signal: <b>Classic bridal + everyday wearable</b> dominant. Margins rising — avg profit score up 8 points from C1.`,'rs',1600);
+      addLog(`C1: "${prevWinnerName}" → C2: "${winner.name}". Mass-market formula ${winner.cat === (r1ref?.winner?.cat||'Ring') ? 'validated — same category dominance' : 'evolving — category shift detected'}.`,'rp',700);
+      // Dynamic C2 trend analysis
+      const c2catCounts = {};
+      sorted.forEach(d => { c2catCounts[d.cat] = (c2catCounts[d.cat]||0) + 1; });
+      const c2topCat = Object.entries(c2catCounts).sort((a,b) => b[1]-a[1])[0];
+      const avgProfit = Math.round(sorted.reduce((s,d)=>s+d.profit,0)/sorted.length);
+      const r1AvgProfit = r1ref ? Math.round(r1ref.designs.reduce((s,d)=>s+d.profit,0)/r1ref.designs.length) : avgProfit;
+      addLog(`Agents converging on commercial sweet spot. Category diversity: ${Object.keys(c2catCounts).length} types. ${c2topCat[0]} at ${Math.round(c2topCat[1]/sorted.length*100)}%.`,'',1100);
+      addLog(`Trend signal: Avg profit ${avgProfit}/100 (${avgProfit > r1AvgProfit ? '↑ up' : '→ flat'} from C1 ${r1AvgProfit}/100). Winner MKT: <b>${winMkt}/100</b>.`,'rs',1600);
       // Apply mass market pressure to underperformers
       sorted.forEach((d,rank)=>{
         const mkt = d.massMarket || computeMassMarketScore(d);
@@ -1254,9 +1440,16 @@ const PHASE_SCRIPTS = [
       const winMkt = winner.massMarket || computeMassMarketScore(winner);
       const avgMkt = Math.round(sorted.reduce((s,d)=>s+(d.massMarket||computeMassMarketScore(d)),0)/sorted.length);
       addLog(`🏆 <b>"${winner.name}"</b> by ${winner.agentName} — ${winner.credits.toLocaleString()}⬡ · Mass-Market: <b>${winMkt}/100</b>. Epoch breakout design.`,'rs',500);
-      addLog(`<b>Epoch mass-market summary:</b> Avg MKT score rose from ~65 (C1) to ~78 (C3) — agents successfully converged on commercially viable designs.`,'rs',1000);
-      addLog(`<b>Epoch conclusion:</b> C1 established commercial baselines, C2 refined margins + categories, C3 achieved full mass-market alignment with best category diversity.`,'rs',1500);
-      addLog(`All agents improved mass-market scores. Margins up 15+ points average. Category diversity peaked. Consumer panel rewards maximized.`,'',2000);
+      // Dynamic epoch summary using actual cycle data
+      const c1mkt = cycleReports[0] ? cycleReports[0].avgMassMarket || '—' : '—';
+      const c2mkt = cycleReports[1] ? cycleReports[1].avgMassMarket || '—' : '—';
+      addLog(`<b>Epoch mass-market summary:</b> Avg MKT: C1 ${c1mkt} → C2 ${c2mkt} → C3 ${avgMkt}/100. ${avgMkt > 70 ? 'Agents successfully converged on commercially viable designs.' : 'Market optimization still in progress.'}`,'rs',1000);
+      const c3catCounts = {};
+      sorted.forEach(d => { c3catCounts[d.cat] = (c3catCounts[d.cat]||0) + 1; });
+      const c3cats = Object.keys(c3catCounts).length;
+      const c3avgProfit = Math.round(sorted.reduce((s,d)=>s+d.profit,0)/sorted.length);
+      addLog(`<b>Epoch conclusion:</b> ${c3cats} categories in final cycle. Avg profit: ${c3avgProfit}/100. Winner MKT: ${winMkt}/100.`,'rs',1500);
+      addLog(`${c3cats >= 3 ? 'Category diversity peaked.' : 'Category concentration persists.'} ${c3avgProfit >= 75 ? 'Margins optimized for mass retail.' : 'Margin improvement needed.'} Consumer panel rewards ${avgMkt >= 75 ? 'maximized' : 'growing'}.`,'',2000);
       // Final mass market pressure application
       sorted.forEach((d,rank)=>{
         const mkt = d.massMarket || computeMassMarketScore(d);
@@ -1731,6 +1924,276 @@ function applyMassMarketPressure(agentIdx, massMarketScore) {
     agent.marketFit = Math.min(100, agent.marketFit + Math.round(gap * 0.15));
     if (agent.risk > 60) agent.risk = Math.max(35, agent.risk - Math.round(gap * 0.1));
   }
+}
+
+/* ══════════════════════════════════
+   CLAUDE API — LIVE DESIGN GENERATION
+══════════════════════════════════ */
+
+function getSimApiKey() {
+  const el = document.getElementById('claude-api-key');
+  return el ? el.value.trim() : '';
+}
+function getSimModel() {
+  const el = document.getElementById('claude-sim-model');
+  return el ? el.value : 'claude-sonnet-4-20250514';
+}
+function isApiEnabled() { return !!getSimApiKey(); }
+
+// Build a summary of prior cycle intelligence for Claude context
+function buildCycleContext() {
+  if (!cycleReports.length) return 'No prior cycle data. This is Cycle 1.';
+  let ctx = '';
+  cycleReports.forEach(r => {
+    ctx += `\n--- CYCLE ${r.cycle} INTELLIGENCE ---\n`;
+    ctx += `Winner: "${r.winner.name}" by ${r.winner.agentName} (${r.winner.credits.toLocaleString()} credits)\n`;
+    ctx += `Avg Mass-Market Score: ${r.avgMassMarket || '—'}/100\n`;
+    ctx += `Top styles: ${(r.trendData.emerging || []).join(', ')}\n`;
+    ctx += `Saturation: ${r.trendData.saturation || '—'}\n`;
+    ctx += `Treasury signal: ${r.trendData.treasury || '—'}\n`;
+    ctx += `Forward intelligence:\n`;
+    (r.trendData.fi || []).forEach(f => { ctx += `  - ${f}\n`; });
+    ctx += `Design results (ranked):\n`;
+    (r.sortedDesigns || r.designs || []).forEach(d => {
+      const mkt = d.massMarket || 0;
+      ctx += `  #${d.rank || '?'} "${d.name}" (${d.cat}) by ${d.agentName} — MKT:${mkt}/100, aesthetic:${d.aesthetic}, novelty:${d.novelty}, profit:${d.profit}, credits:${d.credits}\n`;
+    });
+  });
+  return ctx;
+}
+
+// Build a description of all agents for Claude context
+function buildAgentContext() {
+  return agentStates.map(a =>
+    `Agent ${a.id} "${a.name}" (${a.arch}): risk=${a.risk}, novelty=${a.novelty}, marketFit=${a.marketFit}, ` +
+    `platBias=${a.platBias}, styles=[${(a.styleTags||[]).join(',')}], philosophy="${a.philosophy}"`
+  ).join('\n');
+}
+
+// Call Claude API with retry
+async function callClaudeAPI(systemPrompt, userPrompt, maxTokens = 1024) {
+  const key = getSimApiKey();
+  const model = getSimModel();
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: maxTokens,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.content?.[0]?.text || '';
+      }
+      if (res.status >= 400 && res.status < 500) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(`API error ${res.status}: ${data.error?.message || res.statusText}`);
+      }
+      lastError = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      if (err.message.includes('API error')) throw err;
+      lastError = err;
+    }
+    if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt + 1) * 1000));
+  }
+  throw lastError;
+}
+
+// Generate designs for a cycle via Claude API
+async function generateDesignsViaAPI(cycleNum) {
+  const categories = ['Ring', 'Earrings', 'Pendant', 'Bracelet'];
+  const emojis = { Ring: '💍', Earrings: '✨', Pendant: '💎', Bracelet: '🔗' };
+  const strategies = ['explore', 'exploit', 'mutate'];
+
+  const systemPrompt = `You are a mass-market jewelry design AI. You generate commercial jewelry designs optimized for retail sales.
+
+MASS-MARKET MODEL (your primary objective):
+- Category demand: Ring 42%, Earrings 25%, Pendant 20%, Bracelet 13%
+- Consumer segments: Bridal (30%), Everyday (25%), Gift (25%), Fashion-Forward (20%)
+- Novelty sweet spot: 30-62 (too high = niche, too low = boring)
+- Minimum margin target: 65% profit score
+- Aesthetic floor: 70/100
+- Best-selling styles: minimal (0.88), elevated-everyday (0.90), market-fit (0.92), floral (0.82), vintage (0.78), geometric (0.72)
+- Niche styles (avoid unless agent demands): brutalist (0.20), avant-garde (0.18), industrial (0.28)
+
+CRITICAL RULES:
+- Each design MUST have a commercial product photography prompt (white/neutral background, clean lighting)
+- Designs should use common retail materials: 14k/18k gold, platinum, diamonds, sapphires, pearls
+- Novelty and aesthetic scores should reflect mass-market appeal, NOT artistic merit
+- Profit scores should be 65+ for most designs (manufacturing margins)
+- ${cycleNum > 1 ? 'Agents have learned from prior cycles. Designs should be MORE commercial than previous cycles. Margins should improve. Category diversity should increase.' : 'This is cycle 1. Some agents may start experimental but most should lean commercial.'}
+- ${cycleNum === 3 ? 'This is the FINAL cycle. All agents should be fully optimized for mass-market. Highest margins, best category diversity, cleanest commercial designs.' : ''}`;
+
+  const userPrompt = `AGENTS:
+${buildAgentContext()}
+
+PRIOR CYCLE INTELLIGENCE:
+${buildCycleContext()}
+
+Generate exactly 6 jewelry designs for Cycle ${cycleNum}, one per agent (agentIdx 0-5).
+
+IMPORTANT PROGRESSION RULES FOR CYCLE ${cycleNum}:
+${cycleNum === 1 ? '- Most agents should start with commercially viable designs. 1-2 agents may be slightly experimental based on their genome (high risk/novelty agents).\n- Target average mass-market score: 60-70' : ''}
+${cycleNum === 2 ? '- ALL agents should have improved their designs based on Cycle 1 data.\n- Agents with low mass-market scores last cycle should pivot toward commercial viability.\n- Margins should be higher across the board.\n- Target average mass-market score: 70-80\n- At least 3 different categories should be represented.' : ''}
+${cycleNum === 3 ? '- ALL designs should be fully mass-market optimized.\n- Every design should have profit >= 75.\n- Best category diversity yet (ideally 2+ categories represented).\n- Target average mass-market score: 78-90\n- Clean, commercial, proven retail formulas.' : ''}
+
+Each agent's design should reflect their genome (risk, novelty, marketFit, styleTags, philosophy) but FILTERED through the mass-market model. High-risk agents should still be more commercial than they'd be without mass-market pressure.
+
+Respond with ONLY a JSON array of 6 objects. No other text. Each object:
+{
+  "name": "Design Name (2-3 words, commercial-sounding)",
+  "cat": "Ring|Earrings|Pendant|Bracelet",
+  "agentIdx": 0-5,
+  "strategy": "explore|exploit|mutate",
+  "aesthetic": 65-95,
+  "novelty": 25-80,
+  "profit": 50-95,
+  "prompt": "Concise image-generation prompt for commercial jewelry product photography. Max 180 chars. White/neutral background, clean lighting. Focus on metal, stone, design.",
+  "rationale": "1-sentence explanation of why this design fits mass-market demand"
+}`;
+
+  const raw = await callClaudeAPI(systemPrompt, userPrompt, 2000);
+
+  // Parse JSON from response — handle markdown code blocks
+  let jsonStr = raw;
+  const codeBlock = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) jsonStr = codeBlock[1];
+  jsonStr = jsonStr.trim();
+
+  const designs = JSON.parse(jsonStr);
+
+  // Validate and normalize
+  if (!Array.isArray(designs) || designs.length < 1) throw new Error('Invalid design array');
+
+  return designs.slice(0, 6).map((d, i) => ({
+    name: d.name || `Design ${i+1}`,
+    cat: categories.includes(d.cat) ? d.cat : 'Ring',
+    emoji: emojis[d.cat] || '💎',
+    agentIdx: typeof d.agentIdx === 'number' ? d.agentIdx : i,
+    strategy: strategies.includes(d.strategy) ? d.strategy : 'exploit',
+    aesthetic: Math.max(0, Math.min(100, d.aesthetic || 70)),
+    novelty: Math.max(0, Math.min(100, d.novelty || 50)),
+    profit: Math.max(0, Math.min(100, d.profit || 65)),
+    prompt: (d.prompt || 'Elegant jewelry piece, white background, commercial product photo').slice(0, 250),
+    rationale: d.rationale || '',
+  }));
+}
+
+// Generate agent cross-pollination dialogue via Claude API
+async function generateDialogueViaAPI(cycleNum, phase) {
+  const systemPrompt = `You are generating realistic dialogue between jewelry design AI agents in a competitive mass-market simulation.
+
+Each agent has a distinct personality (archetype, philosophy, style preferences). They are discussing strategy for Cycle ${cycleNum} designs.
+
+CONTEXT: All agents are optimizing for MASS-MARKET SALES. The consumer panel (40% of credits) rewards commercially viable designs. Agents who ignore mass-market signals lose.
+
+Write natural, concise agent dialogue. Each line should reference specific design decisions: materials, categories, target segments, margins, or responses to prior cycle data.`;
+
+  const phaseLabel = phase === 0 ? 'Cross-Pollination (agents discuss strategy and share insights)' : 'Synthesis (agents finalize their design blueprints and parameters)';
+
+  const userPrompt = `AGENTS:
+${buildAgentContext()}
+
+PRIOR CYCLE DATA:
+${buildCycleContext()}
+
+PHASE: ${phaseLabel}
+
+Generate ${phase === 0 ? '6-8' : '6'} dialogue lines for Cycle ${cycleNum}, Phase ${phase}.
+
+${phase === 0 ? 'Agents should discuss mass-market strategy, reference prior cycle winners/losers, debate category diversification, and share commercial insights.' : 'Each agent states their final blueprint: strategy (EXPLORE/EXPLOIT/MUTATE), category, key design elements, estimated margin %, target consumer segment.'}
+
+${cycleNum > 1 ? 'Agents MUST reference specific data from prior cycles (winner names, mass-market scores, trend signals).' : ''}
+
+Respond with ONLY a JSON array of objects:
+{"agentIdx": 0-5, "text": "The dialogue line with specific design/market references"}`;
+
+  const raw = await callClaudeAPI(systemPrompt, userPrompt, 1500);
+
+  let jsonStr = raw;
+  const codeBlock = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) jsonStr = codeBlock[1];
+  jsonStr = jsonStr.trim();
+
+  const lines = JSON.parse(jsonStr);
+  if (!Array.isArray(lines)) throw new Error('Invalid dialogue array');
+  return lines.slice(0, 10);
+}
+
+// Generate voting rationale via Claude API
+async function generateVotesViaAPI(cycleNum, designs) {
+  const systemPrompt = `You are simulating voting by 6 jewelry design AI agents + a mass-market consumer panel.
+
+MASS-MARKET MODEL:
+- Consumer segments: Bridal (30%), Everyday (25%), Gift (25%), Fashion-Forward (20%)
+- Category demand: Ring 42%, Earrings 25%, Pendant 20%, Bracelet 13%
+- Novelty sweet spot: 30-62
+- Margin floor: 65%
+- Consumer panel (40,000 credits) rewards high mass-market scores heavily
+
+Each agent has 10,000 credits to distribute. They vote based on their own design preferences AND mass-market awareness. Agents CANNOT vote for their own design.
+
+The consumer panel distributes 40,000 credits proportionally by mass-market appeal score.`;
+
+  const designDesc = designs.map((d, i) =>
+    `[${i}] "${d.name}" (${d.cat}) by Agent ${d.agentIdx} — aes:${d.aesthetic} nov:${d.novelty} profit:${d.profit} strategy:${d.strategy} prompt:"${d.prompt.slice(0,80)}..."`
+  ).join('\n');
+
+  const userPrompt = `AGENTS:
+${buildAgentContext()}
+
+DESIGNS TO VOTE ON:
+${designDesc}
+
+Generate a vote matrix. Each agent distributes exactly 10,000 credits across designs (NOT their own). Agents should favor designs with high mass-market potential but also consider their own aesthetic preferences.
+
+Respond with ONLY a JSON object:
+{
+  "votes": [[agent0_votes_for_design0, agent0_votes_for_design1, ...], [agent1_votes...], ...],
+  "reasoning": "Brief 1-sentence summary of voting patterns"
+}
+
+RULES:
+- Each row must sum to exactly 10000
+- Agent N must put 0 for design index where agentIdx === N (can't self-vote)
+- Higher credits to designs with better mass-market fit (higher profit, moderate novelty, accessible style)`;
+
+  const raw = await callClaudeAPI(systemPrompt, userPrompt, 1200);
+
+  let jsonStr = raw;
+  const codeBlock = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) jsonStr = codeBlock[1];
+  jsonStr = jsonStr.trim();
+
+  const result = JSON.parse(jsonStr);
+  if (!result.votes || !Array.isArray(result.votes)) throw new Error('Invalid vote matrix');
+
+  // Validate and normalize vote matrix
+  const matrix = result.votes.slice(0, 6).map((row, vi) => {
+    if (!Array.isArray(row)) return [0,0,0,0,0,0];
+    const normalized = row.slice(0, 6).map((v, di) => {
+      // Zero out self-votes
+      if (designs[di] && designs[di].agentIdx === vi) return 0;
+      return Math.max(0, Math.round(v));
+    });
+    // Normalize to sum to 10000
+    const total = normalized.reduce((a, b) => a + b, 0);
+    if (total === 0) return normalized;
+    return normalized.map(v => Math.round(v / total * 10000));
+  });
+
+  return { votes: matrix, reasoning: result.reasoning || '' };
 }
 
 /* ══════════════════════════════════
